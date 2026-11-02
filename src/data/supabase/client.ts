@@ -105,7 +105,20 @@ export function useLiveHost(code: string): HostRoomApi & { error: string | null 
   const command = useCallback(
     async (cmd: HostCommand) => {
       const res = await liveHostCommand(code, cmd)
-      if (res.state) setData(res.state)
+      const stage = res.state
+      if (stage) {
+        // O servidor devolve só o palco: preserva votos, participantes e luzes já conhecidos.
+        setData((prev) =>
+          prev
+            ? {
+                ...stage,
+                participants: prev.participants,
+                lights: prev.lights,
+                polls: Object.fromEntries(Object.entries(stage.polls).map(([id, p]) => [id, { ...p, votes: prev.polls[id]?.votes ?? {} }])),
+              }
+            : stage,
+        )
+      }
       return res.error
     },
     [code, setData],

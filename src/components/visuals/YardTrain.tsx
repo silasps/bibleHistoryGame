@@ -42,7 +42,32 @@ export function YardTrain({ wall = 0, trainKey, kids = "quintal" }: Props) {
           <path d="M -20 0 L 100 -90 L 220 0 Z" fill="#3a2c20" stroke="#6e5137" strokeWidth="3" />
           <rect x="80" y="70" width="44" height="80" fill="#f4d27a" opacity="0.7" />
         </g>
-        {/* muro */}
+        {KIDS.map((k, i) => (
+          <g key={i} transform={`translate(${k.x} ${k.y + kidY})`} style={{ transition: "transform 1s ease" }}>
+            <circle r="16" cy="-46" fill={k.c} />
+            <path d="M -14 0 C -14 -24 -8 -30 0 -30 C 8 -30 14 -24 14 0 Z" fill={k.c} opacity="0.85" />
+          </g>
+        ))}
+      </Scene>
+      {trainKey !== undefined && (
+        <motion.div
+          key={trainKey}
+          aria-hidden
+          className="absolute top-[30%] flex h-[9%] items-end"
+          initial={{ left: "-60%" }}
+          animate={{ left: "120%" }}
+          transition={{ duration: fx.motion ? 2.2 : 0.01, ease: "easeIn" }}
+        >
+          <div className="flex h-full gap-1">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="h-full w-40 rounded-t-md border border-rose/40 bg-gradient-to-b from-rose to-ember" />
+            ))}
+            <div className="h-full w-44 rounded-r-[40%] rounded-tl-md bg-gradient-to-b from-sand to-clay shadow-[30px_0_60px_rgba(244,210,122,0.6)]" />
+          </div>
+        </motion.div>
+      )}
+      <Scene className="pointer-events-none">
+        {/* muro: camada acima do trem */}
         {Array.from({ length: 16 }, (_, i) => (
           <rect
             key={i}
@@ -57,31 +82,7 @@ export function YardTrain({ wall = 0, trainKey, kids = "quintal" }: Props) {
             style={{ transition: "opacity 0.3s", transitionDelay: `${i * 40}ms` }}
           />
         ))}
-        {KIDS.map((k, i) => (
-          <g key={i} transform={`translate(${k.x} ${k.y + kidY})`} style={{ transition: "transform 1s ease" }}>
-            <circle r="16" cy="-46" fill={k.c} />
-            <path d="M -14 0 C -14 -24 -8 -30 0 -30 C 8 -30 14 -24 14 0 Z" fill={k.c} opacity="0.85" />
-          </g>
-        ))}
       </Scene>
-      {trainKey !== undefined && (
-        <motion.div
-          key={trainKey}
-          aria-hidden
-          className="absolute top-[30%] flex h-[9%] items-end"
-          style={{ zIndex: wall >= 1 ? 0 : 1 }}
-          initial={{ left: "-60%" }}
-          animate={{ left: "120%" }}
-          transition={{ duration: fx.motion ? 2.2 : 0.01, ease: "easeIn" }}
-        >
-          <div className="flex h-full gap-1">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="h-full w-40 rounded-t-md border border-rose/40 bg-gradient-to-b from-rose to-ember" />
-            ))}
-            <div className="h-full w-44 rounded-r-[40%] rounded-tl-md bg-gradient-to-b from-sand to-clay shadow-[30px_0_60px_rgba(244,210,122,0.6)]" />
-          </div>
-        </motion.div>
-      )}
     </div>
   )
 }

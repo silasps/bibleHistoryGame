@@ -13,7 +13,7 @@ interface Props {
 
 // Posição horizontal do carro: borda em x=1180; estrada segura começa em x=380.
 function carX(edgeCm: number | undefined, safe: boolean) {
-  if (safe) return 520
+  if (safe) return 700
   if (edgeCm === undefined) return -400
   return 1180 - 120 - edgeCm * 1.6
 }
@@ -27,7 +27,7 @@ export function CliffRoad({ edgeCm, safe = false }: Props) {
       animate={{ scale: safe ? 1 : 1 + danger * 0.18, x: safe ? 0 : `${-danger * 6}%` }}
       transition={{ duration: fx.motion ? 1.6 : 0, ease: "easeInOut" }}
     >
-      <Scene>
+      <Scene align="xMaxYMid">
         <rect width="1600" height="900" fill="url(#v-sky)" />
         {/* abismo */}
         <rect x="1180" y="0" width="420" height="900" fill="#020306" />
@@ -38,7 +38,10 @@ export function CliffRoad({ edgeCm, safe = false }: Props) {
         <path d="M 1180 520 L 1196 900" stroke="#6e5137" strokeWidth="6" />
         <line x1="260" x2="1120" y1="560" y2="560" stroke="#d9c7a7" strokeOpacity="0.4" strokeWidth="4" strokeDasharray="30 30" />
         <path d="M 0 600 L 1180 600 L 1196 900 L 0 900 Z" fill="#14110d" />
-        {safe && <path d="M 200 520 L 0 440" stroke="#7fae8b" strokeWidth="10" strokeOpacity="0.5" strokeDasharray="20 20" />}
+        {safe && (
+          <path d="M 700 470 C 560 430, 420 380, 180 330" fill="none" stroke="#7fae8b" strokeWidth="8" strokeOpacity="0.6" strokeDasharray="18 16" strokeLinecap="round" />
+        )}
+        {safe && <circle cx="180" cy="330" r="40" fill="url(#v-glow)" opacity="0.7" className="animate-glow" />}
         <g transform={`translate(${carX(edgeCm, safe)} 470)`} style={{ transition: fx.motion ? "transform 1.4s cubic-bezier(.3,.7,.3,1)" : undefined }}>
           <rect x="0" y="20" width="200" height="50" rx="14" fill={safe ? "#7fae8b" : "#d8a948"} />
           <path d="M 40 22 L 70 -10 L 150 -10 L 175 22 Z" fill={safe ? "#5d8a69" : "#a47551"} />

@@ -89,7 +89,14 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
       <main id="conteudo" className="relative z-10 mx-auto max-w-md space-y-6 px-4">
         {room.error && !view && <p className="rounded-xl border border-rose/40 bg-rose/10 p-4 text-rose">{room.error}</p>}
 
-        {!joined && (
+        {view?.status === "ended" && !joined && (
+          <section className="glass rounded-3xl p-6 text-center">
+            <p className="font-display text-3xl text-gold-bright">Obrigado por investigar!</p>
+            <p className="mt-2 text-sm text-mist">A sala foi encerrada e os dados de participação foram apagados.</p>
+          </section>
+        )}
+
+        {!joined && view?.status !== "ended" && (
           <section className="glass space-y-4 rounded-3xl p-5">
             <h1 className="font-display text-3xl text-parchment">Entrar na investigação</h1>
             <p className="text-sm text-mist">Sem cadastro. O apelido é opcional e só aparece para você.</p>

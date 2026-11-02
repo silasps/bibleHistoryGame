@@ -2,9 +2,20 @@ import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 
 /** Moldura comum das ilustrações: SVG responsivo que preenche o palco. */
-export function Scene({ children, className, viewBox = "0 0 1600 900" }: { children: ReactNode; className?: string; viewBox?: string }) {
+export function Scene({
+  children,
+  className,
+  viewBox = "0 0 1600 900",
+  align = "xMidYMid",
+}: {
+  children: ReactNode
+  className?: string
+  viewBox?: string
+  /** Ponto de ancoragem quando o palco corta a ilustração. */
+  align?: "xMidYMid" | "xMaxYMid" | "xMinYMid"
+}) {
   return (
-    <svg viewBox={viewBox} preserveAspectRatio="xMidYMid slice" aria-hidden className={cn("absolute inset-0 h-full w-full", className)}>
+    <svg viewBox={viewBox} preserveAspectRatio={`${align} slice`} aria-hidden className={cn("absolute inset-0 h-full w-full", className)}>
       <defs>
         <radialGradient id="v-glow" cx="50%" cy="50%" r="50%">
           <stop offset="0" stopColor="#f4d27a" stopOpacity="0.9" />

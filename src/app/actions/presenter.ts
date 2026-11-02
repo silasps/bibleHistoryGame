@@ -4,7 +4,7 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { hashSecret } from "@/data/supabase/secrets"
 
-export const PRESENTER_COOKIE = "bph_presenter"
+const PRESENTER_COOKIE = "bph_presenter"
 
 /** Libera a Área de preparação quando PRESENTER_ACCESS_CODE está definido. */
 export async function unlockPresenter(formData: FormData) {

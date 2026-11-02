@@ -37,10 +37,10 @@ export async function projectorResponse(rawCode: string) {
  * já liberadas nesta sala. Antes disso, ela não sai do servidor.
  */
 export async function audienceResponse(rawCode: string) {
-  const room = await roomOr404(rawCode)
+  const code = normalizeRoomCode(rawCode)
+  const token = (await cookies()).get(participantCookie(code))?.value
+  const [room, participant] = await Promise.all([roomOr404(rawCode), isRoomCode(code) && isLiveConfigured() ? participantFor(code, token) : null])
   if ("response" in room) return room.response
-  const token = (await cookies()).get(participantCookie(room.code))?.value
-  const participant = await participantFor(room.code, token)
   const released: Record<string, ReleasedSynthesis> = {}
   for (const id of room.state.released) {
     const s = getReleasedSynthesis(id)

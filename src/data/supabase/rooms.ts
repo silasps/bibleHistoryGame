@@ -100,16 +100,19 @@ export async function isHost(code: string, secret: string | undefined): Promise<
   return !!row && secretMatches(secret, row.host_secret_hash)
 }
 
+/** Devolve só o estado do palco; votos, participantes e luzes vêm da rota /host. */
 export async function applyHostCommand(
   code: string,
   secret: string | undefined,
   cmd: HostCommand,
 ): Promise<{ state?: SessionState; error?: string }> {
   for (let attempt = 0; attempt < 3; attempt++) {
-    const loaded = await loadRoom(code)
-    if (!loaded) return { error: "Sala não encontrada ou expirada" }
-    if (!secretMatches(secret, loaded.row.host_secret_hash)) return { error: "Sem permissão de apresentador" }
-    const narrative = { scenes: sequenceScenes(loaded.row.sequence_id) }
+    // Comandos de palco não dependem de votos nem participantes: basta a linha da sala.
+    const row = await loadRow(code)
+    if (!row) return { error: "Sala não encontrada ou expirada" }
+    if (!secretMatches(secret, row.host_secret_hash)) return { error: "Sem permissão de apresentador" }
+    const loaded = { row, state: stageOnly(row.state) }
+    const narrative = { scenes: sequenceScenes(row.sequence_id) }
     const { state, error } = reduceHost(loaded.state, cmd, { now: Date.now(), narrative })
     if (error) return { error }
     if (state === loaded.state) return { state }
