@@ -9,7 +9,7 @@ import type {
   VisualId,
 } from "@/content/schema"
 import { tally, type PollStatus, type TallyRow } from "./poll"
-import type { MomentKind, SessionNarrative, SessionState } from "./session"
+import type { CueKind, MomentKind, SessionNarrative, SessionState } from "./session"
 
 // View-models das superfícies públicas. Os tipos não têm campos editoriais
 // privados: telão e celular só conseguem renderizar o que está aqui.
@@ -46,6 +46,10 @@ export interface ProjectorView {
     seal?: "fechado" | "aberto"
     /** Só a referência, depois da liberação. Nunca a explicação. */
     releasedRefs?: string[]
+    /** Passos já revelados pelo apresentador (ex.: candidatos). */
+    steps?: { id: string; label: string; text: string; value?: number }[]
+    totalSteps?: number
+    cue: { kind: CueKind; at: number } | null
   }
 }
 
@@ -133,6 +137,9 @@ export function toProjectorView(
       seal: scene.releases ? (released ? "aberto" : "fechado") : undefined,
       releasedRefs:
         released && ev && scene.stage.showRefsAfterRelease ? ev.refs.map((r) => formatRef(r)) : undefined,
+      steps: scene.steps?.slice(0, state.step).map((s) => ({ id: s.id, label: s.label, text: s.text, value: s.value })),
+      totalSteps: scene.steps?.length,
+      cue: state.cue,
     },
   }
 }

@@ -2,6 +2,7 @@ import type { Poll, Scene } from "@/content/schema"
 import { castVote, closePoll, createPoll, openPoll, type PollState, type VoteResult } from "./poll"
 
 export type MomentKind = "haja-luz" | "luzes"
+export type CueKind = "trem" | "muro"
 
 export interface Participant {
   id: string
@@ -27,6 +28,10 @@ export interface SessionState {
   /** participantId → instante em que acendeu a luz. */
   lights: Record<string, number>
   moment: { kind: MomentKind; startedAt: number } | null
+  /** Passos revelados na cena atual (ex.: candidatos a motorista). */
+  step: number
+  /** Efeito disparado na cena atual (ex.: trem passando, muro subindo). */
+  cue: { kind: CueKind; at: number } | null
   timing: {
     startedAt?: number
     sceneEnteredAt?: number
@@ -51,6 +56,8 @@ export type HostCommand =
   | { type: "release"; evidenceId: string }
   | { type: "moment"; kind: MomentKind }
   | { type: "clear_moment" }
+  | { type: "step"; delta: 1 | -1 }
+  | { type: "cue"; kind: CueKind }
   | { type: "set_rehearsal"; value: boolean }
   | { type: "end" }
 
@@ -94,6 +101,8 @@ export function createSession(input: {
     participants: {},
     lights: {},
     moment: null,
+    step: 0,
+    cue: null,
     timing: { pausedMs: 0, sceneMs: {} },
     createdAt: input.now,
   }
@@ -127,6 +136,8 @@ function moveTo(state: SessionState, index: number, now: number): SessionState {
     index,
     polls,
     moment: null,
+    step: 0,
+    cue: null,
     timing: { ...timing, sceneEnteredAt: state.paused ? undefined : now },
   }
 }
@@ -196,6 +207,14 @@ export function reduceHost(state: SessionState, cmd: HostCommand, ctx: Ctx): Hos
       return { state: bump({ ...state, moment: { kind: cmd.kind, startedAt: now } }) }
     case "clear_moment":
       return { state: bump({ ...state, moment: null }) }
+    case "step": {
+      const max = narrative.scenes[state.index]?.steps?.length ?? 0
+      const step = Math.min(max, Math.max(0, state.step + cmd.delta))
+      if (step === state.step) return { state }
+      return { state: bump({ ...state, step }) }
+    }
+    case "cue":
+      return { state: bump({ ...state, cue: { kind: cmd.kind, at: now } }) }
     case "set_rehearsal":
       return { state: bump({ ...state, rehearsal: cmd.value }) }
     case "end":

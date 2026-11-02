@@ -151,3 +151,8 @@ export function validateNarrative(): string[] {
   for (const seq of sequences) for (const id of seq.sceneIds) if (!sceneIndex.has(id)) issues.push(`sequência ${seq.id}: cena inexistente ${id}`)
   return issues
 }
+
+/** Cenas de uma sequência, na ordem da apresentação. */
+export function sequenceScenes(sequenceId: string): Scene[] {
+  return (getSequence(sequenceId)?.sceneIds ?? []).map((id) => sceneIndex.get(id)!.scene)
+}

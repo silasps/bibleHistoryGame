@@ -8,11 +8,13 @@ import type { ReleasedSynthesis } from "@/content/schema"
 const EvidenceId = z.string().regex(/^ev-[a-z0-9-]+$/).max(80)
 
 /**
- * Modo solo: entrega a síntese de uma conexão quando o jogador abre o selo.
+ * Entrega a síntese de uma conexão: no modo solo, quando o jogador abre o selo;
+ * na demonstração local, quando o apresentador libera a pista.
  * Conexões "futuras" (episódio ainda não implementado) não são entregues.
- * Proteção anti-spoiler, não sigilo: qualquer jogador solo pode abrir o selo.
+ * Proteção anti-spoiler, não sigilo: no modo solo qualquer jogador pode abrir o selo.
+ * Ao vivo com Supabase, a síntese só sai pela rota da audiência depois da liberação.
  */
-export async function openSoloSeal(evidenceId: string): Promise<{ ok: true; synthesis: ReleasedSynthesis } | { ok: false }> {
+export async function fetchConnectionSynthesis(evidenceId: string): Promise<{ ok: true; synthesis: ReleasedSynthesis } | { ok: false }> {
   const parsed = EvidenceId.safeParse(evidenceId)
   if (!parsed.success) return { ok: false }
   const ev = getEvidence(parsed.data)

@@ -3,7 +3,7 @@
 import { Loader2, Unlock } from "lucide-react"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
-import { openSoloSeal } from "@/app/actions/solo"
+import { fetchConnectionSynthesis } from "@/app/actions/synthesis"
 import { getEvidence } from "@/content"
 import { BlockList } from "@/components/story/BlockList"
 import { ConnectionChips } from "@/components/story/ConnectionChips"
@@ -25,7 +25,7 @@ export function EvidenceUnlock({ scene }: RendererProps) {
   const onOpen = () =>
     start(async () => {
       setOpening(true)
-      const res = await openSoloSeal(ev.id)
+      const res = await fetchConnectionSynthesis(ev.id)
       if (!res.ok) {
         toast.error("Não foi possível abrir o selo agora.")
         setOpening(false)
