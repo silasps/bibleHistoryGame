@@ -1,0 +1,142 @@
+import { block, ref } from "../refs"
+import type { EpisodeInput } from "../schema"
+
+// Analogia ilustrativa (não é evento bíblico). Encaixe editorial sugerido: Ato 2
+// (Levítico/Deuteronômio).
+export const cincoMotoristas: EpisodeInput = {
+  id: "analogia-cinco-motoristas",
+  actId: "ato-02",
+  kind: "analogia",
+  status: "jogavel",
+  order: 91,
+  title: "Os cinco motoristas e o abismo",
+  subtitle: "Santidade não é medir a distância da borda",
+  period: { label: "Analogia (sem época)", approximate: false, debated: false },
+  references: [ref("Lev", 19, 2), ref("Deut", 30, 19, 20), ref("Prov", 4, 14, 15), ref("1Thess", 4, 3, 7)],
+  theme: "Santidade como orientação da vida para Deus",
+  humanQuestion: "Até onde posso chegar perto do erro sem cair?",
+  authorSummary: { status: "pendente_fonte" },
+  manualRequirement: { status: "pendente_fonte" },
+  reviewStatus: "em_revisao",
+  visualHook: "Um carro cada vez mais perto da borda — até a câmera se afastar e mostrar a estrada segura.",
+  scenes: [
+    {
+      id: "motoristas-entrevista",
+      type: "analogy",
+      title: "Uma estrada à beira do precipício",
+      perspective: "investigator",
+      visual: "cliff-road",
+      fxCue: "cliff",
+      illumination: 0.4,
+      stage: { caption: "Quão perto da borda você consegue dirigir?" },
+      audiencePrompt: "Avalie cada candidato.",
+      presenterCue: "historia",
+      estimatedSeconds: 120,
+      blocks: [
+        block(
+          "analogia",
+          "Você precisa contratar um motorista para uma viagem por uma estrada estreita, à beira de um precipício. A entrevista tem uma pergunta só: quão perto da borda você consegue dirigir?",
+        ),
+        block("narracao", "Esta é uma história ilustrativa, não um evento bíblico."),
+      ],
+    },
+    {
+      id: "motoristas-candidatos",
+      type: "investigation",
+      title: "Os quatro primeiros candidatos",
+      perspective: "investigator",
+      visual: "cliff-road",
+      fxCue: "cliff",
+      illumination: 0.35,
+      stage: { caption: "Qual deles você contrataria?" },
+      audiencePrompt: "Vote: qual dos quatro você contrataria?",
+      presenterCue: "votacao",
+      estimatedSeconds: 240,
+      blocks: [block("narracao", "Ouça cada candidato. O carro mostra o quanto ele chegaria perto da borda.")],
+      steps: [
+        { id: "m1", label: "Candidato 1", text: "Consigo dirigir a 2 metros da borda.", value: 200 },
+        { id: "m2", label: "Candidato 2", text: "Eu, a 1 metro.", value: 100 },
+        { id: "m3", label: "Candidato 3", text: "Chego a 50 centímetros.", value: 50 },
+        { id: "m4", label: "Candidato 4", text: "Dirijo a 10 centímetros da borda, sem tremer.", value: 10 },
+      ],
+      poll: {
+        id: "poll-motorista",
+        question: "Qual dos quatro você contrataria?",
+        kind: "opiniao",
+        options: [
+          { id: "m1", label: "2 metros" },
+          { id: "m2", label: "1 metro" },
+          { id: "m3", label: "50 centímetros" },
+          { id: "m4", label: "10 centímetros" },
+        ],
+      },
+    },
+    {
+      id: "motoristas-quinto",
+      type: "canonical_reveal",
+      title: "O quinto candidato",
+      perspective: "investigator",
+      visual: "cliff-road",
+      fxCue: "cliff",
+      illumination: 0.75,
+      stage: { caption: "O quinto candidato" },
+      presenterCue: "historia",
+      estimatedSeconds: 120,
+      blocks: [
+        block(
+          "analogia",
+          "O quinto candidato estranha a pergunta: “Eu não tento chegar perto da borda. Meu objetivo é levar você em segurança até o destino.”",
+          [],
+          "Analogia · fala fictícia",
+        ),
+      ],
+    },
+    {
+      id: "motoristas-santidade",
+      type: "reflection",
+      title: "Orientar a vida para Deus",
+      perspective: "investigator",
+      visual: "cliff-road",
+      fxCue: "embers",
+      illumination: 0.8,
+      stage: { caption: "Para onde a estrada leva?" },
+      audiencePrompt: "Pense: em que área você tem medido a distância da borda?",
+      presenterCue: "pausa",
+      estimatedSeconds: 240,
+      blocks: [
+        block(
+          "interpretacao",
+          "Santidade não é descobrir o quanto se pode chegar perto do pecado sem cair, mas orientar a vida para Deus — como o quinto motorista, que pensa no destino e no passageiro.",
+        ),
+        block("parafrase", "Deus chama seu povo a ser santo porque ele é santo.", [ref("Lev", 19, 2)]),
+        block(
+          "parafrase",
+          "Diante de Israel são postas a vida e a morte; o chamado é escolher a vida, amando o Senhor e apegando-se a ele.",
+          [ref("Deut", 30, 19, 20)],
+        ),
+        block(
+          "parafrase",
+          "Provérbios aconselha não entrar no caminho dos perversos: evitá-lo, desviar-se dele e passar adiante.",
+          [ref("Prov", 4, 14, 15)],
+        ),
+        block(
+          "parafrase",
+          "Paulo diz que a vontade de Deus é a santificação, e que Deus não nos chamou para a impureza, mas para a santidade.",
+          [ref("1Thess", 4, 3, 7)],
+        ),
+        block(
+          "interpretacao",
+          "Cuidado com duas leituras erradas: a analogia não ensina que a salvação é conquistada por esforço humano — na Bíblia, a graça e a aliança vêm antes. E não significa que toda proximidade com pessoas ou situações difíceis seja pecado: Jesus conviveu com pecadores sem pecar.",
+          [ref("Exod", 20, 2), ref("Eph", 2, 8, 10), ref("Luke", 15, 1, 2), ref("Heb", 4, 15)],
+          "Ressalvas",
+        ),
+      ],
+      reflection: {
+        prompts: [
+          "Em que área da vida você tem perguntado “até onde posso ir?” em vez de “para onde estou indo?”",
+          "Como a santidade muda quando o objetivo é o destino e as pessoas que viajam com você?",
+        ],
+      },
+    },
+  ],
+}

@@ -1,0 +1,451 @@
+import { block, ref } from "../../refs"
+import type { SceneInput } from "../../schema"
+
+// Todo texto bíblico aqui é paráfrase autoral (sem citações da NAA).
+// Dramatizações e simulações estão marcadas como hipotese_ficcional.
+export const genesisScenes: SceneInput[] = [
+  {
+    id: "convite",
+    type: "cinematic_intro",
+    title: "Por trás da história",
+    perspective: "investigator",
+    visual: "night-sky",
+    fxCue: "stars",
+    illumination: 0.05,
+    stage: { caption: "Uma história. Muitas escolhas." },
+    audiencePrompt: "Bem-vindo à investigação. Fique de olho na tela.",
+    presenterCue: "historia",
+    estimatedSeconds: 90,
+    blocks: [
+      block(
+        "narracao",
+        "Toda grande história guarda perguntas que não cabem em uma linha. Você vai atravessar a Bíblia como um investigador: ouvir relatos, examinar pistas, enfrentar dilemas e anotar o que descobrir.",
+      ),
+      block(
+        "narracao",
+        "Algumas cenas pedem a sua decisão. Suas escolhas mudam a sua reflexão — nunca o que o texto bíblico narra. Cada trecho mostra o que é paráfrase da Bíblia, o que é interpretação e o que é simulação.",
+      ),
+    ],
+  },
+  {
+    id: "prologo-criacao",
+    type: "cinematic_intro",
+    title: "No princípio",
+    perspective: "historical_observer",
+    visual: "creation",
+    fxCue: "creation-light",
+    illumination: 0.45,
+    stage: { caption: "No princípio…" },
+    presenterCue: "historia",
+    estimatedSeconds: 180,
+    unlocks: ["ev-criacao-boa", "ev-imagem"],
+    blocks: [
+      block(
+        "parafrase",
+        "No princípio, Deus cria os céus e a terra. A terra estava sem forma e vazia, e havia trevas sobre a face do abismo.",
+        [ref("Gen", 1, 1, 2)],
+      ),
+      block(
+        "parafrase",
+        "Deus fala, e a luz passa a existir. Ao longo dos dias, ele separa — luz e trevas, águas de cima e águas de baixo, mar e terra seca — e depois preenche: luzeiros no céu, peixes, aves e animais.",
+        [ref("Gen", 1, 3, 25)],
+      ),
+      block("parafrase", "Várias vezes o relato repete: Deus viu que era bom.", [
+        ref("Gen", 1, 4),
+        ref("Gen", 1, 10),
+        ref("Gen", 1, 12),
+        ref("Gen", 1, 18),
+        ref("Gen", 1, 21),
+        ref("Gen", 1, 25),
+      ]),
+      block(
+        "parafrase",
+        "Então Deus cria o ser humano à sua imagem — homem e mulher — e lhes confia a terra e os seres vivos.",
+        [ref("Gen", 1, 26, 28)],
+      ),
+      block("parafrase", "Deus vê tudo o que tinha feito: era muito bom. No sétimo dia, ele descansa.", [
+        ref("Gen", 1, 31),
+        ref("Gen", 2, 2, 3),
+      ]),
+      block(
+        "interpretacao",
+        "Muitos estudiosos observam um padrão literário no capítulo 1: os primeiros dias formam espaços, e os dias seguintes os preenchem. É uma leitura da estrutura do texto, não algo que o próprio texto declara.",
+      ),
+    ],
+  },
+  {
+    id: "pergunta-mal",
+    type: "theological_dilemma",
+    title: "Se Deus criou tudo bom, por que existe tanto mal?",
+    perspective: "theological_dilemma",
+    visual: "question-mark",
+    fxCue: "question-pulse",
+    illumination: 0.3,
+    stage: { caption: "Se Deus criou tudo bom, por que existe tanto mal?" },
+    audiencePrompt: "Registre sua primeira hipótese.",
+    presenterCue: "votacao",
+    estimatedSeconds: 240,
+    blocks: [
+      block(
+        "narracao",
+        "Guerras, doenças, traições, injustiças. Se o começo foi “muito bom”, algo aconteceu pelo caminho. Antes de abrir o relato, registre sua primeira hipótese.",
+      ),
+    ],
+    poll: {
+      id: "poll-origem-do-mal",
+      question: "Qual é a sua primeira hipótese?",
+      kind: "opiniao",
+      options: [
+        { id: "sempre", label: "O mal sempre existiu, junto com o bem" },
+        { id: "controle", label: "Deus não está no controle" },
+        { id: "escolha", label: "O ser humano fez uma escolha que mudou tudo" },
+        { id: "investigar", label: "Ainda não sei — quero investigar" },
+      ],
+    },
+  },
+  {
+    id: "jardim",
+    type: "historical_context",
+    title: "O jardim, a liberdade e o limite",
+    perspective: "historical_observer",
+    visual: "garden",
+    fxCue: "garden-breeze",
+    illumination: 0.6,
+    stage: { caption: "Liberdade ampla. Um único limite." },
+    audiencePrompt: "Quiz rápido: preste atenção no jardim.",
+    presenterCue: "votacao",
+    estimatedSeconds: 240,
+    unlocks: ["ev-limite"],
+    blocks: [
+      block("parafrase", "O Senhor Deus forma o ser humano do pó da terra e sopra nele o fôlego de vida.", [
+        ref("Gen", 2, 7),
+      ]),
+      block(
+        "parafrase",
+        "Deus planta um jardim no Éden e coloca ali o ser humano para cultivá-lo e guardá-lo. No meio do jardim estão a árvore da vida e a árvore do conhecimento do bem e do mal.",
+        [ref("Gen", 2, 8, 9), ref("Gen", 2, 15)],
+      ),
+      block(
+        "parafrase",
+        "A ordem é ampla e tem um único limite: de toda árvore do jardim ele pode comer, mas não da árvore do conhecimento do bem e do mal — no dia em que dela comer, certamente morrerá.",
+        [ref("Gen", 2, 16, 17)],
+      ),
+      block(
+        "parafrase",
+        "Deus diz que não é bom que o homem esteja só e forma a mulher. Os dois estavam nus e não sentiam vergonha.",
+        [ref("Gen", 2, 18), ref("Gen", 2, 21, 25)],
+      ),
+      block(
+        "interpretacao",
+        "Repare na proporção: a liberdade é a regra, e o limite é a exceção. Uma leitura comum é que a ordem faz parte de uma relação de confiança com o Criador, e não de um capricho.",
+      ),
+      block(
+        "interpretacao",
+        "Muitos estudiosos comparam Gênesis com outros relatos de origem do antigo Oriente Próximo. Nessas comparações, costuma-se destacar que aqui há um único Deus, que cria pela palavra, e que o ser humano recebe dignidade como imagem de Deus.",
+      ),
+    ],
+    poll: {
+      id: "poll-quantas-arvores",
+      question: "Quantas árvores do jardim eram proibidas?",
+      kind: "quiz",
+      correctOptionId: "uma",
+      afterResult: "Só uma. Guarde esse número: ele vai ser distorcido na próxima cena.",
+      options: [
+        { id: "nenhuma", label: "Nenhuma" },
+        { id: "uma", label: "Uma" },
+        { id: "metade", label: "Metade delas" },
+        { id: "todas", label: "Todas, exceto uma" },
+      ],
+    },
+  },
+  {
+    id: "tentacao",
+    type: "character_perspective",
+    title: "Uma pergunta no jardim",
+    perspective: "biblical_character",
+    character: "A mulher no jardim (perspectiva dramatizada)",
+    visual: "serpent-fruit",
+    fxCue: "fruit-glow",
+    illumination: 0.5,
+    stage: { caption: "Uma pergunta no jardim." },
+    presenterCue: "historia",
+    estimatedSeconds: 210,
+    unlocks: ["ev-suspeita"],
+    blocks: [
+      block(
+        "narracao",
+        "Por alguns instantes, veja a cena de dentro. O que segue mistura o relato com dramatização — cada parte está identificada.",
+      ),
+      block(
+        "parafrase",
+        "A serpente, o mais astuto dos animais do campo, pergunta à mulher se Deus realmente tinha dito que não poderiam comer de nenhuma árvore do jardim.",
+        [ref("Gen", 3, 1)],
+      ),
+      block(
+        "parafrase",
+        "A mulher responde que podem comer do fruto das árvores; só da árvore que está no meio do jardim Deus disse que não comessem nem tocassem nela, para não morrerem.",
+        [ref("Gen", 3, 2, 3)],
+      ),
+      block(
+        "parafrase",
+        "A serpente contradiz: certamente não morrerão. Diz que Deus sabe que, no dia em que comerem, os olhos deles se abrirão e eles serão como Deus, conhecendo o bem e o mal.",
+        [ref("Gen", 3, 4, 5)],
+      ),
+      block(
+        "hipotese_ficcional",
+        "O fruto parece ao alcance da mão. A pergunta fica ecoando: e se Deus estiver escondendo algo bom?",
+        [],
+        "Dramatização",
+      ),
+      block(
+        "parafrase",
+        "A mulher vê que a árvore era boa para comer, agradável aos olhos e desejável para dar entendimento.",
+        [ref("Gen", 3, 6)],
+      ),
+      block(
+        "interpretacao",
+        "Observe a estratégia: primeiro o limite é exagerado (“nenhuma árvore?”), depois a consequência é negada e, por fim, as intenções de Deus são postas sob suspeita.",
+      ),
+    ],
+  },
+  {
+    id: "escolha",
+    type: "choice",
+    title: "O que você faria?",
+    perspective: "biblical_character",
+    visual: "choice-crossroads",
+    fxCue: "heartbeat",
+    illumination: 0.35,
+    stage: { caption: "O que você faria?" },
+    audiencePrompt: "Escolha no seu celular. É uma simulação: não muda o relato.",
+    presenterCue: "votacao",
+    estimatedSeconds: 180,
+    blocks: [
+      block(
+        "narracao",
+        "Esta é uma simulação reflexiva. Sua escolha não muda o relato bíblico; ela revela como você pensa diante da mesma pergunta.",
+      ),
+    ],
+    choice: {
+      prompt: "Diante da árvore, o que você faria?",
+      options: [
+        { id: "lembrar", label: "Recordar exatamente o que Deus disse" },
+        { id: "perguntar", label: "Levar a dúvida ao próprio Deus antes de decidir" },
+        { id: "comer", label: "Provar o fruto — talvez a serpente tenha razão" },
+        { id: "conversar", label: "Chamar o homem e decidir juntos" },
+      ],
+    },
+    poll: {
+      id: "poll-o-que-voce-faria",
+      question: "Diante da árvore, o que você faria?",
+      kind: "opiniao",
+      options: [
+        { id: "lembrar", label: "Recordar exatamente o que Deus disse" },
+        { id: "perguntar", label: "Levar a dúvida ao próprio Deus" },
+        { id: "comer", label: "Provar o fruto" },
+        { id: "conversar", label: "Chamar o homem e decidir juntos" },
+      ],
+    },
+  },
+  {
+    id: "hipotese",
+    type: "hypothetical_consequence",
+    title: "Simulação: e se…?",
+    perspective: "investigator",
+    visual: "choice-crossroads",
+    fxCue: "heartbeat",
+    illumination: 0.3,
+    stage: { caption: "E se…?" },
+    presenterCue: "historia",
+    estimatedSeconds: 120,
+    hypothetical: {
+      choiceSceneId: "escolha",
+      byOption: {
+        lembrar: [
+          block(
+            "hipotese_ficcional",
+            "Na simulação, você repete a palavra exata de Deus: de toda árvore podiam comer, exceto de uma. A pergunta da serpente perde força quando a ordem é lembrada como foi dada.",
+          ),
+          block(
+            "interpretacao",
+            "Nos Evangelhos, Jesus responde às tentações no deserto citando as Escrituras — um contraste frequentemente notado com a cena do jardim.",
+            [ref("Matt", 4, 1, 11)],
+          ),
+        ],
+        perguntar: [
+          block(
+            "hipotese_ficcional",
+            "Na simulação, você decide não resolver a dúvida sozinho e a leva a Deus. O relato não diz o que aconteceria nesse caso — é só uma hipótese para pensar: o que muda quando a dúvida vira conversa com Deus, e não suspeita contra ele?",
+          ),
+        ],
+        comer: [
+          block(
+            "hipotese_ficcional",
+            "Na simulação, você prova o fruto. Imagine o silêncio logo depois: o que parecia ganho começa a parecer perda. Por que é tão difícil confiar que um limite dado por Deus pode ser bom?",
+          ),
+        ],
+        conversar: [
+          block(
+            "hipotese_ficcional",
+            "Na simulação, você chama o homem para decidir junto. Mas decidir em dupla não garante decidir bem: a questão continua sendo em quem vocês confiam.",
+          ),
+          block(
+            "interpretacao",
+            "Uma leitura possível: a comunidade ajuda quando nos devolve à palavra de Deus, e não quando apenas divide a responsabilidade.",
+          ),
+        ],
+      },
+    },
+    blocks: [
+      block("narracao", "Seja qual for a sua escolha, a história bíblica não muda. Agora, o relato."),
+    ],
+  },
+  {
+    id: "relato",
+    type: "canonical_reveal",
+    title: "O que Gênesis 3 narra",
+    perspective: "historical_observer",
+    visual: "fallen-garden",
+    fxCue: "rewind",
+    illumination: 0.25,
+    stage: { caption: "O que o relato narra" },
+    presenterCue: "historia",
+    estimatedSeconds: 300,
+    unlocks: ["ev-deus-procura"],
+    blocks: [
+      block("parafrase", "A mulher toma do fruto e come; dá também ao marido, que estava com ela, e ele come.", [
+        ref("Gen", 3, 6),
+      ]),
+      block(
+        "parafrase",
+        "Os olhos dos dois se abrem e eles percebem que estão nus. Juntam folhas de figueira para se cobrir.",
+        [ref("Gen", 3, 7)],
+      ),
+      block(
+        "parafrase",
+        "Quando ouvem o Senhor Deus andando no jardim, escondem-se entre as árvores. Deus chama o homem e pergunta onde ele está.",
+        [ref("Gen", 3, 8, 9)],
+      ),
+      block(
+        "parafrase",
+        "O homem diz que foi a mulher que Deus lhe deu quem lhe deu do fruto. A mulher diz que a serpente a enganou.",
+        [ref("Gen", 3, 12, 13)],
+      ),
+      block(
+        "interpretacao",
+        "Muitos leitores notam aqui uma cadeia de culpa — que chega a insinuar a responsabilidade do próprio Deus, “que a deu”.",
+      ),
+      block(
+        "parafrase",
+        "Deus pronuncia consequências sobre a serpente, a mulher, o homem e a terra: dor no parto, tensão na relação entre o homem e a mulher, trabalho penoso com o solo e a morte — o ser humano voltará ao pó.",
+        [ref("Gen", 3, 14, 19)],
+      ),
+      block(
+        "narracao",
+        "No meio dessas palavras há uma frase dirigida à serpente que é diferente das outras. Vamos examiná-la com calma.",
+      ),
+      block("parafrase", "Mesmo assim, o Senhor Deus faz roupas de pele para o homem e a mulher e os veste.", [
+        ref("Gen", 3, 21),
+      ]),
+      block(
+        "parafrase",
+        "Deus os envia para fora do jardim, e querubins passam a guardar o caminho da árvore da vida.",
+        [ref("Gen", 3, 22, 24)],
+      ),
+      block(
+        "interpretacao",
+        "O relato não responde a todas as perguntas sobre a origem do mal — não explica, por exemplo, de onde vem a astúcia da serpente. Mas apresenta a quebra da confiança em Deus como a porta por onde o mal entra na experiência humana.",
+      ),
+    ],
+  },
+  {
+    id: "conexao-pausa",
+    type: "presenter_pause",
+    title: "Uma frase no meio do juízo",
+    perspective: "investigator",
+    visual: "seed-thread",
+    fxCue: "seed-thread",
+    illumination: 0.2,
+    stage: {},
+    audiencePrompt: "Uma pista está chegando ao seu celular. Ainda selada.",
+    presenterCue: "conexao",
+    estimatedSeconds: 300,
+    blocks: [
+      block(
+        "narracao",
+        "Pausa. Se tiver uma Bíblia por perto, leia Gênesis 3:14–15 com calma antes de seguir. Repare em quem fala, com quem fala e o que é anunciado.",
+      ),
+    ],
+  },
+  {
+    id: "evidencia-descendencia",
+    type: "evidence_unlock",
+    title: "A pista selada",
+    perspective: "investigator",
+    visual: "sealed-scroll",
+    fxCue: "seal",
+    illumination: 0.55,
+    stage: { showRefsAfterRelease: true },
+    audiencePrompt: "Sua pista será aberta pelo apresentador.",
+    presenterCue: "conexao",
+    estimatedSeconds: 120,
+    releases: "ev-descendencia",
+    blocks: [block("narracao", "Esta pista guarda uma conexão. Abra o selo quando estiver pronto.")],
+  },
+  {
+    id: "reflexao",
+    type: "reflection",
+    title: "O que o relato revela",
+    perspective: "investigator",
+    visual: "reflection-pool",
+    fxCue: "embers",
+    illumination: 0.6,
+    stage: { caption: "O que isso revela?" },
+    audiencePrompt: "Pense por um momento. Você pode anotar no seu Arquivo.",
+    presenterCue: "pausa",
+    estimatedSeconds: 240,
+    blocks: [
+      block(
+        "interpretacao",
+        "Neste relato, Deus aparece como Criador generoso, que dá liberdade ampla; justo, que leva a sério a escolha humana; e misericordioso, que procura, pergunta, cobre e promete.",
+        [ref("Gen", 3, 9), ref("Gen", 3, 15), ref("Gen", 3, 21)],
+      ),
+    ],
+    reflection: {
+      prompts: [
+        "Sua hipótese inicial sobre a origem do mal foi confirmada, corrigida ou complicada pelo relato?",
+        "Repare na sequência: Deus procura, pergunta, anuncia consequências, veste e promete. O que isso revela sobre ele?",
+        "Que limites você tem tratado como ameaça, quando talvez sejam proteção?",
+      ],
+    },
+  },
+  {
+    id: "cliffhanger",
+    type: "chapter_cliffhanger",
+    title: "Quem é essa descendência?",
+    perspective: "investigator",
+    visual: "stars-promise",
+    fxCue: "stars",
+    illumination: 0.75,
+    stage: { caption: "Quem é essa descendência?" },
+    audiencePrompt: "Uma nova pista ficou selada para o próximo capítulo.",
+    presenterCue: "historia",
+    estimatedSeconds: 120,
+    unlocks: ["ev-abraao-descendencia"],
+    blocks: [
+      block(
+        "narracao",
+        "A promessa ficou no ar: um descendente da mulher. Dali em diante, Gênesis passa a seguir famílias, nomes e genealogias — como quem segue um fio.",
+      ),
+      block(
+        "parafrase",
+        "Alguns capítulos depois, Deus chama Abrão e promete que, por meio dele, serão abençoadas todas as famílias da terra.",
+        [ref("Gen", 12, 1, 3)],
+      ),
+      block(
+        "narracao",
+        "O que uma promessa a um homem tem a ver com uma frase dita à serpente? A próxima pista está selada — e só será aberta no episódio de Abraão.",
+      ),
+    ],
+  },
+]
