@@ -20,7 +20,7 @@ export const WEEKS: TimelineWeekInput[] = [
 
 export const ITEMS: TimelineItemInput[] = [
   // ── Semana 1 · Origens e Cosmovisão ────────────────────────────────────
-  { id: "criacao", week: 1, kind: "evento", label: "Criação", from: -4000, approx: true, color: "lilas", art: "criacao", refs: [chapters("Gen", 1, 2)] },
+  { id: "criacao", week: 1, kind: "evento", label: "Criação", from: -4000, approx: true, seq: -1, color: "lilas", art: "criacao", refs: [chapters("Gen", 1, 2)] },
   { id: "queda", week: 1, kind: "evento", label: "Queda", from: -4000, approx: true, color: "lilas", art: "queda", refs: [ref("Gen", 3)] },
   { id: "diluvio", week: 1, kind: "evento", label: "Dilúvio", from: -3000, approx: true, color: "ceu", art: "diluvio", refs: [chapters("Gen", 6, 9)] },
   { id: "babel", week: 1, kind: "evento", label: "Torre de Babel", from: -2400, approx: true, color: "coral", art: "babel", refs: [ref("Gen", 11, 1, 9)] },

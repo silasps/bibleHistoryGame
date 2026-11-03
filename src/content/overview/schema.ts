@@ -35,6 +35,8 @@ export const TimelineItem = z
     approx: z.boolean().default(false),
     /** Para "tema": item datado perto do qual a parada aparece. */
     anchor: z.string().optional(),
+    /** Desempate no mesmo ano: menor vem antes. Só quando a narrativa não segue "personagem antes de evento". */
+    seq: z.number().int().optional(),
     color: ItemColor,
     /** Ilustração (biblioteca de arte). */
     art: z.string().min(1),

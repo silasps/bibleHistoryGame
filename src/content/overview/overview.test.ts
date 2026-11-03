@@ -23,6 +23,10 @@ describe("visão geral (material do autor)", () => {
     expect(items.some((i) => i.week >= 7)).toBe(false)
   })
 
+  it("segue a ordem da história no mesmo ano: Criação, Adão e Eva, Queda", () => {
+    expect(itemsOfWeek(1).slice(0, 3).map((i) => i.id)).toEqual(["criacao", "adao-eva", "queda"])
+  })
+
   it("usa as datas do Manual", () => {
     expect(formatSpan(getItem("abraao")!)).toBe("2166–1991 a.C.")
     expect(formatSpan(getItem("criacao")!)).toBe("± 4000 a.C.")

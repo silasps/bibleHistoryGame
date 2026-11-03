@@ -27,6 +27,7 @@ Hoje as semanas 1–6 têm material. As semanas 7–11 aparecem como “em breve
    ```
    - Anos a.C. são **negativos**. Use as datas do Manual, sem etiquetas. `approx: true` mostra “±”.
    - `kind`: `evento` e `potencia` ficam embaixo do eixo; `personagem` fica em cima; `tema` é uma parada do resumo sem data (precisa de `anchor`).
+   - Itens com o mesmo ano aparecem com o personagem antes do evento. Se a história pede outra ordem, use `seq` (menor vem antes). Exemplo: a Criação tem `seq: -1` para vir antes de Adão e Eva.
    - `art`: o nome da ilustração. Se ainda não existir, aparece um círculo tracejado até haver arte (veja `public/art/README.md`).
 4. **Resumo.** Crie `resumos/semana-07.ts` copiando o formato da semana 6 e importe-o em `src/content/overview/index.ts`. Cada trecho tem:
    - `text`: o seu texto, fiel (só correção ortográfica mínima);
