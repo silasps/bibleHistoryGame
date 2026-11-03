@@ -1,10 +1,13 @@
 "use client"
 
-import { Maximize } from "lucide-react"
+import { Maximize, Volume2, VolumeX } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { deleteLiveRoom } from "@/app/actions/live"
 import { DemoBadge } from "@/components/story/DemoBadge"
+import { soundEngine } from "@/fx/sound"
+import { useSoundState } from "@/fx/useSound"
+import { usePreferences } from "@/stores/preferences-store"
 import { useLocalAudience, useLocalProjector } from "@/data/local/clients"
 import { useLocalHost } from "@/data/local/host"
 import { joinUrlFor, siteOrigin, type ProjectorRoomApi, type RoomMode } from "@/data/ports"
@@ -44,6 +47,10 @@ export function LivePresenter({ code }: { code: string }) {
 
 function ProjectorScreen({ room, mode }: { room: ProjectorRoomApi & { error?: string | null }; mode: RoomMode }) {
   const [chrome, setChrome] = useState(true)
+  const sound = usePreferences((s) => s.sound)
+  const setSound = usePreferences((s) => s.setSound)
+  const engine = useSoundState()
+  const waitingGesture = sound && engine !== "ready"
   useEffect(() => {
     const t = setTimeout(() => setChrome(false), 4000)
     const show = () => {
@@ -60,13 +67,28 @@ function ProjectorScreen({ room, mode }: { room: ProjectorRoomApi & { error?: st
         {mode === "demo" && <DemoBadge className="absolute bottom-3 right-3 opacity-80" />}
         {room.error && !room.view && <p className="absolute inset-x-0 bottom-6 text-center text-rose">{room.error}</p>}
       </div>
-      {chrome && (
-        <button
-          onClick={() => document.documentElement.requestFullscreen?.()}
-          className="fixed right-4 top-4 inline-flex items-center gap-2 rounded-full bg-navy/80 px-4 py-2 text-sm text-parchment backdrop-blur"
-        >
-          <Maximize className="size-4" /> Tela cheia
-        </button>
+      {(chrome || waitingGesture) && (
+        <div className="fixed right-4 top-4 flex gap-2">
+          <button
+            onClick={async () => {
+              if (sound && engine === "ready") return setSound(false)
+              setSound(true)
+              await soundEngine.start()
+            }}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm backdrop-blur ${waitingGesture ? "animate-pulse bg-gold text-primary-foreground" : "bg-navy/80 text-parchment"}`}
+          >
+            {sound && engine === "ready" ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+            {waitingGesture ? "Clique para ativar o som" : sound ? "Som ligado" : "Ligar som"}
+          </button>
+          {chrome && (
+            <button
+              onClick={() => document.documentElement.requestFullscreen?.()}
+              className="inline-flex items-center gap-2 rounded-full bg-navy/80 px-4 py-2 text-sm text-parchment backdrop-blur"
+            >
+              <Maximize className="size-4" /> Tela cheia
+            </button>
+          )}
+        </div>
       )}
     </div>
   )

@@ -48,3 +48,6 @@ next-env.d.ts
 
 # supabase cli
 supabase/.temp/
+
+# material autoral da DBS (privado, não versionar)
+content/sources/dbs-2026/

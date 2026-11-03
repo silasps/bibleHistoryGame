@@ -11,7 +11,8 @@ import { PreferencesMenu } from "@/components/app/PreferencesMenu"
 import { Button } from "@/components/ui/button"
 import { canComplete, nextSceneId, previousSceneId, resumeSceneId, statusOf } from "@/domain/solo-progress"
 import { RewindGlitch } from "@/fx/RewindGlitch"
-import { useAmbience, useStinger } from "@/fx/useSound"
+import { MOOD_FOR_CUE } from "@/fx/sound"
+import { useMood, useStinger } from "@/fx/useSound"
 import { useFx } from "@/fx/useFx"
 import { useHydrated } from "@/stores/hydration"
 import { useSolo } from "@/stores/solo-store"
@@ -21,21 +22,6 @@ import type { VisualState } from "../scenes/types"
 import { SceneProgress } from "./SceneProgress"
 import { StageBackground } from "./StageBackground"
 
-const AMBIENCE = {
-  stars: "night",
-  "creation-light": "warm",
-  "garden-breeze": "garden",
-  "fruit-glow": "tension",
-  heartbeat: "tension",
-  rewind: "night",
-  "seed-thread": "night",
-  seal: "warm",
-  embers: "warm",
-  train: "garden",
-  cliff: "tension",
-  "question-pulse": "night",
-} as const
-
 export function ScenePlayer({ sceneId }: { sceneId: string }) {
   const entry = getSceneEntry(sceneId)!
   const { scene } = entry
@@ -44,7 +30,7 @@ export function ScenePlayer({ sceneId }: { sceneId: string }) {
   const hydrated = useHydrated()
   const fx = useFx()
   const stinger = useStinger()
-  useAmbience(scene.fxCue ? AMBIENCE[scene.fxCue] : null)
+  useMood(scene.fxCue ? MOOD_FOR_CUE[scene.fxCue] ?? "night" : "night")
 
   const progress = useSolo()
   const { start, enter, complete } = progress

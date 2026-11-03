@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next"
 import { Cormorant_Garamond, Inter } from "next/font/google"
 import { PreferencesEffect } from "@/components/app/PreferencesMenu"
 import { Toaster } from "@/components/ui/sonner"
+import { SoundBootstrap } from "@/fx/useSound"
 import { StoreHydrator } from "@/stores/hydration"
 import "./globals.css"
 
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </a>
         <StoreHydrator />
         <PreferencesEffect />
+        <SoundBootstrap />
         {children}
         <Toaster position="top-center" />
       </body>

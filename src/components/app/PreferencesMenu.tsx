@@ -3,7 +3,7 @@
 import { Settings2, Volume2, VolumeX } from "lucide-react"
 import { useEffect } from "react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { disableSound, enableSound } from "@/fx/sound"
+import { soundEngine } from "@/fx/sound"
 import { useFx } from "@/fx/useFx"
 import { cn } from "@/lib/utils"
 import { usePreferences, type FxLevel } from "@/stores/preferences-store"
@@ -60,12 +60,13 @@ export function PreferencesMenu({ className }: { className?: string }) {
   const { fx, sound, volume, textScale, setFx, setSound, setVolume, setTextScale } = usePreferences()
   const toggleSound = async () => {
     if (sound) {
-      disableSound()
       setSound(false)
-    } else {
-      await enableSound(volume)
-      setSound(true)
+      return
     }
+    // O clique é o gesto que o navegador exige para liberar o áudio.
+    setSound(true)
+    soundEngine.setVolume(volume)
+    await soundEngine.start()
   }
   return (
     <div className={cn("flex items-center gap-1", className)}>

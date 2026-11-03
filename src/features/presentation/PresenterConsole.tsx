@@ -32,6 +32,7 @@ import { tally } from "@/domain/poll"
 import { toProjectorView } from "@/domain/projection"
 import type { HostCommand } from "@/domain/session"
 import { cn } from "@/lib/utils"
+import { SilentSound } from "@/fx/useSound"
 import { ProjectorStage } from "./ProjectorStage"
 import { RehearsalTimer } from "./RehearsalTimer"
 
@@ -142,7 +143,9 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
       <div className="grid gap-6 p-4 md:p-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-5">
           <div className="overflow-hidden rounded-2xl border border-border">
-            <ProjectorStage view={preview} joinUrl={joinUrl} preview />
+            <SilentSound.Provider value>
+              <ProjectorStage view={preview} joinUrl={joinUrl} preview />
+            </SilentSound.Provider>
           </div>
 
           {state.status === "lobby" && (
