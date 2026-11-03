@@ -1,6 +1,9 @@
 "use client"
 
 import { motion } from "motion/react"
+import { useState } from "react"
+import { getCharacter } from "@/content/characters"
+import { CharacterCard } from "../characters/CharacterCard"
 import { ITEM_COLORS, ItemArt } from "@/components/art/ItemArt"
 import { formatSpan, getItem, getWeek } from "@/content/overview"
 import type { OverviewView } from "@/domain/projection"
@@ -12,6 +15,8 @@ export function OverviewPhoneCard({ overview }: { overview: OverviewView }) {
   const fx = useFx()
   const item = overview.itemId ? getItem(overview.itemId) : undefined
   const week = overview.week ? getWeek(overview.week) : undefined
+  const character = item?.characterId ? getCharacter(item.characterId) : undefined
+  const [showCard, setShowCard] = useState(false)
   return (
     <div className="space-y-4">
       <div className="h-8 [container-type:size]">
@@ -35,6 +40,17 @@ export function OverviewPhoneCard({ overview }: { overview: OverviewView }) {
               {d}
             </motion.p>
           ))}
+          {character && (showCard || overview.spotlightSkinId) ? (
+            <div className="mt-4 border-t border-border pt-4 text-left">
+              <CharacterCard character={character} highlight={overview.spotlightSkinId} />
+            </div>
+          ) : (
+            character && (
+              <button onClick={() => setShowCard(true)} className="mt-4 rounded-full border border-gold/40 px-4 py-2 text-sm text-gold">
+                Ver a ficha de {character.name}
+              </button>
+            )
+          )}
         </motion.article>
       ) : week ? (
         <div className="glass rounded-3xl p-5 text-center">

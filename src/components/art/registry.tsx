@@ -302,10 +302,19 @@ export const ART: Record<string, () => ReactNode> = {
   ),
   josue: () => (
     <>
-      <Person x={46} y={60} s={1} head="helmet" arm="up">
-        <Sword x={18} y={-52} s={0.7} angle={10} />
-      </Person>
-      <Walls x={82} y={84} w={26} h={12} towers={1} />
+      <Person x={42} y={60} s={1} head="helmet" arm="open" />
+      <path d="M 52 50 L 86 22" strokeWidth={2.6} />
+      <path d="M 86 22 L 80 24 L 84 28 Z" stroke={GOLD} fill={GOLD} fillOpacity={0.4} />
+      <Walls x={82} y={86} w={26} h={12} towers={1} broken />
+    </>
+  ),
+  raabe: () => (
+    <>
+      <Walls x={50} y={86} w={70} h={46} towers={0} />
+      <rect x="38" y="44" width="24" height="18" fill="currentColor" fillOpacity={0.14} />
+      <Person x={50} y={70} s={0.48} beard={false} head="veil" arm="open" />
+      <path d="M 60 50 Q 66 64 62 86" stroke="#ff5a69" strokeWidth={3} />
+      <path d="M 18 36 L 40 36 M 20 32 L 38 32" stroke={GOLD} strokeOpacity={0.7} />
     </>
   ),
   debora: () => (

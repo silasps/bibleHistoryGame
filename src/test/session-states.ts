@@ -2,6 +2,8 @@ import { allPresenterNotes } from "@/content/private"
 import { allReleasedSyntheses } from "@/content/released"
 import { getSceneEntry, sequences } from "@/content"
 import type { Scene } from "@/content/schema"
+import { getCharacter } from "@/content/characters"
+import { getItem } from "@/content/overview"
 import { createSession, reduceAudience, reduceHost, type Ctx, type HostCommand, type SessionState } from "@/domain/session"
 
 /** Todo texto server-only: não pode aparecer em telão, palco ou celular antes da hora. */
@@ -32,6 +34,8 @@ export function* everyState(sequenceId: string, light = false): Generator<{ stat
     if (scene.releases) cmds.push({ type: "release", evidenceId: scene.releases })
     cmds.push(...(scene.steps ?? []).map(() => ({ type: "step", delta: 1 }) as const))
     if (scene.visual === "yard-train") cmds.push({ type: "cue", kind: "muro" }, { type: "cue", kind: "trem" })
+    const skin = scene.overview?.itemId ? getCharacter(getItem(scene.overview.itemId)?.characterId ?? "")?.skin[0] : undefined
+    if (skin) cmds.push({ type: "spotlight", skinId: skin.id })
     if (!light) cmds.push({ type: "moment", kind: "haja-luz" }, { type: "pause" }, { type: "resume" })
     for (const cmd of cmds) {
       state = reduceHost(state, cmd, ctx(i * 10 + 1)).state

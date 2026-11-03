@@ -32,6 +32,8 @@ export interface SessionState {
   step: number
   /** Efeito disparado na cena atual (ex.: trem passando, muro subindo). */
   cue: { kind: CueKind; at: number } | null
+  /** Objeto da skin do personagem em destaque na cena atual. */
+  spotlight?: string | null
   timing: {
     startedAt?: number
     sceneEnteredAt?: number
@@ -58,6 +60,7 @@ export type HostCommand =
   | { type: "clear_moment" }
   | { type: "step"; delta: 1 | -1 }
   | { type: "cue"; kind: CueKind }
+  | { type: "spotlight"; skinId: string | null }
   | { type: "set_rehearsal"; value: boolean }
   | { type: "end" }
 
@@ -103,6 +106,7 @@ export function createSession(input: {
     moment: null,
     step: 0,
     cue: null,
+    spotlight: null,
     timing: { pausedMs: 0, sceneMs: {} },
     createdAt: input.now,
   }
@@ -138,6 +142,7 @@ function moveTo(state: SessionState, index: number, now: number): SessionState {
     moment: null,
     step: 0,
     cue: null,
+    spotlight: null,
     timing: { ...timing, sceneEnteredAt: state.paused ? undefined : now },
   }
 }
@@ -215,6 +220,9 @@ export function reduceHost(state: SessionState, cmd: HostCommand, ctx: Ctx): Hos
     }
     case "cue":
       return { state: bump({ ...state, cue: { kind: cmd.kind, at: now } }) }
+    case "spotlight":
+      if ((state.spotlight ?? null) === cmd.skinId) return { state }
+      return { state: bump({ ...state, spotlight: cmd.skinId }) }
     case "set_rehearsal":
       return { state: bump({ ...state, rehearsal: cmd.value }) }
     case "end":

@@ -97,6 +97,14 @@ describe("sessão ao vivo", () => {
     expect(s2.released).toEqual(["ev-descendencia"])
   })
 
+  it("destaque da skin é zerado ao trocar de cena", () => {
+    const { state: s0, ctx } = genesisSession()
+    let s = host(s0, ctx(0), { type: "start" }, { type: "spotlight", skinId: "harpa" })
+    expect(s.spotlight).toBe("harpa")
+    s = host(s, ctx(1), { type: "next" })
+    expect(s.spotlight).toBeNull()
+  })
+
   it("reconexão mantém a ordem de entrada; luz é idempotente", () => {
     const { state: s0, ctx } = genesisSession()
     let s = host(s0, ctx(0), { type: "start" })

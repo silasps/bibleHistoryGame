@@ -31,6 +31,7 @@ const HostCommandSchema: z.ZodType<HostCommand> = z.discriminatedUnion("type", [
   z.object({ type: z.literal("clear_moment") }),
   z.object({ type: z.literal("step"), delta: z.union([z.literal(1), z.literal(-1)]) }),
   z.object({ type: z.literal("cue"), kind: z.enum(["trem", "muro"]) }),
+  z.object({ type: z.literal("spotlight"), skinId: z.string().max(40).regex(/^[a-z0-9-]+$/).nullable() }),
   z.object({ type: z.literal("set_rehearsal"), value: z.boolean() }),
   z.object({ type: z.literal("end") }),
 ])

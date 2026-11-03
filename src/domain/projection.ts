@@ -37,6 +37,8 @@ export interface OverviewView {
   depth: string[]
   /** Itens da semana já visitados (a linha do tempo vai se revelando). */
   revealedItemIds: string[]
+  /** Objeto da skin em destaque (id dentro da ficha do personagem do item). */
+  spotlightSkinId?: string
 }
 
 export interface ProjectorView {
@@ -112,6 +114,7 @@ function overviewView(state: SessionState, narrative: SessionNarrative): Overvie
     stageLine: o.stageLine,
     depth: (scene.steps ?? []).slice(0, state.step).map((st) => st.text),
     revealedItemIds,
+    spotlightSkinId: state.spotlight ?? undefined,
   }
 }
 

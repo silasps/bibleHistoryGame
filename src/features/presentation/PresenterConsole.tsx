@@ -24,6 +24,8 @@ import {
 import { useCallback, useEffect, useMemo } from "react"
 import { toast } from "sonner"
 import { getEvidence, sequenceScenes } from "@/content"
+import { getCharacter } from "@/content/characters"
+import { getItem } from "@/content/overview"
 import { ConnectionStatus } from "@/components/story/ConnectionStatus"
 import { DemoBadge } from "@/components/story/DemoBadge"
 import { Button } from "@/components/ui/button"
@@ -72,6 +74,7 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
   const preview = useMemo(() => (state ? toProjectorView(state, { scenes }, getEvidence) : null), [state, scenes])
   const counts = poll ? tally(pollState?.votes ?? {}, poll) : null
   const participants = state ? Object.keys(state.participants).length : 0
+  const itemCharacter = scene?.overview?.itemId ? getCharacter(getItem(scene.overview.itemId)?.characterId ?? "") : undefined
 
   const send = useCallback(
     async (cmd: HostCommand) => {
@@ -249,6 +252,17 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {itemCharacter && itemCharacter.skin.length > 0 && (
+                <div className="flex flex-wrap gap-2 rounded-2xl border border-gold/30 bg-ink p-4">
+                  <p className="w-full text-xs uppercase tracking-[0.25em] text-gold">Destacar na skin de {itemCharacter.name}</p>
+                  {itemCharacter.skin.map((s) => (
+                    <Button key={s.id} variant={state.spotlight === s.id ? "default" : "outline"} onClick={() => send({ type: "spotlight", skinId: state.spotlight === s.id ? null : s.id })}>
+                      ✦ {s.label}
+                    </Button>
+                  ))}
                 </div>
               )}
 

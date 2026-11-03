@@ -5,6 +5,7 @@ import { useMemo } from "react"
 import { getEpisode, getSceneEntry, playableEpisodes } from "@/content"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ActsTimeline } from "@/features/timeline/ActsTimeline"
+import { CharacterWeb } from "@/features/characters/CharacterWeb"
 import { useHydrated } from "@/stores/hydration"
 import { useSolo } from "@/stores/solo-store"
 import { InvestigationBoard } from "./InvestigationBoard"
@@ -23,6 +24,7 @@ export function DiscoveryArchive() {
     <Tabs defaultValue="quadro" className="gap-8">
       <TabsList className="w-full justify-start overflow-x-auto bg-ink sm:w-auto">
         <TabsTrigger value="quadro">Quadro ({openCount})</TabsTrigger>
+        <TabsTrigger value="personagens">Personagens</TabsTrigger>
         <TabsTrigger value="decisoes">Decisões ({decisions.length})</TabsTrigger>
         <TabsTrigger value="linha">Linha do tempo</TabsTrigger>
         <TabsTrigger value="notas">Anotações</TabsTrigger>
@@ -30,6 +32,10 @@ export function DiscoveryArchive() {
 
       <TabsContent value="quadro">
         <InvestigationBoard evidence={evidence} seen={seen} open={open} syntheses={syntheses} />
+      </TabsContent>
+
+      <TabsContent value="personagens">
+        <CharacterWeb />
       </TabsContent>
 
       <TabsContent value="decisoes">

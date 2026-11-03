@@ -3,7 +3,9 @@
 import { AnimatePresence, LayoutGroup, motion } from "motion/react"
 import { useMemo } from "react"
 import { ITEM_COLORS, ItemArt } from "@/components/art/ItemArt"
+import { getCharacter } from "@/content/characters"
 import { formatSpan, getItem, getWeek } from "@/content/overview"
+import { formatRefs } from "@/content/refs"
 import type { OverviewView } from "@/domain/projection"
 import { ParticleField } from "@/fx/ParticleField"
 import { SplitReveal } from "@/fx/SplitReveal"
@@ -20,6 +22,7 @@ export function OverviewStage({ overview }: { overview: OverviewView }) {
   const week = overview.week ? getWeek(overview.week) : undefined
   const item = overview.itemId ? getItem(overview.itemId) : undefined
   const line = overview.depth.at(-1) ?? overview.stageLine
+  const skin = item?.characterId && overview.spotlightSkinId ? getCharacter(item.characterId)?.skin.find((s) => s.id === overview.spotlightSkinId) : undefined
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-night">
@@ -75,6 +78,20 @@ export function OverviewStage({ overview }: { overview: OverviewView }) {
                       className="max-w-[46cqw] font-display text-[2.9cqw] leading-snug text-parchment/95"
                     >
                       {line}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+                <AnimatePresence>
+                  {skin && (
+                    <motion.p
+                      key={skin.id}
+                      initial={fx.motion ? { opacity: 0, scale: 0.9 } : false}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="inline-flex items-center gap-[1cqw] rounded-full border border-gold/60 bg-gold/15 px-[1.6cqw] py-[0.8cqh] text-[2cqw] text-gold-bright shadow-[0_0_3cqw_rgba(216,169,72,0.35)]"
+                    >
+                      ✦ {skin.label}
+                      {skin.refs.length > 0 && <span className="text-[1.5cqw] text-sand">{formatRefs(skin.refs)}</span>}
                     </motion.p>
                   )}
                 </AnimatePresence>
