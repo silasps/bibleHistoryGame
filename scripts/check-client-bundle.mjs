@@ -6,7 +6,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 
 const root = new URL("..", import.meta.url).pathname
-const SECRET_SOURCES = ["src/content/released/index.ts", "src/content/private/index.ts"]
+const SECRET_SOURCES = ["src/content/released/index.ts", "src/content/released/overview.ts", "src/content/private/index.ts"]
 const STATIC_DIR = join(root, ".next/static")
 
 function literals(file) {
