@@ -76,10 +76,14 @@ test.describe("ao vivo com Supabase", () => {
     expect(projector).not.toContain(AUTHOR_PRD)
     expect(await phones[0].evaluate(async (c) => (await fetch(`/api/rooms/${c}/host`)).status, code)).toBe(403)
 
-    host.on("dialog", (d) => d.accept())
+    // Confirmações no modal do app (não no confirm() do navegador).
     await host.getByRole("button", { name: /Encerrar/ }).click()
+    const endDialog = host.getByRole("alertdialog", { name: "Encerrar a sessão?" })
+    await endDialog.getByRole("button", { name: "Encerrar" }).click()
+    await expect(endDialog).toBeHidden()
     await expect(phones[1].getByText("Obrigado por investigar!")).toBeVisible({ timeout: 10_000 })
     await host.getByRole("button", { name: /Apagar sala/ }).click()
+    await host.getByRole("alertdialog", { name: "Apagar a sala?" }).getByRole("button", { name: "Apagar sala" }).click()
     await host.waitForURL(/\/presenter$/)
   })
 })

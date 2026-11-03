@@ -91,7 +91,7 @@ export function PresenterLobby({ sequences, liveAvailable, accessRequired }: { s
           <FlaskConical className="size-6 text-[#f2a27e]" aria-hidden />
           <h2 className="font-display text-3xl">Demonstração local</h2>
           <p className="text-sm text-mist">
-            Tudo neste navegador: telão e “celulares” em outras abas, com participantes simulados. Não é multiusuário real.
+            Tudo neste navegador: telão e “celulares” em outras abas, com participantes simulados. Celulares de verdade não entram nesta sala: para eles, use Ao vivo.
           </p>
           <Button variant="outline" size="lg" className="h-12 w-full rounded-full" onClick={demo}>
             Abrir demonstração

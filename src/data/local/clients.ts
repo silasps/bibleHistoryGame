@@ -55,10 +55,21 @@ function tabParticipantId(code: string): string | null {
   }
 }
 
-export function useLocalAudience(code: string): AudienceRoomApi {
+/** O canal local só alcança abas do mesmo navegador: outro aparelho nunca recebe a sala. */
+const DEMO_ELSEWHERE =
+  "Esta sala é uma demonstração local: ela só funciona em abas do mesmo navegador do apresentador. Para entrar pelo celular, o apresentador precisa criar uma sala ao vivo."
+const DEMO_WAIT_MS = 4000
+
+export function useLocalAudience(code: string): AudienceRoomApi & { error: string | null } {
   const [pid] = useState(() => tabParticipantId(code))
   const [box] = useState(() => (typeof window === "undefined" ? null : new Mailbox<AudienceView>(null)))
   const channel = useRef<LocalChannel | null>(null)
+  const [waited, setWaited] = useState(false)
+
+  useEffect(() => {
+    const t = setTimeout(() => setWaited(true), DEMO_WAIT_MS)
+    return () => clearTimeout(t)
+  }, [code])
 
   useEffect(() => {
     if (!box || !pid) return
@@ -98,5 +109,6 @@ export function useLocalAudience(code: string): AudienceRoomApi {
     if (channel.current && pid) channel.current.post({ t: "audience-cmd", cmd: { type: "light", participantId: pid } })
   }, [pid])
 
-  return { view, link: view ? "conectado" : "conectando", joined: !!view?.me, join, vote, light }
+  const lost = !view && waited
+  return { view, link: view ? "conectado" : lost ? "offline" : "conectando", joined: !!view?.me, join, vote, light, error: lost ? DEMO_ELSEWHERE : null }
 }

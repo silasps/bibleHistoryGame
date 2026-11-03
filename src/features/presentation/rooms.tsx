@@ -37,7 +37,6 @@ export function LivePresenter({ code }: { code: string }) {
       joinUrl={joinUrlFor(code, "live", siteOrigin())}
       projectorUrl={projectorUrl(code, "live")}
       onDelete={async () => {
-        if (!confirm("Apagar a sala definitivamente?")) return
         await deleteLiveRoom(code)
         router.push("/presenter")
       }}

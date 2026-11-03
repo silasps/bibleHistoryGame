@@ -21,11 +21,12 @@ import {
   BrickWall,
   X,
 } from "lucide-react"
-import { useCallback, useEffect, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { getEvidence, sequenceScenes } from "@/content"
 import { getCharacter } from "@/content/characters"
 import { getItem } from "@/content/overview"
+import { ConfirmDialog } from "@/components/app/ConfirmDialog"
 import { ConnectionStatus } from "@/components/story/ConnectionStatus"
 import { DemoBadge } from "@/components/story/DemoBadge"
 import { Button } from "@/components/ui/button"
@@ -65,6 +66,7 @@ interface Props {
  */
 export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }: Props) {
   const { state } = room
+  const [confirming, setConfirming] = useState<"end" | "delete" | null>(null)
   const scenes = useMemo(() => (state ? sequenceScenes(state.sequenceId) : []), [state])
   const scene = state ? scenes[state.index] : undefined
   const next = state ? scenes[state.index + 1] : undefined
@@ -131,18 +133,37 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
             <Smartphone /> Simular celular
           </Button>
           {state.status !== "ended" ? (
-            <Button variant="destructive" size="lg" onClick={() => confirm("Encerrar a sessão? Os dados de participação serão apagados.") && void send({ type: "end" })}>
+            <Button variant="destructive" size="lg" onClick={() => setConfirming("end")}>
               <Power /> Encerrar
             </Button>
           ) : (
             onDelete && (
-              <Button variant="destructive" size="lg" onClick={onDelete}>
+              <Button variant="destructive" size="lg" onClick={() => setConfirming("delete")}>
                 <X /> Apagar sala
               </Button>
             )
           )}
         </div>
       </header>
+
+      <ConfirmDialog
+        open={confirming === "end"}
+        onOpenChange={(open) => !open && setConfirming(null)}
+        title="Encerrar a sessão?"
+        description="Os dados de participação serão apagados."
+        confirmLabel="Encerrar"
+        onConfirm={() => void send({ type: "end" })}
+      />
+      {onDelete && (
+        <ConfirmDialog
+          open={confirming === "delete"}
+          onOpenChange={(open) => !open && setConfirming(null)}
+          title="Apagar a sala?"
+          description="A sala será apagada definitivamente."
+          confirmLabel="Apagar sala"
+          onConfirm={onDelete}
+        />
+      )}
 
       <div className="grid gap-6 p-4 md:p-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-5">

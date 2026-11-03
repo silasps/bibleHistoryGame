@@ -97,7 +97,7 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
           </section>
         )}
 
-        {!joined && view?.status !== "ended" && (
+        {!joined && view?.status !== "ended" && !(room.error && !view) && (
           <section className="glass space-y-4 rounded-3xl p-5">
             <h1 className="font-display text-3xl text-parchment">Entrar na investigação</h1>
             <p className="text-sm text-mist">Sem cadastro. O apelido é opcional e só aparece para você.</p>
