@@ -11,6 +11,7 @@ import {
   MonitorPlay,
   Pause,
   Play,
+  Plus,
   Power,
   Smartphone,
   Sparkle,
@@ -21,15 +22,17 @@ import {
   BrickWall,
   X,
 } from "lucide-react"
+import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { getEvidence, sequenceScenes } from "@/content"
 import { getCharacter } from "@/content/characters"
 import { getItem } from "@/content/overview"
 import { ConfirmDialog } from "@/components/app/ConfirmDialog"
+import { ExitLink } from "@/components/app/ExitLink"
 import { ConnectionStatus } from "@/components/story/ConnectionStatus"
 import { DemoBadge } from "@/components/story/DemoBadge"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import type { HostRoomApi } from "@/data/ports"
 import { tally } from "@/domain/poll"
 import { toProjectorView } from "@/domain/projection"
@@ -116,6 +119,7 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
     <div className="min-h-dvh bg-night text-parchment">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 md:px-6">
         <div className="flex flex-wrap items-center gap-3">
+          <ExitLink href="/presenter" to="o lobby do apresentador" />
           <p className="font-display text-2xl tracking-[0.18em]">{code}</p>
           {room.mode === "demo" ? <DemoBadge /> : <span className="rounded-full border border-sage/50 bg-sage/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-sage">Ao vivo · Supabase</span>}
           {room.mode === "live" && <ConnectionStatus state={room.link} />}
@@ -137,11 +141,16 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
               <Power /> Encerrar
             </Button>
           ) : (
-            onDelete && (
-              <Button variant="destructive" size="lg" onClick={() => setConfirming("delete")}>
-                <X /> Apagar sala
-              </Button>
-            )
+            <>
+              {onDelete && (
+                <Button variant="destructive" size="lg" onClick={() => setConfirming("delete")}>
+                  <X /> Apagar sala
+                </Button>
+              )}
+              <Link href="/presenter" className={buttonVariants({ size: "lg" })}>
+                <Plus /> Nova apresentação
+              </Link>
+            </>
           )}
         </div>
       </header>
@@ -165,7 +174,7 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
         />
       )}
 
-      <div className="grid gap-6 p-4 md:p-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid grid-cols-1 gap-6 p-4 md:p-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-5">
           <div className="overflow-hidden rounded-2xl border border-border">
             <SilentSound.Provider value>

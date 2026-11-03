@@ -81,6 +81,7 @@ test.describe("ao vivo com Supabase", () => {
     const endDialog = host.getByRole("alertdialog", { name: "Encerrar a sessão?" })
     await endDialog.getByRole("button", { name: "Encerrar" }).click()
     await expect(endDialog).toBeHidden()
+    await expect(host.getByRole("link", { name: /Nova apresentação/ })).toBeVisible()
     await expect(phones[1].getByText("Obrigado por investigar!")).toBeVisible({ timeout: 10_000 })
     await host.getByRole("button", { name: /Apagar sala/ }).click()
     await host.getByRole("alertdialog", { name: "Apagar a sala?" }).getByRole("button", { name: "Apagar sala" }).click()
