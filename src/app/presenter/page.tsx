@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Apresentar ao vivo" }
 export const dynamic = "force-dynamic"
 
 export default function PresenterPage() {
-  const seqs = sequences.map((s) => ({
+  const seqs = sequences.filter((s) => s.presentable).map((s) => ({
     id: s.id,
     title: s.title,
     description: s.description,

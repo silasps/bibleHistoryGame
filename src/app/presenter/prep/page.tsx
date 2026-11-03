@@ -7,6 +7,10 @@ import { CONNECTION_LABEL } from "@/content/labels"
 import { getPresenterNotes } from "@/content/private"
 import { formatRefs } from "@/content/refs"
 import { getReleasedSynthesis } from "@/content/released"
+import { excerptsForItem } from "@/content/overview"
+import { getSlot, isFilled } from "@/content/reflections"
+import { getReflectionNotes } from "@/content/private/reflections"
+import { authorTaskLinks } from "@/lib/author-sources"
 import { presenterUnlocked } from "@/lib/presenter-access"
 
 export const metadata: Metadata = { title: "Área de preparação", robots: { index: false } }
@@ -20,6 +24,7 @@ type Props = { searchParams: Promise<{ seq?: string }> }
  */
 export default async function PrepPage({ searchParams }: Props) {
   const seq = getSequence((await searchParams).seq ?? "") ?? sequences[0]
+  const tasks = authorTaskLinks()
 
   if (!(await presenterUnlocked())) {
     return (
@@ -46,7 +51,7 @@ export default async function PrepPage({ searchParams }: Props) {
         <p className="text-xs uppercase tracking-[0.4em] text-gold">Área de preparação</p>
         <h1 className="mt-2 font-display text-5xl text-parchment">{seq.title}</h1>
         <nav className="mt-4 flex flex-wrap gap-2 text-sm">
-          {sequences.map((s) => (
+          {sequences.filter((s) => s.presentable).map((s) => (
             <Link key={s.id} href={`/presenter/prep?seq=${s.id}`} className={s.id === seq.id ? "rounded-full bg-gold px-3 py-1 text-primary-foreground" : "rounded-full border border-border px-3 py-1 text-mist"}>
               {s.title}
             </Link>
@@ -74,12 +79,47 @@ export default async function PrepPage({ searchParams }: Props) {
                 <p className="mt-2 text-sm text-mist">Sem notas para esta cena.</p>
               )}
               {notes?.transitionHint && <p className="mt-2 text-sm italic text-sand">Transição: {notes.transitionHint}</p>}
+              {scene.overview?.itemId && (
+                <ul className="mt-3 space-y-2 text-sm">
+                  {excerptsForItem(scene.overview.itemId).map((e) => (
+                    <li key={e.id} className="rounded-lg border border-border bg-night/50 p-3 text-parchment/90">
+                      <span className="mr-2 text-[0.65rem] uppercase tracking-widest text-sand">Do resumo · semana {e.week}{e.pendingFact ? " · em revisão" : ""}</span>
+                      {e.text}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {scene.overview?.slotId && (() => {
+                const slot = getSlot(scene.overview.slotId)
+                const week = scene.overview.week
+                const links = week ? tasks[String(week)] : undefined
+                const notes = getReflectionNotes(scene.overview.slotId)
+                return (
+                  <div className="mt-3 space-y-2 rounded-xl border border-dashed border-gold/40 p-4 text-sm">
+                    <p className="text-xs uppercase tracking-[0.25em] text-gold">Espaço do autor · {slot && isFilled(slot) ? "preenchido" : "vazio (pausa só com imagem)"}</p>
+                    {slot?.pergunta && <p className="font-display text-xl text-parchment">{slot.pergunta}</p>}
+                    {notes.map((n, i) => <p key={i} className="text-parchment/90">{n}</p>)}
+                    {links && (
+                      <p className="text-mist">
+                        Referência:{" "}
+                        {links.carater && <a className="text-gold underline" href={links.carater} target="_blank" rel="noreferrer">Task 3 · Caráter e Natureza</a>}
+                        {links.principios && <> · <a className="text-gold underline" href={links.principios} target="_blank" rel="noreferrer">Task 5 · Princípios</a></>}
+                      </p>
+                    )}
+                    <p className="text-xs text-mist">Para preencher: src/content/reflections/index.ts (veja docs/reflexoes.md).</p>
+                  </div>
+                )
+              })()}
               {ev?.connection && synthesis && (
                 <div className="mt-4 space-y-2 rounded-xl border border-gold/30 bg-night/60 p-4 text-sm">
                   <p className="text-xs uppercase tracking-[0.25em] text-gold">
-                    Conexão · {CONNECTION_LABEL[ev.connection.primary].label} · {formatRefs(ev.connection.basis)}
+                    {ev.showClassification ? `Conexão · ${CONNECTION_LABEL[ev.connection.primary].label}` : "Versículo e conexão da semana"} · {formatRefs(ev.connection.basis)}
                   </p>
-                  <p className="text-parchment/90">{synthesis.classificationNote}</p>
+                  {ev.showClassification ? (
+                    <p className="text-parchment/90">{synthesis.classificationNote}</p>
+                  ) : (
+                    synthesis.blocks.map((b, i) => <p key={i} className={b.kind === "texto_biblico" ? "font-display text-lg text-parchment" : "text-parchment/90"}>{b.text}</p>)
+                  )}
                   <p className="text-mist">Liberada no celular só depois que você terminar de falar (botão “Liberar pista”).</p>
                 </div>
               )}

@@ -1,0 +1,62 @@
+import { describe, expect, it } from "vitest"
+import { getEvidence, getSequence, sequenceScenes } from "@/content"
+import { formatSpan, getItem } from "@/content/overview"
+import { reflectionSlots } from "@/content/reflections"
+import { everyState } from "@/test/session-states"
+import { toProjectorView } from "./projection"
+
+const scenes = sequenceScenes("visao-geral")
+
+/** Texto que o telão desenha numa cena da visão geral (sem contar opções de enquete). */
+function visibleText(view: ReturnType<typeof toProjectorView>): string {
+  const o = view.scene?.overview
+  if (!o) return [view.scene?.title, view.scene?.caption, ...(view.scene?.releasedRefs ?? [])].filter(Boolean).join(" ")
+  const item = o.itemId ? getItem(o.itemId) : undefined
+  const line = o.depth.at(-1) ?? o.stageLine ?? ""
+  return [item?.label, item ? formatSpan(item) : "", item?.sub, line].filter(Boolean).join(" ")
+}
+
+describe("Visão Geral no telão", () => {
+  it("é apresentável e cobre só as semanas com material, dentro de 30–45 min", () => {
+    const seq = getSequence("visao-geral")!
+    expect(seq.presentable).toBe(true)
+    const weeks = new Set(scenes.map((s) => s.overview?.week).filter(Boolean))
+    expect([...weeks].sort()).toEqual([1, 2, 3, 4, 5, 6])
+    const minutes = scenes.reduce((sum, s) => sum + s.estimatedSeconds, 0) / 60
+    expect(minutes).toBeGreaterThanOrEqual(30)
+    expect(minutes).toBeLessThanOrEqual(45)
+  })
+
+  it("respeita o orçamento de texto em todos os estados", () => {
+    for (const { state, scenes: sc } of everyState("visao-geral", true)) {
+      const view = toProjectorView(state, { scenes: sc }, getEvidence)
+      expect(visibleText(view).length).toBeLessThanOrEqual(220)
+    }
+  })
+
+  it("espaços do autor vazios aparecem só como imagem", () => {
+    const empty = reflectionSlots.filter((s) => s.scope !== "jogo" && !s.pergunta)
+    expect(empty.length).toBeGreaterThan(0)
+    for (const { state, scenes: sc } of everyState("visao-geral", true)) {
+      const view = toProjectorView(state, { scenes: sc }, getEvidence)
+      const o = view.scene?.overview
+      if (o?.role === "reflexao" && empty.some((s) => s.id === o.slotId)) {
+        expect(o.stageLine).toBeUndefined()
+        expect(view.scene?.title).toBeUndefined()
+      }
+    }
+  })
+
+  it("revela os itens da semana à medida que avança", () => {
+    let last = 0
+    for (const { state, scenes: sc } of everyState("visao-geral", true)) {
+      const o = toProjectorView(state, { scenes: sc }, getEvidence).scene?.overview
+      if (o?.role === "item" && o.week === 1) {
+        expect(o.revealedItemIds).toContain(o.itemId)
+        expect(o.revealedItemIds.length).toBeGreaterThanOrEqual(last)
+        last = o.revealedItemIds.length
+      }
+    }
+    expect(last).toBeGreaterThan(5)
+  })
+})

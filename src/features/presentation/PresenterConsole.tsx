@@ -95,6 +95,7 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
       else if (k === "v" && poll) void send({ type: pollState?.status === "open" ? "close_poll" : "open_poll", pollId: poll.id })
       else if (k === "r" && poll && pollState) void send({ type: pollState.resultsVisible ? "hide_results" : "show_results", pollId: poll.id })
       else if (k === "l" && scene?.releases) void send({ type: "release", evidenceId: scene.releases })
+      else if (k === "d" && scene?.steps && state.step < scene.steps.length) void send({ type: "step", delta: 1 })
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
@@ -208,13 +209,13 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
                   </Button>
                 )}
 
-                {scene.steps && (
+                {scene.steps && scene.steps.length > 0 && (
                   <>
                     <Button size="lg" className="h-12" disabled={state.step >= scene.steps.length} onClick={() => send({ type: "step", delta: 1 })}>
-                      <Footprints /> Próximo candidato ({state.step}/{scene.steps.length})
+                      <Footprints /> {scene.overview ? "Aprofundar" : "Próximo candidato"} ({state.step}/{scene.steps.length})
                     </Button>
                     <Button variant="outline" size="lg" className="h-12" disabled={state.step === 0} onClick={() => send({ type: "step", delta: -1 })}>
-                      Voltar candidato
+                      {scene.overview ? "Voltar linha" : "Voltar candidato"}
                     </Button>
                   </>
                 )}
@@ -284,7 +285,7 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
           )}
 
           <p className="text-xs text-mist">
-            Atalhos: → ou espaço avança · ← volta · P pausa · V abre/fecha votação · R revela resultado · L libera pista
+            Atalhos: → ou espaço avança · ← volta · D aprofunda · P pausa · V abre/fecha votação · R revela resultado · L libera pista
           </p>
         </div>
 
@@ -297,8 +298,10 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
               {scenes.map((s, i) => {
                 const SCue = s.presenterCue ? CUE_ICON[s.presenterCue] : null
                 const spent = state.timing.sceneMs[s.id]
+                const newWeek = s.overview?.week !== undefined && s.overview.week !== scenes[i - 1]?.overview?.week
                 return (
                   <li key={s.id}>
+                    {newWeek && <p className="px-3 pb-1 pt-3 text-[0.65rem] uppercase tracking-[0.3em] text-gold">Semana {s.overview!.week}</p>}
                     <button
                       onClick={() => state.status === "running" && send({ type: "goto", index: i })}
                       disabled={state.status !== "running"}

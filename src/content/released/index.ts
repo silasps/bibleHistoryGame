@@ -1,8 +1,11 @@
 import "server-only"
 
 import { z } from "zod"
-import { block, ref } from "../refs"
+import { weeks } from "../overview"
+import { weekEvidenceId } from "../overview/sequence"
+import { block, formatRefs, ref } from "../refs"
 import { ReleasedSynthesis } from "../schema"
+import { getWeekConnection } from "./overview"
 
 // Sínteses das conexões. Só saem do servidor depois da liberação (ao vivo)
 // ou do "abrir o selo" (solo). Nunca importe este módulo em componente cliente.
@@ -55,7 +58,19 @@ const SYNTHESES = z.array(ReleasedSynthesis).parse([
   },
 ])
 
-const byEvidence = new Map(SYNTHESES.map((s) => [s.evidenceId, s]))
+/** Pistas da visão geral: versículo da semana (NAA) + parágrafo do PRD do autor. */
+const WEEK_SYNTHESES: ReleasedSynthesis[] = weeks
+  .filter((w) => w.status === "com_material")
+  .map((w) => {
+    const c = getWeekConnection(w.week)
+    const verse = c?.verseText
+      ? [{ kind: "texto_biblico" as const, text: c.verseText, refs: w.memoryVerse, quoteVerified: true }]
+      : [{ kind: "narracao" as const, text: `Versículo para memorizar: ${formatRefs(w.memoryVerse, "long")} (NAA).`, refs: [], quoteVerified: false }]
+    const paragraphs = (c?.blocks ?? []).map((text) => ({ kind: "resumo_autor" as const, text, refs: [], quoteVerified: false }))
+    return ReleasedSynthesis.parse({ evidenceId: weekEvidenceId(w.week), blocks: [...verse, ...paragraphs] })
+  })
+
+const byEvidence = new Map([...SYNTHESES, ...WEEK_SYNTHESES].map((s) => [s.evidenceId, s]))
 
 export function getReleasedSynthesis(evidenceId: string): ReleasedSynthesis | undefined {
   return byEvidence.get(evidenceId)
@@ -63,5 +78,5 @@ export function getReleasedSynthesis(evidenceId: string): ReleasedSynthesis | un
 
 /** Usado apenas pelo teste de vazamento e pelo verificador de bundle. */
 export function allReleasedSyntheses(): ReleasedSynthesis[] {
-  return SYNTHESES
+  return [...SYNTHESES, ...WEEK_SYNTHESES]
 }

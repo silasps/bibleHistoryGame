@@ -13,6 +13,7 @@ import { useFx } from "@/fx/useFx"
 import { cn } from "@/lib/utils"
 import { StageBackground } from "../solo/StageBackground"
 import { HajaLuzStage, LightsSky } from "./Moments"
+import { OverviewStage } from "./OverviewStage"
 import { PollResults } from "./PollResults"
 import { QRJoin } from "./QRJoin"
 
@@ -76,7 +77,11 @@ export function ProjectorStage({ view, joinUrl, className, preview = false }: Pr
         </div>
       )}
 
-      {view?.status === "running" && scene && (
+      {view?.status === "running" && scene?.overview && ["abertura", "item", "reflexao", "conclusao"].includes(scene.overview.role) && (
+        <OverviewStage overview={scene.overview} />
+      )}
+
+      {view?.status === "running" && scene && !(scene.overview && ["abertura", "item", "reflexao", "conclusao"].includes(scene.overview.role)) && (
         <>
           <StageBackground scene={scene} visual={visual} className="absolute inset-0" />
           {view.lightsCount > 0 && <LightsSky count={view.lightsCount} className="absolute inset-x-0 top-0 h-2/3" />}

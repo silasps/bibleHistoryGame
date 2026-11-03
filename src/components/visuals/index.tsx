@@ -23,6 +23,7 @@ const VISUALS: Record<VisualId, () => React.ReactNode> = {
   "stars-promise": StarsPromise,
   "yard-train": () => <YardTrain />,
   "cliff-road": () => <CliffRoad />,
+  timeline: NightSky,
 }
 
 /** Ilustração autoral da cena (SVG/CSS, sem assets externos). */

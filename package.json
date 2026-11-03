@@ -12,7 +12,9 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "check:bundle": "node scripts/check-client-bundle.mjs",
-    "db:push": "bash scripts/db-push.sh"
+    "db:push": "bash scripts/db-push.sh",
+    "art:scan": "node scripts/art-scan.mjs",
+    "prebuild": "node scripts/art-scan.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

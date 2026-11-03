@@ -39,7 +39,7 @@ export function PresenterLobby({ sequences, liveAvailable, accessRequired }: { s
     <div className="space-y-8">
       <fieldset className="space-y-3">
         <legend className="mb-3 text-xs uppercase tracking-[0.3em] text-gold">1 · Sequência</legend>
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2">
           {sequences.map((s) => (
             <label
               key={s.id}

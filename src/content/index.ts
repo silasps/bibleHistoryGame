@@ -4,13 +4,14 @@ import { cincoMotoristas } from "./analogies/cinco-motoristas"
 import { muroTrem } from "./analogies/muro-trem"
 import { getBook } from "./books"
 import { genesis13 } from "./episodes/genesis-1-3/episode"
+import { OVERVIEW_EPISODE_ID, overviewEpisode } from "./overview/sequence"
 import { scaffolds } from "./scaffolds"
 import { Act, Episode, type BibleRef, type Evidence, type Scene } from "./schema"
 
 export const acts: Act[] = z.array(Act).parse(ACTS)
 export const episodes: Episode[] = z
   .array(Episode)
-  .parse([genesis13, muroTrem, cincoMotoristas, ...scaffolds])
+  .parse([overviewEpisode, genesis13, muroTrem, cincoMotoristas, ...scaffolds])
   .sort((a, b) => a.order - b.order)
 
 type SceneEntry = { scene: Scene; episode: Episode; index: number }
@@ -62,28 +63,39 @@ export function sceneHref(sceneId: string): string {
 
 // ─── Sequências de apresentação ──────────────────────────────────────────
 
-export type PresentationSequence = { id: string; title: string; description: string; sceneIds: string[] }
+/** `presentable`: aparece no lobby do apresentador (só o material do autor). */
+export type PresentationSequence = { id: string; title: string; description: string; sceneIds: string[]; presentable: boolean }
 
 const ids = (episodeId: string) => getEpisode(episodeId)?.scenes.map((s) => s.id) ?? []
 
 export const sequences: PresentationSequence[] = [
   {
+    id: "visao-geral",
+    title: "Visão Geral da Bíblia",
+    description: "Linha do tempo + seus resumos · semanas com material",
+    sceneIds: ids(OVERVIEW_EPISODE_ID),
+    presentable: true,
+  },
+  {
     id: "genesis",
     title: "Gênesis 1–3",
     description: "O jardim e a promessa · cerca de 40 min",
     sceneIds: ids("genesis-1-3"),
+    presentable: false,
   },
   {
     id: "genesis-analogias",
     title: "Gênesis 1–3 + analogias",
     description: "Inclui o muro e os cinco motoristas · ensaio estendido",
     sceneIds: [...ids("genesis-1-3"), ...ids("analogia-muro-trem"), ...ids("analogia-cinco-motoristas")],
+    presentable: false,
   },
   {
     id: "analogias",
     title: "Só as analogias",
     description: "Muro e trem · cinco motoristas",
     sceneIds: [...ids("analogia-muro-trem"), ...ids("analogia-cinco-motoristas")],
+    presentable: false,
   },
 ]
 

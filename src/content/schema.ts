@@ -11,6 +11,8 @@ export const ContentKind = z.enum([
   "analogia", // história ilustrativa, não é evento bíblico
   "hipotese_ficcional", // simulação reflexiva ou dramatização
   "narracao", // voz do jogo: enquadramento, instrução, sem afirmação factual
+  "resumo_autor", // texto do resumo do autor (material da DBS)
+  "reflexao", // reflexão escrita pelo autor/apresentador nos espaços de pausa
 ])
 export type ContentKind = z.infer<typeof ContentKind>
 
@@ -93,6 +95,7 @@ export const VisualId = z.enum([
   "stars-promise",
   "yard-train",
   "cliff-road",
+  "timeline",
 ])
 export type VisualId = z.infer<typeof VisualId>
 
@@ -220,6 +223,17 @@ export const Scene = z
     unlocks: z.array(z.string()).default([]),
     /** evidence_unlock: evidência de conexão aberta pelo apresentador (ao vivo) ou pelo jogador (solo). */
     releases: z.string().optional(),
+    /** Cena da visão geral (linha do tempo + resumo do autor). */
+    overview: z
+      .object({
+        role: z.enum(["abertura", "item", "versiculo", "pista", "reflexao", "conclusao"]),
+        week: z.number().int().optional(),
+        itemId: z.string().optional(),
+        slotId: z.string().optional(),
+        /** Linha de palco (do resumo do autor ou do espaço de reflexão). */
+        stageLine: z.string().max(140).optional(),
+      })
+      .optional(),
     /** Marcador discreto (só ícone) no painel do apresentador. */
     presenterCue: z.enum(["conexao", "votacao", "historia", "pausa"]).optional(),
     estimatedSeconds: z.number().int().positive(),
@@ -273,6 +287,8 @@ export const Evidence = z
     connection: Connection.optional(),
     /** "futura": aparece selada, será aberta em episódio ainda não implementado. */
     availability: z.enum(["disponivel", "futura"]).default("disponivel"),
+    /** Mostrar o tipo de conexão (falso para as semanas da visão geral, que o autor não classificou). */
+    showClassification: z.boolean().default(true),
   })
   .refine((e) => !(e.connection && e.summary), {
     message: "evidência de conexão não pode ter resumo público",
@@ -292,7 +308,7 @@ const Period = z.object({
 export const Episode = z.object({
   id: z.string().regex(/^[a-z0-9-]+$/),
   actId: z.string(),
-  kind: z.enum(["narrativa", "analogia"]),
+  kind: z.enum(["narrativa", "analogia", "visao_geral"]),
   status: z.enum(["jogavel", "esboco_editorial", "fontes_pendentes"]),
   order: z.number().int(),
   title: z.string().min(1),
@@ -355,7 +371,7 @@ export type ActInput = z.input<typeof Act>
 export const ReleasedSynthesis = z.object({
   evidenceId: z.string(),
   blocks: z.array(ContentBlock).min(1),
-  classificationNote: z.string().min(1),
+  classificationNote: z.string().optional(),
 })
 export type ReleasedSynthesis = z.infer<typeof ReleasedSynthesis>
 

@@ -50,7 +50,7 @@ export const EvidenceCard = forwardRef<HTMLDivElement, Props>(function EvidenceC
         <div className="mt-4 space-y-4 border-t border-border pt-4">
           {ev.summary && <BlockList blocks={[ev.summary]} stagger={0} />}
           {synthesis && <BlockList blocks={synthesis.blocks} stagger={0.05} />}
-          {ev.connection && <ConnectionChips primary={ev.connection.primary} secondary={ev.connection.secondary} note={synthesis?.classificationNote} />}
+          {ev.connection && ev.showClassification && <ConnectionChips primary={ev.connection.primary} secondary={ev.connection.secondary} note={synthesis?.classificationNote} />}
         </div>
       )}
     </motion.div>

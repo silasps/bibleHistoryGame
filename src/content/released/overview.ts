@@ -23,7 +23,7 @@ const CONNECTIONS = z.array(WeekConnection).parse([
       "Portanto, santifiquem-se e sejam santos, pois eu sou o Senhor, o Deus de vocês. Guardem os meus estatutos e tratem de cumpri-los. Eu sou o Senhor, que os santifico.",
     blocks: [
       "Deus estabeleceu uma série de rituais para que fosse possível Ele se relacionar com o povo e, como lá no jardim o homem havia sido separado de Deus, agora Ele encontra um meio de se relacionar novamente, fazendo um convite através de cada lei, ritual e mandamento.",
-      "O meio de Levítico, o capítulo 16, fala sobre a expiação que acontecia uma vez por ano, quando o sumo sacerdote entrava no Santo dos Santos e preparava um sacrifício ao Senhor por todo o povo — o que conecta com a vida de Cristo.",
+      "O capítulo 16, no meio de Levítico — a expiação por todo o povo —, conecta com a vida de Cristo.",
     ],
   },
   {

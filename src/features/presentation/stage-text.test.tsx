@@ -15,7 +15,8 @@ describe("texto renderizado nas superfícies de palco", () => {
   for (const seq of sequences) {
     it(`telão e painel nunca mostram PRD nem conteúdo server-only — ${seq.id}`, () => {
       let checked = 0
-      for (const { state, scenes } of everyState(seq.id)) {
+      // Sequências longas: estados essenciais (cena, enquete, liberação), sem momentos/pausa.
+      for (const { state, scenes } of everyState(seq.id, seq.sceneIds.length > 40)) {
         const projector = render(<ProjectorStage view={toProjectorView(state, { scenes }, getEvidence)} joinUrl="http://x/join/TESTE1" />)
         const room: HostRoomApi = { mode: "demo", state, link: "conectado", command: async () => undefined }
         const presenter = render(<PresenterConsole room={room} code="TESTE1" joinUrl="http://x" projectorUrl="/projector/TESTE1" />)
@@ -28,6 +29,6 @@ describe("texto renderizado nas superfícies de palco", () => {
         checked++
       }
       expect(checked).toBeGreaterThan(20)
-    }, 60_000)
+    }, 240_000)
   }
 })

@@ -26,6 +26,19 @@ export interface PollView {
   afterResult?: string
 }
 
+/** Cena da visão geral no telão/celular: só dados públicos do material do autor. */
+export interface OverviewView {
+  role: "abertura" | "item" | "versiculo" | "pista" | "reflexao" | "conclusao"
+  week?: number
+  itemId?: string
+  slotId?: string
+  stageLine?: string
+  /** Linhas de "profundidade" já mostradas pelo apresentador. */
+  depth: string[]
+  /** Itens da semana já visitados (a linha do tempo vai se revelando). */
+  revealedItemIds: string[]
+}
+
 export interface ProjectorView {
   roomCode: string
   status: SessionState["status"]
@@ -50,6 +63,7 @@ export interface ProjectorView {
     steps?: { id: string; label: string; text: string; value?: number }[]
     totalSteps?: number
     cue: { kind: CueKind; at: number } | null
+    overview?: OverviewView
   }
 }
 
@@ -76,11 +90,30 @@ export interface AudienceView {
     title?: string
     prompt?: string
     poll?: PollView & { myVote?: string }
+    overview?: OverviewView
   }
   clues: ClueView[]
 }
 
 type EvidenceLookup = (id: string) => Evidence | undefined
+
+function overviewView(state: SessionState, narrative: SessionNarrative): OverviewView | undefined {
+  const scene = narrative.scenes[state.index]
+  const o = scene?.overview
+  if (!o) return undefined
+  const revealedItemIds = narrative.scenes
+    .slice(0, state.index + 1)
+    .flatMap((s) => (s.overview?.role === "item" && s.overview.week === o.week && s.overview.itemId ? [s.overview.itemId] : []))
+  return {
+    role: o.role,
+    week: o.week,
+    itemId: o.itemId,
+    slotId: o.slotId,
+    stageLine: o.stageLine,
+    depth: (scene.steps ?? []).slice(0, state.step).map((st) => st.text),
+    revealedItemIds,
+  }
+}
 
 function pollView(state: SessionState, narrative: SessionNarrative, sceneIndex: number): PollView | undefined {
   const def = narrative.scenes[sceneIndex]?.poll
@@ -119,7 +152,9 @@ export function toProjectorView(
   if (!scene) return { ...base, scene: null }
 
   // No momento de conexão o telão mostra só a imagem: nada de título nem legenda.
-  const silent = scene.type === "presenter_pause"
+  // Na visão geral, a própria cena desenha rótulos; título/legenda genéricos ficam de fora.
+  const overview = overviewView(state, narrative)
+  const silent = scene.type === "presenter_pause" || (!!overview && overview.role !== "pista")
   const released = scene.releases ? state.released.includes(scene.releases) : false
   const ev = scene.releases ? lookup(scene.releases) : undefined
 
@@ -137,9 +172,10 @@ export function toProjectorView(
       seal: scene.releases ? (released ? "aberto" : "fechado") : undefined,
       releasedRefs:
         released && ev && scene.stage.showRefsAfterRelease ? ev.refs.map((r) => formatRef(r)) : undefined,
-      steps: scene.steps?.slice(0, state.step).map((s) => ({ id: s.id, label: s.label, text: s.text, value: s.value })),
+      steps: overview ? undefined : scene.steps?.slice(0, state.step).map((s) => ({ id: s.id, label: s.label, text: s.text, value: s.value })),
       totalSteps: scene.steps?.length,
       cue: state.cue,
+      overview,
     },
   }
 }
@@ -180,11 +216,9 @@ export function toAudienceView(
           lockedHint: ev.lockedHint,
           refs: ev.refs.map((r) => formatRef(r)),
           synthesis: synthesis.blocks,
-          classification: {
-            primary: ev.connection.primary,
-            secondary: ev.connection.secondary,
-            note: synthesis.classificationNote,
-          },
+          classification: ev.showClassification
+            ? { primary: ev.connection.primary, secondary: ev.connection.secondary, note: synthesis.classificationNote ?? "" }
+            : undefined,
         },
       ]
     }
@@ -212,9 +246,10 @@ export function toAudienceView(
       ? {
           id: scene.id,
           type: scene.type,
-          title: scene.type === "presenter_pause" ? undefined : scene.title,
+          title: scene.type === "presenter_pause" || (scene.overview && scene.overview.role !== "abertura") ? undefined : scene.title,
           prompt: scene.audiencePrompt,
           poll: poll ? { ...poll, myVote } : undefined,
+          overview: overviewView(state, narrative),
         }
       : null,
     clues,

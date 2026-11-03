@@ -1,4 +1,4 @@
-import { BookOpen, Feather, FlaskConical, Lightbulb, MessageCircle, Quote } from "lucide-react"
+import { BookOpen, Feather, FlaskConical, Lightbulb, MessageCircle, NotebookPen, Quote, Sparkles } from "lucide-react"
 import type { ContentKind } from "@/content/schema"
 import { CONTENT_KIND_LABEL } from "@/content/refs"
 import { cn } from "@/lib/utils"
@@ -10,6 +10,8 @@ const STYLE: Record<ContentKind, { icon: typeof BookOpen; className: string }> =
   analogia: { icon: Feather, className: "border-sage/40 bg-sage/10 text-sage" },
   hipotese_ficcional: { icon: FlaskConical, className: "border-rose/40 bg-rose/10 text-rose" },
   narracao: { icon: MessageCircle, className: "border-mist/30 bg-transparent text-mist" },
+  resumo_autor: { icon: NotebookPen, className: "border-sand/40 bg-sand/10 text-sand" },
+  reflexao: { icon: Sparkles, className: "border-gold/50 bg-gold/10 text-gold-bright" },
 }
 
 /** Mostra a natureza do trecho: relato, interpretação, analogia ou hipótese. */

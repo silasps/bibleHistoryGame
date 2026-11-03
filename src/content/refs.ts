@@ -40,6 +40,8 @@ export const CONTENT_KIND_LABEL: Record<ContentKind, string> = {
   analogia: "Analogia",
   hipotese_ficcional: "Hipótese / simulação",
   narracao: "Narração",
+  resumo_autor: "Do resumo",
+  reflexao: "Reflexão",
 }
 
 export function blockLabel(b: Pick<ContentBlock, "kind" | "label">): string {

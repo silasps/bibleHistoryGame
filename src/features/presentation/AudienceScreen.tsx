@@ -17,6 +17,7 @@ import { SealBreak } from "@/fx/SealBreak"
 import { useStinger } from "@/fx/useSound"
 import { cn } from "@/lib/utils"
 import { HajaLuzPhone } from "./Moments"
+import { OverviewPhoneCard } from "./OverviewPhoneCard"
 import { PollResults } from "./PollResults"
 
 function Clue({ clue }: { clue: ClueView }) {
@@ -128,8 +129,9 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
 
             {view.status === "running" && scene && (
               <section className="space-y-4" aria-live="polite">
-                {scene.title && <h1 className="font-display text-3xl leading-tight text-parchment">{scene.title}</h1>}
-                {scene.prompt && <p className="text-mist">{scene.prompt}</p>}
+                {scene.overview && <OverviewPhoneCard overview={scene.overview} />}
+                {!scene.overview && scene.title && <h1 className="font-display text-3xl leading-tight text-parchment">{scene.title}</h1>}
+                {scene.prompt && (!scene.overview || scene.overview.role === "versiculo" || (scene.overview.role === "pista" && opened.length === 0)) && <p className="text-mist">{scene.prompt}</p>}
 
                 {poll && poll.status !== "idle" && (
                   <div className="glass space-y-3 rounded-3xl p-4">

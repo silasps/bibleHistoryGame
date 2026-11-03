@@ -18,6 +18,8 @@ function useNow(active: boolean) {
 }
 
 const groupOf = (scene: Scene) => {
+  const week = scene.overview?.week
+  if (scene.overview) return week ? { key: `semana-${week}`, label: `Semana ${week}` } : { key: "abertura-conclusao", label: "Abertura e conclusão" }
   const ep = getSceneEntry(scene.id)?.episode
   return { key: ep?.id ?? "?", label: ep?.title ?? "?" }
 }

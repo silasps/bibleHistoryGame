@@ -15,6 +15,8 @@ const TEXT: Record<ContentBlock["kind"], string> = {
   analogia: "font-display text-[1.35rem] italic leading-snug text-parchment md:text-2xl",
   hipotese_ficcional: "font-display text-[1.35rem] italic leading-snug text-rose/90 md:text-2xl",
   narracao: "text-base leading-relaxed text-mist md:text-lg",
+  resumo_autor: "text-lg leading-relaxed text-parchment/90",
+  reflexao: "font-display text-[1.4rem] leading-snug text-gold-bright md:text-2xl",
 }
 
 /** Lista de blocos editoriais, cada um com seu rótulo de natureza e referências. */

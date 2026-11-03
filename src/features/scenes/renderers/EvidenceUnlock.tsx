@@ -49,7 +49,7 @@ export function EvidenceUnlock({ scene }: RendererProps) {
               <RefList refs={ev.refs} className="mt-1 text-sm" />
             </div>
             <BlockList blocks={synthesis.blocks} stagger={0.3} />
-            {ev.connection && <ConnectionChips primary={ev.connection.primary} secondary={ev.connection.secondary} note={synthesis.classificationNote} />}
+            {ev.connection && ev.showClassification && <ConnectionChips primary={ev.connection.primary} secondary={ev.connection.secondary} note={synthesis.classificationNote} />}
           </div>
         )}
       </SealBreak>

@@ -11,7 +11,7 @@ export const secretTexts = [
 ]
 
 /** Gera estados representativos de cada cena: inicial, enquete aberta/fechada/resultado, liberado, pausado, momento. */
-export function* everyState(sequenceId: string): Generator<{ state: SessionState; scenes: Scene[] }> {
+export function* everyState(sequenceId: string, light = false): Generator<{ state: SessionState; scenes: Scene[] }> {
   const seq = sequences.find((s) => s.id === sequenceId)!
   const scenes = seq.sceneIds.map((id) => getSceneEntry(id)!.scene)
   const ctx = (now: number): Ctx => ({ now, narrative: { scenes } })
@@ -32,7 +32,7 @@ export function* everyState(sequenceId: string): Generator<{ state: SessionState
     if (scene.releases) cmds.push({ type: "release", evidenceId: scene.releases })
     cmds.push(...(scene.steps ?? []).map(() => ({ type: "step", delta: 1 }) as const))
     if (scene.visual === "yard-train") cmds.push({ type: "cue", kind: "muro" }, { type: "cue", kind: "trem" })
-    cmds.push({ type: "moment", kind: "haja-luz" }, { type: "pause" }, { type: "resume" })
+    if (!light) cmds.push({ type: "moment", kind: "haja-luz" }, { type: "pause" }, { type: "resume" })
     for (const cmd of cmds) {
       state = reduceHost(state, cmd, ctx(i * 10 + 1)).state
       if (cmd.type === "open_poll" && scene.poll) {
