@@ -1,11 +1,12 @@
 "use client"
 
-import { ArrowLeft, ArrowRight, Map, ScrollText, Sparkles } from "lucide-react"
+import { ArrowLeft, ArrowRight, ScrollText, Sparkles } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { ITEM_COLORS, ItemArt } from "@/components/art/ItemArt"
+import { ExitLink } from "@/components/app/ExitLink"
 import { PreferencesMenu } from "@/components/app/PreferencesMenu"
 import { Button } from "@/components/ui/button"
 import { getCharacter } from "@/content/characters"
@@ -72,9 +73,13 @@ export function JourneyItem({ itemId }: { itemId: string }) {
       <ParticleField preset="stars" density={0.5} intensity={0.4} />
 
       <header className="relative z-10 flex items-center justify-between gap-3 px-4 py-3 md:px-8">
-        <Link href={`/solo?semana=${item.week}`} className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-mist hover:text-parchment">
-          <Map className="size-4" aria-hidden /> Semana {week.week} · {week.title}
-        </Link>
+        <div className="flex min-w-0 items-center gap-3">
+          <ExitLink href={`/solo?semana=${item.week}`} to="o mapa da jornada" />
+          <p className="truncate text-xs uppercase tracking-[0.25em] text-mist">
+            Semana {week.week}
+            <span className="hidden sm:inline"> · {week.title}</span>
+          </p>
+        </div>
         <PreferencesMenu />
       </header>
 
@@ -119,7 +124,7 @@ export function JourneyItem({ itemId }: { itemId: string }) {
 
       <section className="sticky bottom-0 z-10 border-t border-border bg-night/85 backdrop-blur" aria-label="Linha do tempo da semana">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-2 py-2 md:px-6 md:py-0">
-          <Button variant="ghost" size="lg" className="h-12 shrink-0 rounded-full" disabled={!prev} onClick={() => prev && router.push(journeyHref(item.week, prev.id))} aria-label="Item anterior">
+          <Button variant="outline" size="lg" className="h-12 shrink-0 rounded-full" disabled={!prev} onClick={() => prev && router.push(journeyHref(item.week, prev.id))} aria-label="Item anterior">
             <ArrowLeft />
           </Button>
           <p className="text-sm tabular-nums text-mist md:hidden">

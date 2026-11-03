@@ -6,6 +6,7 @@ import { useState, useTransition } from "react"
 import { toast } from "sonner"
 import { fetchConnectionSynthesis } from "@/app/actions/synthesis"
 import { ITEM_COLORS } from "@/components/art/ItemArt"
+import { ExitLink } from "@/components/app/ExitLink"
 import { PreferencesMenu } from "@/components/app/PreferencesMenu"
 import { BlockList } from "@/components/story/BlockList"
 import { RefList } from "@/components/story/RefList"
@@ -57,9 +58,13 @@ export function WeekClue({ week }: { week: number }) {
       <div className="stage-glow pointer-events-none absolute inset-0" style={{ ["--illumination" as string]: revealed ? 0.6 : 0.3 }} />
       <ParticleField preset="embers" density={0.5} intensity={0.5} />
       <header className="relative z-10 flex items-center justify-between gap-3 px-4 py-3 md:px-8">
-        <Link href={`/solo?semana=${week}`} className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-mist hover:text-parchment">
-          <Map className="size-4" aria-hidden /> Semana {week} · {info.title}
-        </Link>
+        <div className="flex min-w-0 items-center gap-3">
+          <ExitLink href={`/solo?semana=${week}`} to="o mapa da jornada" />
+          <p className="truncate text-xs uppercase tracking-[0.25em] text-mist">
+            Semana {week}
+            <span className="hidden sm:inline"> · {info.title}</span>
+          </p>
+        </div>
         <PreferencesMenu />
       </header>
 

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { getEpisode, getEvidence, getSceneEntry, sceneHref } from "@/content"
+import { ExitLink } from "@/components/app/ExitLink"
 import { PreferencesMenu } from "@/components/app/PreferencesMenu"
 import { Button } from "@/components/ui/button"
 import { canComplete, nextSceneId, previousSceneId, resumeSceneId, statusOf } from "@/domain/solo-progress"
@@ -94,9 +95,10 @@ export function ScenePlayer({ sceneId }: { sceneId: string }) {
 
       <div className="relative z-10 -mt-10 flex min-h-[58dvh] flex-col rounded-t-3xl border-t border-border bg-gradient-to-b from-ink/95 to-night lg:mt-0 lg:h-dvh lg:rounded-none lg:border-l lg:border-t-0">
         <header className="flex items-center justify-between gap-3 px-5 pt-4 md:px-8">
-          <Link href="/solo" className="min-w-0 text-xs uppercase tracking-[0.25em] text-mist hover:text-parchment">
-            <span className="block truncate">{episode.title}</span>
-          </Link>
+          <div className="flex min-w-0 items-center gap-3">
+            <ExitLink href="/solo" to="o modo solo" />
+            <p className="truncate text-xs uppercase tracking-[0.25em] text-mist">{episode.title}</p>
+          </div>
           <div className="flex shrink-0 items-center">
             <Link href="/archive" aria-label="Abrir o Arquivo de Descobertas" className="grid size-10 place-items-center rounded-full text-mist hover:bg-navy-2 hover:text-parchment">
               <BookMarked className="size-5" />
