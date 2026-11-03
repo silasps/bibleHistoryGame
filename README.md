@@ -54,7 +54,7 @@ Rotas principais:
 1. Abra `/presenter` e crie a sala da **Visão Geral da Bíblia**.
 2. Clique em **Abrir telão** e arraste a janela para o projetor (botão “Tela cheia”). Clique em **Ativar som** no telão.
 3. O público entra pelo QR code ou pelo código de 6 letras em `/join`.
-4. Conduza pelo painel: setas ou espaço avançam; **D** aprofunda o item com a próxima linha do seu resumo; **P** pausa; **V** abre/fecha votação; **R** revela resultado; **L** libera a pista da semana (o versículo e o seu texto chegam ao celular). Nos itens com personagem, os botões da skin destacam um detalhe no telão.
+4. Conduza pelo painel: setas ou espaço avançam; **D** aprofunda o item com a próxima linha do seu resumo; **P** pausa; **V** abre/fecha votação; **R** revela resultado; **L** libera a pista da semana (o seu texto chega ao celular; o versículo já apareceu no telão e no celular na cena anterior). Nos itens com personagem, os botões da skin destacam um detalhe no telão.
 5. Antes, revise o roteiro em `/presenter/prep` (privado: **não projetar**).
 
 Na **demonstração local**, telão e “celulares” precisam estar no mesmo navegador (outras abas). Para celulares reais, use o modo ao vivo.

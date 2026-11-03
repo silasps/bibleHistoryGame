@@ -8,9 +8,9 @@ Hoje as semanas 1–6 têm material. As semanas 7–11 aparecem como “em breve
 
 | Arquivo | O que guarda |
 | --- | --- |
-| `src/content/overview/timeline.ts` | `WEEKS` (título, período, versículo para memorizar, cor, status) e `ITEMS` (eventos e personagens da linha do tempo, com datas do Manual) |
+| `src/content/overview/timeline.ts` | `WEEKS` (título, período, versículo para memorizar com o texto NAA, cor, status) e `ITEMS` (eventos e personagens da linha do tempo, com datas do Manual) |
 | `src/content/overview/resumos/semana-0N.ts` | O seu resumo dividido em trechos |
-| `src/content/released/overview.ts` | Texto do versículo (NAA conferida) + parágrafos do PRD — **server-only** |
+| `src/content/released/overview.ts` | Parágrafos do PRD — **server-only** |
 | `src/content/overview/contexto.ts` | “Descobrindo o contexto” (Task 4), para o dossiê do jogo |
 | `src/content/overview/corrections.ts` | Referências do seu material que o app mostra corrigidas |
 | `src/content/characters/index.ts` | Fichas dos personagens (significado do nome, skin, ligações) |
@@ -35,7 +35,9 @@ Hoje as semanas 1–6 têm material. As semanas 7–11 aparecem como “em breve
    - `refs`: referências NAA. Se a do material estiver errada, use a correta e registre em `corrections.ts`;
    - `itemIds`: os itens da linha do tempo que o trecho sustenta. Trecho sem item vira abertura da semana;
    - `pendingFact`: marque quando houver um fato a conferir. Trechos marcados não vão ao palco e aparecem “em revisão” no dossiê.
-5. **PRD e versículo.** Em `released/overview.ts`, acrescente `{ week: 7, verseText, blocks }`. Confira o versículo em bibliaonline.com.br/naa. O prefixo “PRD -” não entra. Esse texto só sai do servidor depois da liberação (ao vivo) ou da abertura do selo (jogo).
+5. **Versículo e PRD.**
+   - **Versículo para memorizar:** em `timeline.ts`, na entrada da semana, preencha `memoryVerseText` com o texto NAA conferido em bibliaonline.com.br/naa, um texto por referência de `memoryVerse`. Ele é público: aparece no telão e no celular na cena “versículo para memorizar”.
+   - **PRD:** em `released/overview.ts`, acrescente `{ week: 7, blocks }`. O prefixo “PRD -” não entra. Esse texto só sai do servidor depois da liberação (ao vivo) ou da abertura do selo (jogo), e nunca aparece no telão.
 6. **Contexto (jogo).** Em `contexto.ts`, acrescente as notas da Task 4 com `itemIds`.
 7. **Personagens (jogo, opcional).** Em `characters/index.ts`: significado do nome conferido no Bible Hub (com o link), skin com base declarada (`texto` com referência, `contexto` com fonte ou `licenca_artistica`) e ligações.
 8. **Reflexões.** Inclua a semana 7 em `[1, 2, 3, 4, 5, 6].flatMap(semana)` no arquivo de reflexões, para ganhar os espaços daquela semana.

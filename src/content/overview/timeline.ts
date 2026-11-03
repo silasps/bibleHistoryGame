@@ -2,15 +2,29 @@ import { chapters, ref } from "../refs"
 import type { TimelineItemInput, TimelineWeekInput } from "./schema"
 
 // Linhas do tempo do autor (Task 1 de cada semana), com as datas do Manual
-// DBS 11S. Semanas 7–11 ainda aguardam o material do autor.
+// DBS 11S. Semanas 7–11 ainda aguardam o material do autor. Os versículos para
+// memorizar (`memoryVerseText`) foram conferidos com a NAA em
+// bibliaonline.com.br/naa em 2026-11-03.
 
 export const WEEKS: TimelineWeekInput[] = [
-  { week: 1, actId: "ato-01", title: "Origens e Cosmovisão", status: "com_material", span: { from: -4000, to: -1446 }, memoryVerse: [ref("Gen", 3, 15)], color: "lilas", sources: ["w1-resumo.txt", "w1-linha-do-tempo.pdf", "w1-contexto.txt"] },
-  { week: 2, actId: "ato-02", title: "Pentateuco", status: "com_material", span: { from: -1446, to: -1406 }, memoryVerse: [ref("Lev", 20, 7, 8)], color: "turquesa", sources: ["w2-resumo.txt", "w2-linha-do-tempo.pdf", "w2-contexto.txt"] },
-  { week: 3, actId: "ato-03", title: "Tribos e Davi", status: "com_material", span: { from: -1406, to: -970 }, memoryVerse: [ref("Josh", 1, 7), ref("2Sam", 7, 16)], color: "verde", sources: ["w3-resumo.txt", "w3-linha-do-tempo.pdf", "w3-contexto.txt"] },
-  { week: 4, actId: "ato-04", title: "Reis", status: "com_material", span: { from: -970, to: -612 }, memoryVerse: [ref("2Chr", 7, 14)], color: "violeta", sources: ["w4-resumo.txt", "w4-linha-do-tempo.pdf", "w4-contexto.txt"] },
-  { week: 5, actId: "ato-05", title: "Primeiros Profetas", status: "com_material", span: { from: -800, to: -539 }, memoryVerse: [ref("Mic", 6, 8)], color: "laranja", sources: ["w5-resumo.txt", "w5-linha-do-tempo.pdf", "w5-contexto.txt"] },
-  { week: 6, actId: "ato-06", title: "Últimos Profetas", status: "com_material", span: { from: -640, to: -331 }, memoryVerse: [ref("Ezek", 36, 26)], color: "azul", sources: ["w6-resumo.txt", "w6-linha-do-tempo.pdf", "w6-contexto.txt"] },
+  { week: 1, actId: "ato-01", title: "Origens e Cosmovisão", status: "com_material", span: { from: -4000, to: -1446 }, memoryVerse: [ref("Gen", 3, 15)],
+    memoryVerseText: ["Porei inimizade entre você e a mulher, entre a sua descendência e o descendente dela. Este lhe ferirá a cabeça, e você lhe ferirá o calcanhar."],
+    color: "lilas", sources: ["w1-resumo.txt", "w1-linha-do-tempo.pdf", "w1-contexto.txt"] },
+  { week: 2, actId: "ato-02", title: "Pentateuco", status: "com_material", span: { from: -1446, to: -1406 }, memoryVerse: [ref("Lev", 20, 7, 8)],
+    memoryVerseText: ["Portanto, santifiquem-se e sejam santos, pois eu sou o Senhor, o Deus de vocês. Guardem os meus estatutos e tratem de cumpri-los. Eu sou o Senhor, que os santifico."],
+    color: "turquesa", sources: ["w2-resumo.txt", "w2-linha-do-tempo.pdf", "w2-contexto.txt"] },
+  { week: 3, actId: "ato-03", title: "Tribos e Davi", status: "com_material", span: { from: -1406, to: -970 }, memoryVerse: [ref("Josh", 1, 7), ref("2Sam", 7, 16)],
+    memoryVerseText: ["Tão somente seja forte e muito corajoso para que você tenha o cuidado de fazer segundo toda a Lei que o meu servo Moisés lhe ordenou. Não se desvie dela, nem para a direita nem para a esquerda, para que seja bem-sucedido por onde quer que você andar.", "Quanto a você, a sua casa e o seu reino serão firmados para sempre diante de mim; o seu trono será estabelecido para sempre."],
+    color: "verde", sources: ["w3-resumo.txt", "w3-linha-do-tempo.pdf", "w3-contexto.txt"] },
+  { week: 4, actId: "ato-04", title: "Reis", status: "com_material", span: { from: -970, to: -612 }, memoryVerse: [ref("2Chr", 7, 14)],
+    memoryVerseText: ["se o meu povo, que se chama pelo meu nome, se humilhar, orar, me buscar e se converter dos seus maus caminhos, eu ouvirei dos céus, perdoarei os seus pecados e sararei a sua terra."],
+    color: "violeta", sources: ["w4-resumo.txt", "w4-linha-do-tempo.pdf", "w4-contexto.txt"] },
+  { week: 5, actId: "ato-05", title: "Primeiros Profetas", status: "com_material", span: { from: -800, to: -539 }, memoryVerse: [ref("Mic", 6, 8)],
+    memoryVerseText: ["Ele já mostrou a você o que é bom; e o que o Senhor pede de você? Que pratique a justiça, ame a misericórdia e ande humildemente com o seu Deus."],
+    color: "laranja", sources: ["w5-resumo.txt", "w5-linha-do-tempo.pdf", "w5-contexto.txt"] },
+  { week: 6, actId: "ato-06", title: "Últimos Profetas", status: "com_material", span: { from: -640, to: -331 }, memoryVerse: [ref("Ezek", 36, 26)],
+    memoryVerseText: ["Eu lhes darei um coração novo e porei dentro de vocês um espírito novo. Tirarei de vocês o coração de pedra e lhes darei um coração de carne."],
+    color: "azul", sources: ["w6-resumo.txt", "w6-linha-do-tempo.pdf", "w6-contexto.txt"] },
   { week: 7, actId: "ato-07", title: "Pós-exílio e Intertestamentário", status: "aguardando_material", span: { from: -538, to: -5 }, memoryVerse: [ref("Ezra", 1, 3)], color: "oliva" },
   { week: 8, actId: "ato-08", title: "Jesus", status: "aguardando_material", span: { from: -4, to: 30 }, memoryVerse: [ref("Matt", 28, 5, 6)], color: "dourado" },
   { week: 9, actId: "ato-09", title: "Igreja", status: "aguardando_material", span: { from: 30, to: 68 }, memoryVerse: [ref("Acts", 1, 8)], color: "coral" },

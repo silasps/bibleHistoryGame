@@ -66,6 +66,10 @@ describe("visão geral (material do autor)", () => {
     for (const i of items) expect(i.refs.length, i.id).toBeGreaterThan(0)
   })
 
+  it("toda semana com material tem o texto NAA do versículo para memorizar", () => {
+    for (const w of weeks.filter((w) => w.status === "com_material")) expect(w.memoryVerseText?.length, `semana ${w.week}`).toBe(w.memoryVerse.length)
+  })
+
   it("PRD do autor fica só no módulo server-only", () => {
     const connections = allWeekConnections()
     expect(connections.map((c) => c.week)).toEqual([1, 2, 3, 4, 5, 6])

@@ -3,12 +3,15 @@ import { allReleasedSyntheses } from "@/content/released"
 import { getSceneEntry, sequences } from "@/content"
 import type { Scene } from "@/content/schema"
 import { getCharacter } from "@/content/characters"
-import { getItem } from "@/content/overview"
+import { getItem, weeks } from "@/content/overview"
 import { createSession, reduceAudience, reduceHost, type Ctx, type HostCommand, type SessionState } from "@/domain/session"
+
+// O versículo para memorizar também entra na pista da semana, mas é público (vai ao telão).
+const publicVerses = new Set(weeks.flatMap((w) => w.memoryVerseText ?? []))
 
 /** Todo texto server-only: não pode aparecer em telão, palco ou celular antes da hora. */
 export const secretTexts = [
-  ...allReleasedSyntheses().flatMap((s) => [s.classificationNote, ...s.blocks.map((b) => b.text)]),
+  ...allReleasedSyntheses().flatMap((s) => [s.classificationNote, ...s.blocks.map((b) => b.text).filter((t) => !publicVerses.has(t))]),
   ...allPresenterNotes().flatMap((n) => [...n.talkingPoints, n.transitionHint ?? ""]).filter(Boolean),
 ]
 

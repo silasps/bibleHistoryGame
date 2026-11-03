@@ -63,8 +63,8 @@ const WEEK_SYNTHESES: ReleasedSynthesis[] = weeks
   .filter((w) => w.status === "com_material")
   .map((w) => {
     const c = getWeekConnection(w.week)
-    const verse = c?.verseText
-      ? [{ kind: "texto_biblico" as const, text: c.verseText, refs: w.memoryVerse, quoteVerified: true }]
+    const verse = w.memoryVerseText
+      ? w.memoryVerseText.map((text, i) => ({ kind: "texto_biblico" as const, text, refs: [w.memoryVerse[i]], quoteVerified: true }))
       : [{ kind: "narracao" as const, text: `Versículo para memorizar: ${formatRefs(w.memoryVerse, "long")} (NAA).`, refs: [], quoteVerified: false }]
     const paragraphs = (c?.blocks ?? []).map((text) => ({ kind: "resumo_autor" as const, text, refs: [], quoteVerified: false }))
     return ReleasedSynthesis.parse({ evidenceId: weekEvidenceId(w.week), blocks: [...verse, ...paragraphs] })

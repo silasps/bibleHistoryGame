@@ -57,10 +57,12 @@ export const TimelineWeek = z.object({
   span: z.object({ from: z.number().int(), to: z.number().int() }),
   /** Versículo para memorizar da semana (Manual 11S). */
   memoryVerse: z.array(BibleRef).min(1),
+  /** Texto NAA conferido, um por referência de `memoryVerse`. É público: vai ao telão e ao celular. */
+  memoryVerseText: z.array(z.string().min(1)).optional(),
   color: ItemColor,
   /** Arquivos do autor que alimentam a semana (nomes locais, para o /editor). */
   sources: z.array(z.string()).default([]),
-})
+}).refine((w) => !w.memoryVerseText || w.memoryVerseText.length === w.memoryVerse.length, "um texto por referência do versículo")
 export type TimelineWeek = z.infer<typeof TimelineWeek>
 export type TimelineWeekInput = z.input<typeof TimelineWeek>
 
@@ -108,7 +110,6 @@ export type ContextNoteInput = z.input<typeof ContextNote>
 /** Parágrafo do PRD do autor (server-only, liberado depois da fala). */
 export const WeekConnection = z.object({
   week: z.number().int(),
-  verseText: z.string().optional(),
   blocks: z.array(z.string().min(1)).default([]),
 })
 export type WeekConnection = z.infer<typeof WeekConnection>

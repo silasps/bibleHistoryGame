@@ -82,7 +82,7 @@ function weekScenes(week: number, title: string): SceneInput[] {
     visual: "seed-thread",
     fxCue: "seed-thread",
     illumination: 0.25,
-    audiencePrompt: "Uma pista está chegando ao seu celular. Ainda selada.",
+    audiencePrompt: "Guarde este versículo. A pista da semana chega em seguida.",
     overview: { role: "versiculo", week },
     presenterCue: "conexao",
     estimatedSeconds: 60,

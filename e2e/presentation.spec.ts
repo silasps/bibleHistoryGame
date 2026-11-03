@@ -34,6 +34,12 @@ test("demonstração local: a linha do tempo conduz e a pista da semana só abre
   await expect(stage).toContainText("Deus cria e organiza, de forma esplêndida, todas as coisas.")
   await expect(phone.getByRole("heading", { name: "Criação" })).toBeVisible()
 
+  // O versículo (NAA) é público: telão e celular mostram o texto; o PRD não.
+  await gotoScene(host, /Semana 1 · versículo para/)
+  await expect(stage).toContainText("Porei inimizade entre você e a mulher")
+  await expect(phone.getByText(/Porei inimizade entre você e a mulher/)).toBeVisible()
+  await expect(stage).not.toContainText(AUTHOR_PRD)
+
   await gotoScene(host, /Semana 1 · a pista/)
   await expect(phone.getByText("Pista selada").first()).toBeVisible()
   await expect(phone.locator("body")).not.toContainText(AUTHOR_PRD)

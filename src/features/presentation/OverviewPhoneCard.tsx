@@ -6,6 +6,7 @@ import { getCharacter } from "@/content/characters"
 import { CharacterCard } from "../characters/CharacterCard"
 import { ITEM_COLORS, ItemArt } from "@/components/art/ItemArt"
 import { formatSpan, getItem, getWeek } from "@/content/overview"
+import { formatRef } from "@/content/refs"
 import type { OverviewView } from "@/domain/projection"
 import { useFx } from "@/fx/useFx"
 import { WeekStrip } from "../timeline/BibleTimeline"
@@ -52,6 +53,20 @@ export function OverviewPhoneCard({ overview }: { overview: OverviewView }) {
             )
           )}
         </motion.article>
+      ) : week && overview.role === "versiculo" ? (
+        <div className="glass space-y-5 rounded-3xl p-5 text-center">
+          <p className="text-xs uppercase tracking-[0.35em]" style={{ color: ITEM_COLORS[week.color] }}>
+            Semana {week.week} · versículo para memorizar
+          </p>
+          {week.memoryVerse.map((r, i) => (
+            <motion.figure key={i} initial={fx.motion ? { opacity: 0, y: 12 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.4 }}>
+              {week.memoryVerseText?.[i] && <blockquote className="font-display text-2xl leading-snug text-parchment">“{week.memoryVerseText[i]}”</blockquote>}
+              <figcaption className="mt-2 text-sm text-gold">
+                {formatRef(r, "long")} <span className="text-mist">(NAA)</span>
+              </figcaption>
+            </motion.figure>
+          ))}
+        </div>
       ) : week ? (
         <div className="glass rounded-3xl p-5 text-center">
           <p className="text-xs uppercase tracking-[0.35em]" style={{ color: ITEM_COLORS[week.color] }}>

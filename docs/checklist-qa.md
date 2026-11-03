@@ -32,7 +32,8 @@ Antes de cada apresentação importante, rode os automáticos e percorra o manua
 
 - [ ] Visão Geral: o telão mostra a linha do tempo da semana, um item por vez, com **uma** linha do resumo; **D** troca para a próxima linha
 - [ ] Destaque da skin aparece no telão e a ficha no celular; some ao trocar de item
-- [ ] Versículo da semana: telão só com imagem e referência; celular recebe o versículo e o texto do autor depois de “Liberar pista”
+- [ ] Versículo da semana: telão, painel e celular mostram o texto NAA e a referência; nenhum mostra o PRD
+- [ ] Pista da semana: o telão mostra só a referência; o celular recebe o texto do autor depois de “Liberar pista”
 - [ ] Espaços do autor vazios viram pausa só com imagem
 - [ ] Lobby do telão com QR code legível a 5 m e código de 6 letras
 - [ ] Celular entra pelo QR, com e sem apelido; recarregar não perde o participante

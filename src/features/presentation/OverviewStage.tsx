@@ -5,7 +5,8 @@ import { useMemo } from "react"
 import { ITEM_COLORS, ItemArt } from "@/components/art/ItemArt"
 import { getCharacter } from "@/content/characters"
 import { formatSpan, getItem, getWeek } from "@/content/overview"
-import { formatRefs } from "@/content/refs"
+import type { TimelineWeek } from "@/content/overview/schema"
+import { formatRef, formatRefs } from "@/content/refs"
 import type { OverviewView } from "@/domain/projection"
 import { ParticleField } from "@/fx/ParticleField"
 import { SplitReveal } from "@/fx/SplitReveal"
@@ -126,6 +127,8 @@ export function OverviewStage({ overview }: { overview: OverviewView }) {
         </div>
       )}
 
+      {overview.role === "versiculo" && week && <StageVerse week={week} />}
+
       {(overview.role === "reflexao" || overview.role === "conclusao") && (
         <div className="absolute inset-0 grid place-items-center px-[10cqw] text-center">
           {line ? (
@@ -135,6 +138,33 @@ export function OverviewStage({ overview }: { overview: OverviewView }) {
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+/** Versículo para memorizar (NAA conferida): texto grande e referência. Nunca o PRD. */
+function StageVerse({ week }: { week: TimelineWeek }) {
+  const fx = useFx()
+  const length = (week.memoryVerseText ?? []).join(" ").length
+  const size = length > 260 ? "text-[2.4cqw]" : length > 160 ? "text-[3cqw]" : "text-[3.6cqw]"
+  return (
+    <div className="absolute inset-x-[8cqw] bottom-[6cqh] top-[10cqh] flex flex-col items-center justify-center gap-[3cqh] text-center">
+      <p className="text-[1.6cqw] uppercase tracking-[0.4em]" style={{ color: ITEM_COLORS[week.color] }}>
+        Semana {week.week} · versículo para memorizar
+      </p>
+      {week.memoryVerse.map((r, i) => (
+        <motion.figure
+          key={i}
+          initial={fx.motion ? { opacity: 0, y: 16 } : false}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 + i * 0.6 }}
+        >
+          {week.memoryVerseText?.[i] && <blockquote className={`font-display leading-snug text-parchment ${size}`}>“{week.memoryVerseText[i]}”</blockquote>}
+          <figcaption className="mt-[1.4cqh] text-[2.2cqw] text-gold-bright">
+            {formatRef(r, "long")} <span className="text-mist">(NAA)</span>
+          </figcaption>
+        </motion.figure>
+      ))}
     </div>
   )
 }
