@@ -18,6 +18,13 @@ import { safeJSONStorage } from "@/lib/safe-storage"
 interface SoloState extends SoloProgress {
   /** Sínteses recebidas do servidor ao abrir selos (cache local). */
   syntheses: Record<string, ReleasedSynthesis>
+  /** Jornada pela linha do tempo: itens visitados e documentos do dossiê abertos. */
+  visitedItems: Record<string, number>
+  openedDocs: Record<string, number>
+  visitItem: (itemId: string) => void
+  openDoc: (key: string) => void
+  /** Abre a pista selada de uma semana (síntese vinda do servidor). */
+  openWeekSeal: (evidenceId: string, synthesis: ReleasedSynthesis) => void
   start: (episodeId: string) => void
   enter: (sceneId: string) => void
   choose: (sceneId: string, optionId: string) => void
@@ -44,6 +51,19 @@ export const useSolo = create<SoloState>()(
       return {
         ...emptyProgress(),
         syntheses: {},
+        visitedItems: {},
+        openedDocs: {},
+        visitItem: (itemId) => {
+          if (!get().visitedItems[itemId]) set({ visitedItems: { ...get().visitedItems, [itemId]: Date.now() } })
+        },
+        openDoc: (key) => {
+          if (!get().openedDocs[key]) set({ openedDocs: { ...get().openedDocs, [key]: Date.now() } })
+        },
+        openWeekSeal: (evidenceId, synthesis) =>
+          set({
+            openEvidence: { ...get().openEvidence, [evidenceId]: get().openEvidence[evidenceId] ?? Date.now() },
+            syntheses: { ...get().syntheses, [evidenceId]: synthesis },
+          }),
         start: (episodeId) => {
           const episode = getEpisode(episodeId)
           if (!episode) return
@@ -72,7 +92,7 @@ export const useSolo = create<SoloState>()(
           set({ ...next, syntheses })
           set(startEpisode(progressOf(get()), episode))
         },
-        resetAll: () => set({ ...emptyProgress(), syntheses: {} }),
+        resetAll: () => set({ ...emptyProgress(), syntheses: {}, visitedItems: {}, openedDocs: {} }),
       }
     },
     {
@@ -80,7 +100,9 @@ export const useSolo = create<SoloState>()(
       version: 1,
       storage: safeJSONStorage(),
       skipHydration: true,
-      partialize: ({ sceneStatus, choices, pollAnswers, seenEvidence, openEvidence, decisions, notes, completedEpisodes, lastScene, syntheses }) => ({
+      partialize: ({ sceneStatus, choices, pollAnswers, seenEvidence, openEvidence, decisions, notes, completedEpisodes, lastScene, syntheses, visitedItems, openedDocs }) => ({
+        visitedItems,
+        openedDocs,
         sceneStatus,
         choices,
         pollAnswers,

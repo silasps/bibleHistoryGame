@@ -14,10 +14,18 @@ export const resumo01: ResumoExcerptInput[] = [
   {
     id: "r01-criacao",
     week: 1,
-    text: "Deus cria e organiza, de forma esplêndida, todas as coisas. Cria o jardim do Éden e coloca nele a Humanidade, que em grego quer dizer “Adão”.",
+    text: "Deus cria e organiza, de forma esplêndida, todas as coisas.",
     stageLine: "Deus cria e organiza, de forma esplêndida, todas as coisas.",
     refs: [chapters("Gen", 1, 2)],
-    itemIds: ["criacao", "adao-eva"],
+    itemIds: ["criacao"],
+  },
+  {
+    // Mesma frase do resumo, separada no ponto final: o fato f1 fica fora do palco.
+    id: "r01-humanidade",
+    week: 1,
+    text: "Cria o jardim do Éden e coloca nele a Humanidade, que em grego quer dizer “Adão”.",
+    refs: [ref("Gen", 2, 8)],
+    itemIds: ["adao-eva"],
     pendingFact: "f1",
   },
   {

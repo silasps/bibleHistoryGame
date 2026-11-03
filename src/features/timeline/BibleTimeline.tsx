@@ -1,5 +1,6 @@
 "use client"
 
+import { Check } from "lucide-react"
 import { motion } from "motion/react"
 import { useMemo } from "react"
 import { ITEM_COLORS, ItemArt } from "@/components/art/ItemArt"
@@ -24,12 +25,14 @@ interface Props {
   revealed?: ReadonlySet<string>
   /** Item cuja arte foi "ampliada" para o destaque (a arte sai daqui). */
   spotlightId?: string
+  /** Itens já visitados no jogo (recebem uma marca). */
+  visited?: ReadonlySet<string>
   onSelect?: (itemId: string) => void
   showTitle?: boolean
   className?: string
 }
 
-export function BibleTimeline({ week, variant = "stage", focusId, revealed, spotlightId, onSelect, showTitle = true, className }: Props) {
+export function BibleTimeline({ week, variant = "stage", focusId, revealed, spotlightId, visited, onSelect, showTitle = true, className }: Props) {
   const layout = useMemo(() => layoutWeek(week, variant === "trail" ? 12 : 11), [week, variant])
   const info = getWeek(week)
   const fx = useFx()
@@ -53,7 +56,7 @@ export function BibleTimeline({ week, variant = "stage", focusId, revealed, spot
           const edge = c.side === "acima" ? y + 7.5 : y - 8.5
           const dim = focusId && focusId !== c.item.id
           return (
-            <g key={c.item.id} opacity={visible ? (dim ? 0.35 : 0.9) : 0.12} style={{ transition: "opacity .6s" }}>
+            <g key={c.item.id} opacity={visible ? (dim ? (variant === "trail" ? 0.6 : 0.35) : 0.9) : 0.12} style={{ transition: "opacity .6s" }}>
               {c.bracket && (
                 <path
                   d={`M ${c.bracket[0]} ${AXIS_Y - 2} L ${c.bracket[0]} ${AXIS_Y - 4.5} L ${c.bracket[1]} ${AXIS_Y - 4.5} L ${c.bracket[1]} ${AXIS_Y - 2}`}
@@ -112,7 +115,7 @@ export function BibleTimeline({ week, variant = "stage", focusId, revealed, spot
             style={{ left: `${c.x}%`, top: `${y}%`, width: `${W}%` }}
             initial={false}
             animate={{
-              opacity: visible ? (dim ? 0.4 : 1) : 0.14,
+              opacity: visible ? (dim ? (variant === "trail" ? 0.75 : 0.4) : 1) : 0.14,
               scale: focused && fx.motion ? 1.18 : 1,
               filter: focused ? `drop-shadow(0 0 1.6cqh ${color})` : "drop-shadow(0 0 0 transparent)",
             }}
@@ -123,6 +126,11 @@ export function BibleTimeline({ week, variant = "stage", focusId, revealed, spot
                 <motion.div layoutId={`art-${c.item.id}`} className="h-full w-full" transition={{ duration: fx.motion ? 0.8 : 0, ease: [0.3, 0.7, 0.2, 1] }}>
                   <ItemArt art={c.item.art} color={c.item.color} className="h-full w-full" />
                 </motion.div>
+              )}
+              {visited?.has(c.item.id) && (
+                <span className="absolute -right-[0.8cqh] -top-[0.4cqh] grid size-[2.6cqh] place-items-center rounded-full bg-gold text-night" aria-label="visitado">
+                  <Check className="size-[1.9cqh]" strokeWidth={3} />
+                </span>
               )}
             </div>
             <p className="mt-[0.3cqh] text-[1.95cqh] font-semibold leading-tight" style={{ color }}>

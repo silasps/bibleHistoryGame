@@ -18,7 +18,7 @@ export const ITEM_COLORS: Record<ItemColor, string> = {
   dourado: "#f4c86a",
 }
 
-const ART_FILES = manifest as { items: Record<string, string>; characters: Record<string, string> }
+const ART_FILES = manifest as { items: Record<string, string> }
 
 /**
  * Ilustração de um item. Se o autor colocou uma imagem em

@@ -8,9 +8,19 @@ Antes de cada apresentação importante, rode os automáticos e percorra o manua
 - [ ] `npm run build && npm run check:bundle`
 - [ ] `npm run test:e2e` (com Supabase configurado, inclui o teste ao vivo com dois navegadores)
 
-## Modo solo
+## Jornada do jogo (linha do tempo)
 
-- [ ] Completar Gênesis 1–3 do início ao fim, no celular e no desktop
+- [ ] `/solo`: semanas 1–6 clicáveis, 7–11 “em breve”; a linha do tempo da semana abre o item ao clicar
+- [ ] Cena do item: ilustração grande, data, uma linha do resumo; setas ← → e tecla **D** (dossiê)
+- [ ] Dossiê: “Do resumo” com o texto completo (trechos em revisão marcados), Contexto (quando houver), Personagem, Passagens com links para a NAA e o Bible Hub
+- [ ] Itens visitados ganham a marca dourada; “Pista selada” só libera depois de visitar todos
+- [ ] Pista da semana: o selo abre com o versículo e o texto do autor; as pausas do autor aparecem só se estiverem preenchidas
+- [ ] Arquivo: aba Linha do tempo com o progresso por semana; aba Documentos com as pistas e os dossiês abertos
+- [ ] No celular, a barra ← 3/12 → fica fixa no rodapé
+
+## Episódios “por dentro”
+
+- [ ] Completar Gênesis 1–3 do início ao fim, no celular e no desktop (13 cenas, incluindo “A chave de casa”)
 - [ ] “Continuar” bloqueado na escolha até escolher; quiz e enquetes registram a resposta
 - [ ] Faixa “Simulação reflexiva — não é texto bíblico” na consequência hipotética
 - [ ] Efeito “rebobinar” ao entrar no relato canônico
@@ -20,6 +30,10 @@ Antes de cada apresentação importante, rode os automáticos e percorra o manua
 
 ## Apresentação
 
+- [ ] Visão Geral: o telão mostra a linha do tempo da semana, um item por vez, com **uma** linha do resumo; **D** troca para a próxima linha
+- [ ] Destaque da skin aparece no telão e a ficha no celular; some ao trocar de item
+- [ ] Versículo da semana: telão só com imagem e referência; celular recebe o versículo e o texto do autor depois de “Liberar pista”
+- [ ] Espaços do autor vazios viram pausa só com imagem
 - [ ] Lobby do telão com QR code legível a 5 m e código de 6 letras
 - [ ] Celular entra pelo QR, com e sem apelido; recarregar não perde o participante
 - [ ] Votação: abrir → votar → trocar o voto → fechar (voto tardio recusado) → revelar com contagem regressiva

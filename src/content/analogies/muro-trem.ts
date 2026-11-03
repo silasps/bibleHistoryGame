@@ -25,6 +25,7 @@ export const muroTrem: EpisodeInput = {
   manualRequirement: { status: "pendente_fonte" },
   reviewStatus: "em_revisao",
   visualHook: "Um trem passando rente ao quintal — e um muro que transforma o quintal inteiro em lugar de brincar.",
+  movements: [{ id: "muro", title: "O muro e a linha de trem", endsAt: "muro-alianca" }],
   scenes: [
     {
       id: "muro-quintal",
@@ -106,14 +107,13 @@ export const muroTrem: EpisodeInput = {
     },
     {
       id: "muro-alianca",
-      type: "reflection",
+      type: "historical_context",
       title: "A Lei dada a um povo libertado",
       perspective: "investigator",
       visual: "yard-train",
       fxCue: "embers",
       illumination: 0.7,
       stage: { caption: "Limites que protegem" },
-      audiencePrompt: "Pense: que limite na sua vida funciona como esse muro?",
       presenterCue: "pausa",
       estimatedSeconds: 240,
       blocks: [
@@ -141,12 +141,6 @@ export const muroTrem: EpisodeInput = {
           ref("Deut", 24, 10, 22),
         ]),
       ],
-      reflection: {
-        prompts: [
-          "Que limite você recebeu (ou deu) que, olhando hoje, protegia a sua liberdade?",
-          "Por que faz diferença que a Lei tenha sido dada a um povo já libertado, e não como condição para a libertação?",
-        ],
-      },
     },
   ],
 }

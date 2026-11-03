@@ -6,7 +6,10 @@ import { ScenePlayer } from "@/features/solo/ScenePlayer"
 type Params = Promise<{ act: string; scene: string }>
 
 export function generateStaticParams() {
-  return allScenes().map((s) => ({ act: getSceneEntry(s.id)!.episode.actId, scene: s.id }))
+  return allScenes()
+    .map((s) => getSceneEntry(s.id)!)
+    .filter((e) => e.episode.status === "jogavel")
+    .map((e) => ({ act: e.episode.actId, scene: e.scene.id }))
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {

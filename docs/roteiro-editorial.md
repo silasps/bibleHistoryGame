@@ -21,7 +21,7 @@ Regras e fluxo de trabalho para escrever ou revisar conteúdo. A meta é precis�
 
 ## Como escrever um episódio
 
-1. Confira as fontes autorizadas em `content/sources/` (resumo semanal da DBS, Manual 11S). Sem fonte, o episódio continua como `esboco_editorial` com `authorSummary.status: "pendente_fonte"`.
+1. Confira as fontes do autor em `content/sources/dbs-2026/` (resumo semanal da DBS, Manual 11S). Sem fonte, o episódio continua como `esboco_editorial` com `authorSummary.status: "pendente_fonte"`. Reflexões e aplicações não são escritas pelo app: use os espaços do autor (`docs/reflexoes.md`) no fim de cada bloco (`movements`) do episódio.
 2. Crie `src/content/episodes/<id>/{episode,scenes,evidence}.ts` seguindo Gênesis 1–3. Preencha todos os campos de `Episode`: período com incerteza, referências, acontecimentos, personagens, geografia, contexto, tema, pergunta humana, caráter de Deus, princípios, conexões, lacunas e fontes de apoio.
 3. Escreva as sínteses em `src/content/released/` e as notas de fala em `src/content/private/`.
 4. Registre o episódio em `src/content/index.ts` (e numa sequência de apresentação, se for o caso).

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest"
 import { allPresenterNotes } from "./private"
 import { allReleasedSyntheses } from "./released"
-import { acts, allEvidence, allScenes, episodes, getEvidence, getSceneEntry, sequences, validateNarrative } from "."
+import { genesis13 } from "./episodes/genesis-1-3/episode"
+import { getSlot, ReflectionSlot } from "./reflections"
+import { acts, allEvidence, allScenes, episodes, getEvidence, getSceneEntry, sequences, validateNarrative, withAuthorPauses } from "."
 import { formatRef } from "./refs"
 
 describe("conteúdo editorial", () => {
@@ -53,6 +55,20 @@ describe("conteúdo editorial", () => {
 
   it("sequências de apresentação só usam cenas existentes", () => {
     for (const seq of sequences) for (const id of seq.sceneIds) expect(getSceneEntry(id)).toBeDefined()
+  })
+
+  it("reflexões e aplicações são só do autor: nenhuma cena de reflexão escrita pelo app", () => {
+    // Os espaços do autor estão vazios; enquanto estiverem, não há pausa de reflexão no jogo.
+    for (const e of episodes.filter((x) => x.kind !== "visao_geral")) {
+      expect(e.scenes.filter((s) => s.type === "reflection").map((s) => s.id)).toEqual([])
+    }
+  })
+
+  it("pausa preenchida pelo autor entra no fim do bloco; vazia, não entra", () => {
+    expect(withAuthorPauses(genesis13).scenes).toEqual(genesis13.scenes)
+    const filled = ReflectionSlot.parse({ ...getSlot("gn-hoje")!, pergunta: "Pergunta do autor?", textoSolo: ["Comentário do autor."] })
+    const ids = withAuthorPauses(genesis13, (ep, mv) => (ep === "genesis-1-3" && mv === "hoje" ? [filled] : [])).scenes!.map((s) => s.id)
+    expect(ids.slice(ids.indexOf("chave-limites"), ids.indexOf("chave-limites") + 3)).toEqual(["chave-limites", "pausa-gn-hoje", "cliffhanger"])
   })
 
   it("formata referências em português", () => {

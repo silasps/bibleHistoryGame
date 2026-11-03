@@ -1,5 +1,6 @@
 import { z } from "zod"
-import { ReflectionSlot, type ReflectionSlotInput } from "./schema"
+import type { SceneInput } from "../schema"
+import { isFilled, ReflectionSlot, type ReflectionSlotInput } from "./schema"
 
 export * from "./schema"
 
@@ -41,4 +42,34 @@ export const reflectionSlots: ReflectionSlot[] = z.array(ReflectionSlot).parse(S
 
 export function getSlot(id: string): ReflectionSlot | undefined {
   return reflectionSlots.find((s) => s.id === id)
+}
+
+export const pauseSceneId = (slot: Pick<ReflectionSlot, "id">) => `pausa-${slot.id}`
+
+/** Espaços do jogo já escritos pelo autor no fim de um bloco do episódio. */
+export function filledGameSlots(episodeId: string, movementId: string): ReflectionSlot[] {
+  return reflectionSlots.filter(
+    (s) => s.scope !== "apresentacao" && s.position.kind === "bloco" && s.position.episodeId === episodeId && s.position.afterMovementId === movementId && isFilled(s),
+  )
+}
+
+/** Pausa do modo jogo com o texto do autor (só existe quando o espaço foi preenchido). */
+export function soloPauseScene(slot: ReflectionSlot): SceneInput {
+  return {
+    id: pauseSceneId(slot),
+    type: slot.pergunta ? "reflection" : "historical_context",
+    title: "Pausa",
+    perspective: "investigator",
+    visual: "reflection-pool",
+    fxCue: "embers",
+    illumination: 0.6,
+    audiencePrompt: slot.pergunta,
+    presenterCue: "pausa",
+    estimatedSeconds: 120,
+    blocks: [
+      ...slot.textoSolo.map((text) => ({ kind: "reflexao" as const, text })),
+      ...(slot.aplicacao ? [{ kind: "reflexao" as const, text: slot.aplicacao, label: "Para a vida" }] : []),
+    ],
+    reflection: slot.pergunta ? { prompts: [slot.pergunta] } : undefined,
+  }
 }

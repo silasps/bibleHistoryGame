@@ -95,6 +95,7 @@ export const VisualId = z.enum([
   "stars-promise",
   "yard-train",
   "cliff-road",
+  "house-key",
   "timeline",
 ])
 export type VisualId = z.infer<typeof VisualId>
@@ -334,6 +335,8 @@ export const Episode = z.object({
   visualHook: z.string().optional(),
   reviewStatus: ReviewStatus,
   scenes: z.array(Scene).default([]),
+  /** Blocos da narrativa; no fim de cada um pode entrar um espaço de reflexão do autor. */
+  movements: z.array(z.object({ id: z.string().regex(/^[a-z0-9-]+$/), title: z.string().min(1), endsAt: z.string() })).default([]),
   evidence: z.array(Evidence).default([]),
   /** Para scaffolds: ideia do dilema e cuidados editoriais. */
   draft: z

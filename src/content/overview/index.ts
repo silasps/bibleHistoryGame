@@ -54,9 +54,9 @@ export function excerptsForItem(itemId: string): ResumoExcerpt[] {
   return [...all.filter((e) => e.week === item?.week), ...all.filter((e) => e.week !== item?.week)]
 }
 
-/** Linha de palco do item: a primeira linha disponível nos trechos do autor. */
+/** Linha de palco do item: a primeira linha disponível nos trechos do autor (fato em revisão não vai ao palco). */
 export function stageLineForItem(itemId: string): ResumoExcerpt | undefined {
-  return excerptsForItem(itemId).find((e) => e.stageLine)
+  return excerptsForItem(itemId).find((e) => e.stageLine && !e.pendingFact)
 }
 
 /** Trechos de abertura da semana (não ligados a itens). */

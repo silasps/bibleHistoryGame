@@ -1,4 +1,4 @@
-import { block, chapters, ref } from "../../refs"
+import { block, chapters } from "../../refs"
 import type { EpisodeInput } from "../../schema"
 import { genesisEvidence } from "./evidence"
 import { genesisScenes } from "./scenes"
@@ -37,28 +37,11 @@ export const genesis13: EpisodeInput = {
   peoplesAndPowers: [],
   theme: "Criação boa, liberdade, queda e promessa",
   humanQuestion: "Se Deus criou tudo bom, por que existe tanto mal?",
-  godRevealed: [
-    block("parafrase", "Criador que fala e ordena, e declara a criação muito boa.", [ref("Gen", 1, 31)]),
-    block("parafrase", "Deus que procura o ser humano depois da queda e o veste.", [
-      ref("Gen", 3, 9),
-      ref("Gen", 3, 21),
-    ]),
-  ],
-  principles: [
-    block(
-      "interpretacao",
-      "Limites dados por Deus aparecem no relato dentro de uma relação de confiança e generosidade, e não como privação arbitrária.",
-    ),
-    block(
-      "interpretacao",
-      "A tentação começa distorcendo a palavra de Deus e lançando suspeita sobre o seu caráter.",
-    ),
-  ],
   connectionEvidence: ["ev-descendencia", "ev-abraao-descendencia"],
   linksTo: [{ episodeId: "abraao", note: "A promessa da descendência continua em Gênesis 12 (em desenvolvimento)." }],
   authorSummary: {
     status: "pendente_fonte",
-    source: "Resumo semanal autoral da DBS — ainda não fornecido (ver content/sources/README.md).",
+    source: "O resumo da semana 1 (DBS 2026) está na jornada pela linha do tempo; este episódio ainda não foi conferido com ele.",
   },
   manualRequirement: {
     status: "pendente_fonte",
@@ -72,5 +55,11 @@ export const genesis13: EpisodeInput = {
   visualHook: "Uma semente caindo na terra escura e um fio dourado que começa a se desenhar.",
   reviewStatus: "em_revisao",
   scenes: genesisScenes,
+  movements: [
+    { id: "criacao-jardim", title: "Criação e jardim", endsAt: "jardim" },
+    { id: "tentacao-queda", title: "Tentação e queda", endsAt: "relato" },
+    { id: "promessa", title: "A promessa", endsAt: "evidencia-descendencia" },
+    { id: "hoje", title: "Hoje", endsAt: "chave-limites" },
+  ],
   evidence: genesisEvidence,
 }

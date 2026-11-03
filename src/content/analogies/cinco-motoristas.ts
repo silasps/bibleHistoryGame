@@ -19,6 +19,7 @@ export const cincoMotoristas: EpisodeInput = {
   manualRequirement: { status: "pendente_fonte" },
   reviewStatus: "em_revisao",
   visualHook: "Um carro cada vez mais perto da borda — até a câmera se afastar e mostrar a estrada segura.",
+  movements: [{ id: "motoristas", title: "Os cinco motoristas", endsAt: "motoristas-santidade" }],
   scenes: [
     {
       id: "motoristas-entrevista",
@@ -93,14 +94,13 @@ export const cincoMotoristas: EpisodeInput = {
     },
     {
       id: "motoristas-santidade",
-      type: "reflection",
+      type: "historical_context",
       title: "Orientar a vida para Deus",
       perspective: "investigator",
       visual: "cliff-road",
       fxCue: "embers",
       illumination: 0.8,
       stage: { caption: "Para onde a estrada leva?" },
-      audiencePrompt: "Pense: em que área você tem medido a distância da borda?",
       presenterCue: "pausa",
       estimatedSeconds: 240,
       blocks: [
@@ -131,12 +131,6 @@ export const cincoMotoristas: EpisodeInput = {
           "Ressalvas",
         ),
       ],
-      reflection: {
-        prompts: [
-          "Em que área da vida você tem perguntado “até onde posso ir?” em vez de “para onde estou indo?”",
-          "Como a santidade muda quando o objetivo é o destino e as pessoas que viajam com você?",
-        ],
-      },
     },
   ],
 }

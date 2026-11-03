@@ -5,13 +5,27 @@ import { muroTrem } from "./analogies/muro-trem"
 import { getBook } from "./books"
 import { genesis13 } from "./episodes/genesis-1-3/episode"
 import { OVERVIEW_EPISODE_ID, overviewEpisode } from "./overview/sequence"
+import { filledGameSlots, pauseSceneId, reflectionSlots, soloPauseScene } from "./reflections"
 import { scaffolds } from "./scaffolds"
-import { Act, Episode, type BibleRef, type Evidence, type Scene } from "./schema"
+import { Act, Episode, type BibleRef, type EpisodeInput, type Evidence, type Scene } from "./schema"
 
 export const acts: Act[] = z.array(Act).parse(ACTS)
+
+/** No fim de cada bloco, entra a pausa que o autor escreveu (espaço vazio: nada entra). */
+export function withAuthorPauses(episode: EpisodeInput, slotsFor = filledGameSlots): EpisodeInput {
+  if (!episode.movements?.length || !episode.scenes) return episode
+  const scenes = episode.scenes.flatMap((scene) => {
+    const movement = episode.movements!.find((m) => m.endsAt === scene.id)
+    return movement ? [scene, ...slotsFor(episode.id, movement.id).map(soloPauseScene)] : [scene]
+  })
+  return { ...episode, scenes }
+}
+
+/** Pausas exclusivas do jogo não entram nas sequências de apresentação. */
+const gameOnlyScenes = new Set(reflectionSlots.filter((s) => s.scope === "jogo").map(pauseSceneId))
 export const episodes: Episode[] = z
   .array(Episode)
-  .parse([overviewEpisode, genesis13, muroTrem, cincoMotoristas, ...scaffolds])
+  .parse([overviewEpisode, genesis13, muroTrem, cincoMotoristas, ...scaffolds].map((e) => withAuthorPauses(e)))
   .sort((a, b) => a.order - b.order)
 
 type SceneEntry = { scene: Scene; episode: Episode; index: number }
@@ -66,7 +80,7 @@ export function sceneHref(sceneId: string): string {
 /** `presentable`: aparece no lobby do apresentador (só o material do autor). */
 export type PresentationSequence = { id: string; title: string; description: string; sceneIds: string[]; presentable: boolean }
 
-const ids = (episodeId: string) => getEpisode(episodeId)?.scenes.map((s) => s.id) ?? []
+const ids = (episodeId: string) => getEpisode(episodeId)?.scenes.map((s) => s.id).filter((id) => !gameOnlyScenes.has(id)) ?? []
 
 export const sequences: PresentationSequence[] = [
   {
@@ -158,6 +172,14 @@ export function validateNarrative(): string[] {
       if (!unlocked) issues.push(`${ev.id}: nenhuma cena desbloqueia esta evidência`)
     }
     for (const evId of episode.connectionEvidence) if (!evidenceIndex.get(evId)?.connection) issues.push(`${episode.id}: conexão inválida ${evId}`)
+    const sceneIds = new Set(episode.scenes.map((s) => s.id))
+    for (const m of episode.movements) if (!sceneIds.has(m.endsAt)) issues.push(`${episode.id}: bloco ${m.id} termina em cena inexistente ${m.endsAt}`)
+  }
+
+  for (const slot of reflectionSlots) {
+    if (slot.position.kind !== "bloco") continue
+    const { episodeId, afterMovementId } = slot.position
+    if (!getEpisode(episodeId)?.movements.some((m) => m.id === afterMovementId)) issues.push(`espaço ${slot.id}: bloco inexistente ${episodeId}/${afterMovementId}`)
   }
 
   for (const seq of sequences) for (const id of seq.sceneIds) if (!sceneIndex.has(id)) issues.push(`sequência ${seq.id}: cena inexistente ${id}`)

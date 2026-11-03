@@ -50,6 +50,18 @@ describe("visão geral (material do autor)", () => {
     }
   })
 
+  it("trecho com fato em revisão nunca vira linha de palco", () => {
+    for (const i of items) expect(stageLineForItem(i.id)?.pendingFact, i.id).toBeUndefined()
+  })
+
+  it("ids dos itens não colidem com as rotas da jornada", () => {
+    for (const i of items) expect(i.id).not.toBe("pista")
+  })
+
+  it("todo item da jornada tem passagem para o dossiê", () => {
+    for (const i of items) expect(i.refs.length, i.id).toBeGreaterThan(0)
+  })
+
   it("PRD do autor fica só no módulo server-only", () => {
     const connections = allWeekConnections()
     expect(connections.map((c) => c.week)).toEqual([1, 2, 3, 4, 5, 6])

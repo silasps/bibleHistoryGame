@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils"
 import { CliffRoad } from "./CliffRoad"
 import { Creation, NightSky, QuestionMark, StarsPromise } from "./Cosmic"
 import { FallenGarden, Garden, ReflectionPool, SerpentFruit } from "./Garden"
+import { HouseKey } from "./HouseKey"
 import { Crossroads, SealedScroll, SeedThread } from "./Moments"
 import { YardTrain } from "./YardTrain"
 
@@ -23,6 +24,7 @@ const VISUALS: Record<VisualId, () => React.ReactNode> = {
   "stars-promise": StarsPromise,
   "yard-train": () => <YardTrain />,
   "cliff-road": () => <CliffRoad />,
+  "house-key": HouseKey,
   timeline: NightSky,
 }
 

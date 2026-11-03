@@ -360,3 +360,13 @@ export const MOOD_FOR_CUE: Record<string, Mood> = {
   train: "garden",
   cliff: "tension",
 }
+
+/** Clima musical de cada semana na jornada do jogo. */
+export const MOOD_FOR_WEEK: Record<number, Mood> = {
+  1: "wonder",
+  2: "warm",
+  3: "triumph",
+  4: "tension",
+  5: "sorrow",
+  6: "hope",
+}

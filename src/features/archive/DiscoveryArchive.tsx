@@ -4,29 +4,31 @@ import { FlaskConical, Vote } from "lucide-react"
 import { useMemo } from "react"
 import { getEpisode, getSceneEntry, playableEpisodes } from "@/content"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ActsTimeline } from "@/features/timeline/ActsTimeline"
 import { CharacterWeb } from "@/features/characters/CharacterWeb"
 import { useHydrated } from "@/stores/hydration"
 import { useSolo } from "@/stores/solo-store"
 import { InvestigationBoard } from "./InvestigationBoard"
+import { JourneyDocuments, JourneyTimeline } from "./JourneyRecord"
 
 export function DiscoveryArchive() {
   const hydrated = useHydrated()
-  const { seenEvidence, openEvidence, syntheses, decisions, notes } = useSolo()
+  const { seenEvidence, openEvidence, syntheses, decisions, notes, visitedItems, openedDocs } = useSolo()
   const evidence = useMemo(() => playableEpisodes().flatMap((e) => e.evidence), [])
   const seen = useMemo(() => new Set([...Object.keys(seenEvidence), ...Object.keys(openEvidence)]), [seenEvidence, openEvidence])
   const open = useMemo(() => new Set(Object.keys(openEvidence)), [openEvidence])
-  const openCount = open.size
+  // Só as evidências do quadro (as pistas das semanas ficam em Documentos).
+  const openCount = evidence.filter((e) => open.has(e.id)).length
 
   if (!hydrated) return <p className="text-mist">Carregando seu Arquivo…</p>
 
   return (
-    <Tabs defaultValue="quadro" className="gap-8">
+    <Tabs defaultValue="linha" className="gap-8">
       <TabsList className="w-full justify-start overflow-x-auto bg-ink sm:w-auto">
+        <TabsTrigger value="linha">Linha do tempo</TabsTrigger>
+        <TabsTrigger value="documentos">Documentos</TabsTrigger>
         <TabsTrigger value="quadro">Quadro ({openCount})</TabsTrigger>
         <TabsTrigger value="personagens">Personagens</TabsTrigger>
         <TabsTrigger value="decisoes">Decisões ({decisions.length})</TabsTrigger>
-        <TabsTrigger value="linha">Linha do tempo</TabsTrigger>
         <TabsTrigger value="notas">Anotações</TabsTrigger>
       </TabsList>
 
@@ -64,7 +66,11 @@ export function DiscoveryArchive() {
       </TabsContent>
 
       <TabsContent value="linha">
-        <ActsTimeline compact />
+        <JourneyTimeline visited={visitedItems} openEvidence={openEvidence} />
+      </TabsContent>
+
+      <TabsContent value="documentos">
+        <JourneyDocuments openedDocs={openedDocs} syntheses={syntheses} />
       </TabsContent>
 
       <TabsContent value="notas">

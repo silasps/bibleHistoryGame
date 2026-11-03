@@ -37,12 +37,12 @@ export function CharacterCard({ character: c, onOpen, highlight }: { character: 
           <p className="mt-1 text-sm text-parchment/90">
             <span className="text-mist">Nome:</span> {c.nameMeaning.text}
           </p>
-          <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-mist">
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-mist">
             <a href={c.nameMeaning.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-gold underline">
               {c.nameMeaning.source} <ExternalLink className="size-3" aria-hidden />
             </a>
             {c.nameMeaning.refs.length > 0 && <RefList refs={c.nameMeaning.refs} />}
-          </p>
+          </div>
         </div>
       </header>
 
