@@ -1,6 +1,7 @@
+import { itemsOfEtapa } from "@/content/etapas"
 import { getItem, itemsOfWeek, type TimelineItem } from "@/content/overview"
 
-// Layout de uma semana da linha do tempo, em porcentagem do palco.
+// Layout de um trecho da linha do tempo (uma semana ou uma etapa), em porcentagem do palco.
 // Personagens, potências e temas ficam acima do eixo; eventos, abaixo.
 // Cada lado tem duas faixas; os cartões se deslocam para não se sobrepor e
 // ligam-se ao eixo por linhas tracejadas (como nas linhas do tempo do autor).
@@ -32,7 +33,14 @@ function niceStep(range: number): number {
 }
 
 export function layoutWeek(week: number, baseWidth = 11): TimelineLayout {
-  const items = itemsOfWeek(week)
+  return layoutItems(itemsOfWeek(week), baseWidth)
+}
+
+export function layoutEtapa(etapa: number, baseWidth = 11): TimelineLayout {
+  return layoutItems(itemsOfEtapa(etapa), baseWidth)
+}
+
+function layoutItems(items: TimelineItem[], baseWidth: number): TimelineLayout {
   const years = items.flatMap((i) => [i.from, i.to]).filter((y): y is number => y !== undefined)
   let min = Math.min(...years)
   let max = Math.max(...years)

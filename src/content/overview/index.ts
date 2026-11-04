@@ -39,12 +39,16 @@ export function itemYear(item: TimelineItem): number {
   return anchor?.from ?? 0
 }
 
-/** Itens da semana em ordem cronológica. No mesmo ano: `seq` (se houver), depois personagens antes de eventos. */
+const KIND_ORDER = { personagem: 0, evento: 1, potencia: 2, tema: 3 } as const
+
+/** Ordem cronológica. No mesmo ano: `seq` (se houver), depois personagens antes de eventos. */
+export function compareItems(a: TimelineItem, b: TimelineItem): number {
+  return itemYear(a) - itemYear(b) || (a.seq ?? 0) - (b.seq ?? 0) || KIND_ORDER[a.kind] - KIND_ORDER[b.kind]
+}
+
+/** Itens da semana em ordem cronológica. */
 export function itemsOfWeek(week: number): TimelineItem[] {
-  const order = { personagem: 0, evento: 1, potencia: 2, tema: 3 } as const
-  return items
-    .filter((i) => i.week === week)
-    .sort((a, b) => itemYear(a) - itemYear(b) || (a.seq ?? 0) - (b.seq ?? 0) || order[a.kind] - order[b.kind])
+  return items.filter((i) => i.week === week).sort(compareItems)
 }
 
 export function excerptsForItem(itemId: string): ResumoExcerpt[] {

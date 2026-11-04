@@ -30,12 +30,16 @@ export interface PollView {
 export interface OverviewView {
   role: "abertura" | "item" | "versiculo" | "pista" | "reflexao" | "conclusao"
   week?: number
+  etapa?: number
   itemId?: string
   slotId?: string
   stageLine?: string
+  refIndex?: number
+  /** Posição do versículo no fio do plano. */
+  knot?: number
   /** Linhas de "profundidade" já mostradas pelo apresentador. */
   depth: string[]
-  /** Itens da semana já visitados (a linha do tempo vai se revelando). */
+  /** Itens da etapa já visitados (a linha do tempo vai se revelando). */
   revealedItemIds: string[]
   /** Objeto da skin em destaque (id dentro da ficha do personagem do item). */
   spotlightSkinId?: string
@@ -105,13 +109,16 @@ function overviewView(state: SessionState, narrative: SessionNarrative): Overvie
   if (!o) return undefined
   const revealedItemIds = narrative.scenes
     .slice(0, state.index + 1)
-    .flatMap((s) => (s.overview?.role === "item" && s.overview.week === o.week && s.overview.itemId ? [s.overview.itemId] : []))
+    .flatMap((s) => (s.overview?.role === "item" && s.overview.etapa === o.etapa && s.overview.itemId ? [s.overview.itemId] : []))
   return {
     role: o.role,
     week: o.week,
+    etapa: o.etapa,
     itemId: o.itemId,
     slotId: o.slotId,
     stageLine: o.stageLine,
+    refIndex: o.refIndex,
+    knot: o.knot,
     depth: (scene.steps ?? []).slice(0, state.step).map((st) => st.text),
     revealedItemIds,
     spotlightSkinId: state.spotlight ?? undefined,

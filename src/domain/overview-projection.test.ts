@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { getEvidence, getSequence, sequenceScenes } from "@/content"
 import { formatSpan, getItem } from "@/content/overview"
+import { itemsOfEtapa } from "@/content/etapas"
 import { reflectionSlots } from "@/content/reflections"
 import { everyState } from "@/test/session-states"
 import { toProjectorView } from "./projection"
@@ -47,16 +48,24 @@ describe("Visão Geral no telão", () => {
     }
   })
 
-  it("revela os itens da semana à medida que avança", () => {
-    let last = 0
+  it("revela os itens da etapa à medida que avança e recomeça na etapa seguinte", () => {
+    const seen = new Map<number, number>()
     for (const { state, scenes: sc } of everyState("visao-geral", true)) {
       const o = toProjectorView(state, { scenes: sc }, getEvidence).scene?.overview
-      if (o?.role === "item" && o.week === 1) {
+      if (o?.role === "item" && o.etapa) {
         expect(o.revealedItemIds).toContain(o.itemId)
-        expect(o.revealedItemIds.length).toBeGreaterThanOrEqual(last)
-        last = o.revealedItemIds.length
+        expect(o.revealedItemIds.every((id) => itemsOfEtapa(o.etapa!).some((i) => i.id === id))).toBe(true)
+        expect(o.revealedItemIds.length).toBeGreaterThanOrEqual(seen.get(o.etapa) ?? 0)
+        seen.set(o.etapa, o.revealedItemIds.length)
       }
     }
-    expect(last).toBeGreaterThan(5)
+    expect(seen.get(6)).toBe(itemsOfEtapa(6).length)
+  })
+
+  it("só etapas na tela: o telão nunca escreve “Semana N”", () => {
+    for (const { state, scenes: sc } of everyState("visao-geral", true)) {
+      const view = toProjectorView(state, { scenes: sc }, getEvidence)
+      expect(JSON.stringify([view.scene?.title, view.scene?.caption, view.scene?.overview?.stageLine, view.scene?.overview?.depth])).not.toMatch(/Semana \d/)
+    }
   })
 })

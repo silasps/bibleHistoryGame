@@ -229,8 +229,14 @@ export const Scene = z
       .object({
         role: z.enum(["abertura", "item", "versiculo", "pista", "reflexao", "conclusao"]),
         week: z.number().int().optional(),
+        /** Etapa da história (é o que aparece na tela; a semana fica interna). */
+        etapa: z.number().int().optional(),
         itemId: z.string().optional(),
         slotId: z.string().optional(),
+        /** Versículo: qual referência da semana (a semana 3 tem duas). */
+        refIndex: z.number().int().min(0).optional(),
+        /** Versículo: posição no fio do plano (1 = Gn 3:15). */
+        knot: z.number().int().min(1).optional(),
         /** Linha de palco (do resumo do autor ou do espaço de reflexão). */
         stageLine: z.string().max(140).optional(),
       })

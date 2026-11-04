@@ -1,10 +1,13 @@
+import { itemsOfEtapa, presentableEtapas, prdMoments, type Etapa } from "../etapas"
 import { isFilled, reflectionSlots, type ReflectionSlot } from "../reflections"
+import { formatRef, formatRefs } from "../refs"
 import type { EpisodeInput, EvidenceInput, SceneInput } from "../schema"
-import { excerptsForItem, itemsOfWeek, stageLineForItem, weekIntroExcerpts, weeks } from "."
+import { excerpts, excerptsForItem, getWeek, stageLineForItem, weeks } from "."
 
 // Monta a apresentação "Visão Geral da Bíblia" a partir APENAS do material do
 // autor: linha do tempo (ordem e datas) + resumo (linhas e profundidade) +
-// versículo da semana + os espaços de reflexão dele.
+// versículo da semana + os espaços de reflexão dele. A história corre por
+// etapas; o versículo de cada semana entra depois do item em que o texto acontece.
 
 export const OVERVIEW_EPISODE_ID = "visao-geral"
 const pad = (n: number) => String(n).padStart(2, "0")
@@ -18,7 +21,7 @@ function depthSteps(lines: { id: string; stageLine?: string; pendingFact?: strin
     .map((e) => ({ id: e.id, label: "Do resumo", text: e.stageLine! }))
 }
 
-function slotScene(slot: ReflectionSlot, week?: number): SceneInput {
+function slotScene(slot: ReflectionSlot, week?: number, etapa?: number): SceneInput {
   const filled = isFilled(slot)
   const role = slot.position.kind === "abertura" ? "abertura" : slot.position.kind === "conclusao" ? "conclusao" : "reflexao"
   return {
@@ -31,7 +34,7 @@ function slotScene(slot: ReflectionSlot, week?: number): SceneInput {
     illumination: 0.5,
     audiencePrompt: filled ? slot.pergunta : undefined,
     reflection: { prompts: [slot.pergunta ?? "Pausa"] },
-    overview: { role, week, slotId: slot.id, stageLine: slot.pergunta },
+    overview: { role, week, etapa, slotId: slot.id, stageLine: slot.pergunta },
     presenterCue: "pausa",
     estimatedSeconds: 30,
   }
@@ -40,58 +43,32 @@ function slotScene(slot: ReflectionSlot, week?: number): SceneInput {
 const slotFor = (pred: (s: ReflectionSlot) => boolean) =>
   reflectionSlots.filter((s) => s.scope !== "jogo" && pred(s))
 
-function weekScenes(week: number, title: string): SceneInput[] {
-  const intro = weekIntroExcerpts(week).filter((e) => !e.pendingFact)
-  const opening: SceneInput = {
-    id: `semana-${pad(week)}`,
-    type: "cinematic_intro",
-    title: `Semana ${week} · ${title}`,
-    perspective: "historical_observer",
-    visual: "timeline",
-    fxCue: "stars",
-    illumination: 0.4,
-    audiencePrompt: `Semana ${week}: ${title}`,
-    overview: { role: "abertura", week, stageLine: intro.find((e) => e.stageLine)?.stageLine },
-    steps: depthSteps(intro.slice(1)),
-    presenterCue: "historia",
-    estimatedSeconds: 30,
-  }
+/** A ordem das pistas no fio do plano (uma por semana, depois do último versículo dela). */
+const clueOrder = [...new Set(prdMoments.filter((p) => p.refIndex === getWeek(p.week)!.memoryVerse.length - 1).map((p) => p.week))]
+const clueNumber = (week: number) => clueOrder.indexOf(week) + 1
 
-  const itemScenes: SceneInput[] = itemsOfWeek(week).map((item) => {
-    const main = stageLineForItem(item.id)
-    const others = excerptsForItem(item.id).filter((e) => e.id !== main?.id)
-    return {
-      id: `item-${item.id}`,
-      type: "historical_context",
-      title: item.label,
-      perspective: "historical_observer",
-      visual: "timeline",
-      illumination: 0.55,
-      overview: { role: "item", week, itemId: item.id, stageLine: main?.stageLine },
-      steps: depthSteps(others),
-      presenterCue: "historia",
-      estimatedSeconds: 15,
-    }
-  })
-
-  const verse: SceneInput = {
-    id: `versiculo-${pad(week)}`,
+function verseScene(week: number, refIndex: number, etapa: number, knot: number): SceneInput {
+  const w = getWeek(week)!
+  return {
+    id: w.memoryVerse.length > 1 ? `versiculo-${pad(week)}-${refIndex + 1}` : `versiculo-${pad(week)}`,
     type: "presenter_pause",
-    title: `Semana ${week} · versículo para memorizar`,
+    title: `Versículo do plano · ${formatRef(w.memoryVerse[refIndex], "long")}`,
     perspective: "investigator",
     visual: "seed-thread",
     fxCue: "seed-thread",
     illumination: 0.25,
-    audiencePrompt: "Guarde este versículo. A pista da semana chega em seguida.",
-    overview: { role: "versiculo", week },
+    audiencePrompt: "Guarde este versículo.",
+    overview: { role: "versiculo", week, refIndex, etapa, knot },
     presenterCue: "conexao",
-    estimatedSeconds: 60,
+    estimatedSeconds: 50,
   }
+}
 
-  const clue: SceneInput = {
+function clueScene(week: number, etapa: number): SceneInput {
+  return {
     id: `pista-${pad(week)}`,
     type: "evidence_unlock",
-    title: `Semana ${week} · a pista`,
+    title: `Pista ${clueNumber(week)} do plano`,
     perspective: "investigator",
     visual: "sealed-scroll",
     fxCue: "seal",
@@ -99,33 +76,84 @@ function weekScenes(week: number, title: string): SceneInput[] {
     stage: { showRefsAfterRelease: true },
     audiencePrompt: "Sua pista será aberta pelo apresentador.",
     releases: weekEvidenceId(week),
-    overview: { role: "pista", week },
+    overview: { role: "pista", week, etapa },
     presenterCue: "conexao",
     estimatedSeconds: 25,
   }
-
-  const pauses = slotFor((s) => s.position.kind === "semana" && s.position.week === week).map((s) => slotScene(s, week))
-  return [opening, ...itemScenes, verse, clue, ...pauses]
 }
 
-const presentableWeeks = weeks.filter((w) => w.status === "com_material")
+function etapaScenes(etapa: Etapa): SceneInput[] {
+  // Linha de abertura: trechos sem item do resumo. Frases que falam em "semana" ficam de fora da tela.
+  const intro = etapa.intros
+    .map((id) => excerpts.find((e) => e.id === id)!)
+    .filter((e) => !e.pendingFact && !/semana/i.test(e.stageLine ?? ""))
+  const lead = intro.find((e) => e.stageLine)
+  const opening: SceneInput = {
+    id: `etapa-${pad(etapa.n)}`,
+    type: "cinematic_intro",
+    title: `Etapa ${etapa.n} · ${etapa.title}`,
+    perspective: "historical_observer",
+    visual: "timeline",
+    fxCue: "stars",
+    illumination: 0.4,
+    audiencePrompt: `Etapa ${etapa.n}: ${etapa.title}`,
+    overview: { role: "abertura", etapa: etapa.n, stageLine: lead?.stageLine },
+    steps: depthSteps(intro.filter((e) => e !== lead)),
+    presenterCue: "historia",
+    estimatedSeconds: 25,
+  }
+
+  const scenes: SceneInput[] = [opening]
+  const cluesHere: number[] = []
+  for (const item of itemsOfEtapa(etapa.n)) {
+    const main = stageLineForItem(item.id)
+    const others = excerptsForItem(item.id).filter((e) => e.id !== main?.id)
+    scenes.push({
+      id: `item-${item.id}`,
+      type: "historical_context",
+      title: item.label,
+      perspective: "historical_observer",
+      visual: "timeline",
+      illumination: 0.55,
+      overview: { role: "item", week: item.week, etapa: etapa.n, itemId: item.id, stageLine: main?.stageLine },
+      steps: depthSteps(others),
+      presenterCue: "historia",
+      estimatedSeconds: 15,
+    })
+    for (const p of prdMoments.filter((m) => m.etapa === etapa.n && m.afterItemId === item.id)) {
+      scenes.push(verseScene(p.week, p.refIndex, etapa.n, p.knot))
+      if (p.refIndex === getWeek(p.week)!.memoryVerse.length - 1) {
+        scenes.push(clueScene(p.week, etapa.n))
+        cluesHere.push(p.week)
+      }
+    }
+  }
+  // Espaços do autor (C&N e revelação pessoal) das semanas cuja pista abriu nesta etapa.
+  const pauses = cluesHere.flatMap((week) => slotFor((s) => s.position.kind === "semana" && s.position.week === week).map((s) => slotScene(s, week, etapa.n)))
+  return [...scenes, ...pauses]
+}
 
 const scenes: SceneInput[] = [
   ...slotFor((s) => s.position.kind === "abertura").map((s) => slotScene(s)),
-  ...presentableWeeks.flatMap((w) => weekScenes(w.week, w.title)),
+  ...presentableEtapas.flatMap(etapaScenes),
   ...slotFor((s) => s.position.kind === "conclusao").map((s) => slotScene(s)),
 ]
 
-const evidence: EvidenceInput[] = presentableWeeks.map((w) => ({
-  id: weekEvidenceId(w.week),
-  title: `Semana ${w.week} · ${w.title}`,
-  category: "promessa",
-  actId: w.actId,
-  refs: w.memoryVerse,
-  lockedHint: `O versículo da semana ${w.week}`,
-  connection: { primary: "tema_redentivo", basis: w.memoryVerse },
-  showClassification: false,
-}))
+const presentableWeeks = weeks.filter((w) => w.status === "com_material")
+
+const evidence: EvidenceInput[] = clueOrder.map((week) => {
+  const w = getWeek(week)!
+  return {
+    id: weekEvidenceId(week),
+    title: `Pista ${clueNumber(week)} do plano`,
+    category: "promessa",
+    actId: w.actId,
+    refs: w.memoryVerse,
+    lockedHint: `Abre depois do versículo ${formatRefs(w.memoryVerse, "long")}`,
+    connection: { primary: "tema_redentivo", basis: w.memoryVerse },
+    showClassification: false,
+  }
+})
 
 export const overviewEpisode: EpisodeInput = {
   id: OVERVIEW_EPISODE_ID,
@@ -137,8 +165,8 @@ export const overviewEpisode: EpisodeInput = {
   subtitle: "A partir dos resumos e linhas do tempo do autor",
   period: { label: "± 4000 a.C. em diante", approximate: false, debated: false },
   references: presentableWeeks.flatMap((w) => w.memoryVerse),
-  theme: "Visão geral das semanas da DBS",
-  humanQuestion: `Semanas ${presentableWeeks[0]?.week}–${presentableWeeks.at(-1)?.week}`,
+  theme: "A história da Bíblia contada por etapas",
+  humanQuestion: `Etapas ${presentableEtapas[0]?.n}–${presentableEtapas.at(-1)?.n}`,
   authorSummary: { status: "em_revisao", source: "content/sources/dbs-2026 (resumos e linhas do tempo)" },
   manualRequirement: { status: "em_revisao", note: "Apresentação Visão Geral da Bíblia (Manual 11S): 30–45 min." },
   reviewStatus: "em_revisao",

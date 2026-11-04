@@ -10,6 +10,7 @@ import { getReleasedSynthesis } from "@/content/released"
 import { excerptsForItem } from "@/content/overview"
 import { getSlot, isFilled } from "@/content/reflections"
 import { getReflectionNotes } from "@/content/private/reflections"
+import { RubricChecklist } from "@/features/prep/RubricChecklist"
 import { authorTaskLinks } from "@/lib/author-sources"
 import { presenterUnlocked } from "@/lib/presenter-access"
 
@@ -58,6 +59,7 @@ export default async function PrepPage({ searchParams }: Props) {
           ))}
         </nav>
       </div>
+      {seq.id === "visao-geral" && <RubricChecklist />}
       <ol className="space-y-4">
         {sequenceScenes(seq.id).map((scene, i) => {
           const notes = getPresenterNotes(scene.id)

@@ -4,6 +4,7 @@ import { AnimatePresence, LayoutGroup, motion } from "motion/react"
 import { useMemo } from "react"
 import { ITEM_COLORS, ItemArt } from "@/components/art/ItemArt"
 import { getCharacter } from "@/content/characters"
+import { getEtapa, prdMoments, type Etapa } from "@/content/etapas"
 import { formatSpan, getItem, getWeek } from "@/content/overview"
 import type { TimelineWeek } from "@/content/overview/schema"
 import { formatRef, formatRefs } from "@/content/refs"
@@ -11,7 +12,8 @@ import type { OverviewView } from "@/domain/projection"
 import { ParticleField } from "@/fx/ParticleField"
 import { SplitReveal } from "@/fx/SplitReveal"
 import { useFx } from "@/fx/useFx"
-import { BibleTimeline, WeekStrip } from "../timeline/BibleTimeline"
+import { BibleTimeline, EtapaStrip } from "../timeline/BibleTimeline"
+import { PlanThread } from "./PlanThread"
 
 /**
  * Telão da Visão Geral: a linha do tempo é o palco. Em cada item, a
@@ -21,6 +23,7 @@ export function OverviewStage({ overview }: { overview: OverviewView }) {
   const fx = useFx()
   const revealed = useMemo(() => new Set(overview.revealedItemIds), [overview.revealedItemIds])
   const week = overview.week ? getWeek(overview.week) : undefined
+  const etapa = overview.etapa ? getEtapa(overview.etapa) : undefined
   const item = overview.itemId ? getItem(overview.itemId) : undefined
   const line = overview.depth.at(-1) ?? overview.stageLine
   const skin = item?.characterId && overview.spotlightSkinId ? getCharacter(item.characterId)?.skin.find((s) => s.id === overview.spotlightSkinId) : undefined
@@ -31,18 +34,18 @@ export function OverviewStage({ overview }: { overview: OverviewView }) {
       <ParticleField preset="stars" density={0.5} intensity={0.35} />
 
       <LayoutGroup>
-        {week && (overview.role === "abertura" || overview.role === "item") && (
+        {etapa && (overview.role === "abertura" || overview.role === "item") && (
           <motion.div
             className="absolute inset-x-0 bottom-0 top-[6cqh]"
             animate={{ opacity: item ? 0.32 : 1, filter: item ? "blur(1.5px)" : "blur(0px)" }}
             transition={{ duration: fx.motion ? 0.8 : 0 }}
           >
-            <BibleTimeline week={week.week} revealed={revealed} focusId={item?.id} spotlightId={item?.id} showTitle={!item} />
+            <BibleTimeline etapa={etapa.n} revealed={revealed} focusId={item?.id} spotlightId={item?.id} showTitle={!item} />
           </motion.div>
         )}
 
         <div className="absolute inset-x-[3cqw] top-[1.6cqh]">
-          <WeekStrip current={overview.week} />
+          <EtapaStrip current={overview.etapa} />
         </div>
 
         <AnimatePresence mode="popLayout">
@@ -102,21 +105,21 @@ export function OverviewStage({ overview }: { overview: OverviewView }) {
         </AnimatePresence>
       </LayoutGroup>
 
-      {overview.role === "abertura" && week && (
+      {overview.role === "abertura" && etapa && (
         <motion.div
           className="absolute inset-x-0 bottom-[3cqh] mx-auto max-w-[70cqw] rounded-[2cqw] bg-night/70 px-[3cqw] py-[1.6cqh] text-center backdrop-blur"
           initial={fx.motion ? { opacity: 0, y: 20 } : false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
         >
-          <p className="text-[1.6cqw] uppercase tracking-[0.4em]" style={{ color: ITEM_COLORS[week.color] }}>
-            Semana {week.week}
+          <p className="text-[1.6cqw] uppercase tracking-[0.4em]" style={{ color: ITEM_COLORS[etapa.color] }}>
+            Etapa {etapa.n}
           </p>
           {line && <p className="mt-[0.6cqh] font-display text-[2.6cqw] leading-snug text-parchment">{line}</p>}
         </motion.div>
       )}
 
-      {overview.role === "abertura" && !week && (
+      {overview.role === "abertura" && !etapa && (
         <div className="absolute inset-0 grid place-items-center text-center">
           <div>
             <p className="text-[1.4cqw] uppercase tracking-[0.5em] text-gold">Visão Geral da Bíblia</p>
@@ -127,7 +130,7 @@ export function OverviewStage({ overview }: { overview: OverviewView }) {
         </div>
       )}
 
-      {overview.role === "versiculo" && week && <StageVerse week={week} />}
+      {overview.role === "versiculo" && week && <StageVerse week={week} refIndex={overview.refIndex ?? 0} etapa={etapa} knot={overview.knot} />}
 
       {(overview.role === "reflexao" || overview.role === "conclusao") && (
         <div className="absolute inset-0 grid place-items-center px-[10cqw] text-center">
@@ -142,29 +145,24 @@ export function OverviewStage({ overview }: { overview: OverviewView }) {
   )
 }
 
-/** Versículo para memorizar (NAA conferida): texto grande e referência. Nunca o PRD. */
-function StageVerse({ week }: { week: TimelineWeek }) {
+/** Versículo para memorizar (NAA conferida): texto grande, referência e o fio do plano. Nunca a palavra PRD. */
+function StageVerse({ week, refIndex, etapa, knot }: { week: TimelineWeek; refIndex: number; etapa?: Etapa; knot?: number }) {
   const fx = useFx()
-  const length = (week.memoryVerseText ?? []).join(" ").length
+  const text = week.memoryVerseText?.[refIndex]
+  const length = text?.length ?? 0
   const size = length > 260 ? "text-[2.4cqw]" : length > 160 ? "text-[3cqw]" : "text-[3.6cqw]"
   return (
     <div className="absolute inset-x-[8cqw] bottom-[6cqh] top-[10cqh] flex flex-col items-center justify-center gap-[3cqh] text-center">
-      <p className="text-[1.6cqw] uppercase tracking-[0.4em]" style={{ color: ITEM_COLORS[week.color] }}>
-        Semana {week.week} · versículo para memorizar
+      <p className="text-[1.6cqw] uppercase tracking-[0.4em]" style={{ color: ITEM_COLORS[etapa?.color ?? week.color] }}>
+        Versículo para memorizar
       </p>
-      {week.memoryVerse.map((r, i) => (
-        <motion.figure
-          key={i}
-          initial={fx.motion ? { opacity: 0, y: 16 } : false}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 + i * 0.6 }}
-        >
-          {week.memoryVerseText?.[i] && <blockquote className={`font-display leading-snug text-parchment ${size}`}>“{week.memoryVerseText[i]}”</blockquote>}
-          <figcaption className="mt-[1.4cqh] text-[2.2cqw] text-gold-bright">
-            {formatRef(r, "long")} <span className="text-mist">(NAA)</span>
-          </figcaption>
-        </motion.figure>
-      ))}
+      <motion.figure initial={fx.motion ? { opacity: 0, y: 16 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}>
+        {text && <blockquote className={`font-display leading-snug text-parchment ${size}`}>“{text}”</blockquote>}
+        <figcaption className="mt-[1.4cqh] text-[2.2cqw] text-gold-bright">
+          {formatRef(week.memoryVerse[refIndex], "long")} <span className="text-mist">(NAA)</span>
+        </figcaption>
+      </motion.figure>
+      {knot && <PlanThread current={knot} total={prdMoments.length} className="w-[56cqw]" />}
     </div>
   )
 }

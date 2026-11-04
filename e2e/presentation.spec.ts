@@ -26,21 +26,30 @@ test("demonstração local: a linha do tempo conduz e a pista da semana só abre
   await expect(projector.getByText("1 pessoa conectada")).toBeVisible()
 
   await host.getByRole("button", { name: /Começar a apresentação/ }).click()
-  await gotoScene(host, /Semana 1 · Origens/)
-  await expect(projector.getByText("Origens e Cosmovisão").first()).toBeVisible()
+  await gotoScene(host, /Etapa 1 · O começo/)
+  await expect(projector.getByText("O começo").first()).toBeVisible()
+  await expect(projector.locator("[data-surface=projector]")).not.toContainText(/Semana \d/)
 
   await gotoScene(host, /^\d+\s*Criação/)
   const stage = projector.locator("[data-surface=projector]")
   await expect(stage).toContainText("Deus cria e organiza, de forma esplêndida, todas as coisas.")
   await expect(phone.getByRole("heading", { name: "Criação" })).toBeVisible()
 
-  // O versículo (NAA) é público: telão e celular mostram o texto; o PRD não.
-  await gotoScene(host, /Semana 1 · versículo para/)
+  // O versículo (NAA) é público: telão e celular mostram o texto; o parágrafo do PRD não.
+  await gotoScene(host, /Versículo do plano · Gênesis 3:15/)
   await expect(stage).toContainText("Porei inimizade entre você e a mulher")
   await expect(phone.getByText(/Porei inimizade entre você e a mulher/)).toBeVisible()
+  await expect(phone.getByText("PRD · Plano Redentor de Deus")).toBeVisible()
   await expect(stage).not.toContainText(AUTHOR_PRD)
+  await expect(stage).not.toContainText(FORBIDDEN)
+  // No painel, o lembrete revela uma palavra por clique e depois tudo.
+  const reminder = host.getByText(/Lembrete do versículo/).locator("..")
+  await host.getByRole("button", { name: /Lembrar o versículo/ }).click()
+  await expect(reminder.locator("span.text-parchment")).toHaveCount(1)
+  await host.getByRole("button", { name: "Mostrar tudo" }).click()
+  await expect(host.getByRole("button", { name: /Lembrar o versículo/ })).toBeDisabled()
 
-  await gotoScene(host, /Semana 1 · a pista/)
+  await gotoScene(host, /Pista 1 do plano/)
   await expect(phone.getByText("Pista selada").first()).toBeVisible()
   await expect(phone.locator("body")).not.toContainText(AUTHOR_PRD)
   await host.getByRole("button", { name: /Liberar pista/ }).click()
@@ -71,7 +80,7 @@ test.describe("ao vivo com Supabase", () => {
     await gotoScene(host, /^\d+\s*Abraão/)
     for (const p of phones) await expect(p.getByRole("heading", { name: "Abraão" })).toBeVisible({ timeout: 10_000 })
 
-    await gotoScene(host, /Semana 1 · a pista/)
+    await gotoScene(host, /Pista 1 do plano/)
     const before = await phones[0].evaluate(async (c) => (await fetch(`/api/rooms/${c}/audience`)).text(), code)
     expect(before).not.toContain(AUTHOR_PRD)
     await host.getByRole("button", { name: /Liberar pista/ }).click()

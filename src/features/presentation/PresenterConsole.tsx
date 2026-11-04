@@ -2,6 +2,7 @@
 
 import {
   BarChart3,
+  BookOpenText,
   ChevronLeft,
   ChevronRight,
   Eye,
@@ -27,7 +28,9 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { getEvidence, sequenceScenes } from "@/content"
 import { getCharacter } from "@/content/characters"
-import { getItem } from "@/content/overview"
+import { getEtapa } from "@/content/etapas"
+import { getItem, getWeek } from "@/content/overview"
+import { formatRef } from "@/content/refs"
 import { ConfirmDialog } from "@/components/app/ConfirmDialog"
 import { ExitLink } from "@/components/app/ExitLink"
 import { ConnectionStatus } from "@/components/story/ConnectionStatus"
@@ -80,6 +83,23 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
   const counts = poll ? tally(pollState?.votes ?? {}, poll) : null
   const participants = state ? Object.keys(state.participants).length : 0
   const itemCharacter = scene?.overview?.itemId ? getCharacter(getItem(scene.overview.itemId)?.characterId ?? "") : undefined
+  const verse = useMemo(() => {
+    const o = scene?.overview
+    if (o?.role !== "versiculo" || !o.week) return null
+    const w = getWeek(o.week)
+    const text = w?.memoryVerseText?.[o.refIndex ?? 0]
+    return text && w ? { words: text.split(/\s+/), ref: formatRef(w.memoryVerse[o.refIndex ?? 0], "long") } : null
+  }, [scene])
+  // Lembrete do versículo: só no painel, uma palavra por clique (o público vê o texto inteiro).
+  const [verseShown, setVerseShown] = useState({ sceneId: "", count: 0 })
+  const shownWords = verseShown.sceneId === scene?.id ? verseShown.count : 0
+  const revealVerse = useCallback(
+    (all: boolean) => {
+      if (!scene || !verse) return
+      setVerseShown((v) => ({ sceneId: scene.id, count: all ? verse.words.length : Math.min(verse.words.length, (v.sceneId === scene.id ? v.count : 0) + 1) }))
+    },
+    [scene, verse],
+  )
 
   const send = useCallback(
     async (cmd: HostCommand) => {
@@ -101,13 +121,14 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
       else if (k === "arrowleft") void send({ type: "prev" })
       else if (k === "p") void send({ type: state.paused ? "resume" : "pause" })
       else if (k === "v" && poll) void send({ type: pollState?.status === "open" ? "close_poll" : "open_poll", pollId: poll.id })
+      else if (k === "v" && verse) revealVerse(e.shiftKey)
       else if (k === "r" && poll && pollState) void send({ type: pollState.resultsVisible ? "hide_results" : "show_results", pollId: poll.id })
       else if (k === "l" && scene?.releases) void send({ type: "release", evidenceId: scene.releases })
       else if (k === "d" && scene?.steps && state.step < scene.steps.length) void send({ type: "step", delta: 1 })
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [state, poll, pollState, scene, send])
+  }, [state, poll, pollState, scene, send, verse, revealVerse])
 
   if (!state) {
     return <p className="p-8 text-mist" role="status">Carregando a sala…</p>
@@ -265,6 +286,32 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
                 )}
               </div>
 
+              {verse && (
+                <div className="space-y-3 rounded-2xl border border-gold/30 bg-ink p-4">
+                  <p className="text-xs uppercase tracking-[0.25em] text-gold">Lembrete do versículo · {verse.ref} · só você vê</p>
+                  <p className="min-h-[3.5rem] font-display text-2xl leading-snug" aria-live="polite">
+                    {verse.words.map((w, i) => (
+                      <span key={i} className={i < shownWords ? "text-parchment" : "rounded bg-mist/15 text-transparent"}>
+                        {w}{" "}
+                      </span>
+                    ))}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="lg" className="h-12" disabled={shownWords >= verse.words.length} onClick={() => revealVerse(false)}>
+                      <BookOpenText /> Lembrar o versículo
+                    </Button>
+                    <Button variant="outline" size="lg" className="h-12" disabled={shownWords >= verse.words.length} onClick={() => revealVerse(true)}>
+                      Mostrar tudo
+                    </Button>
+                    {shownWords > 0 && (
+                      <Button variant="ghost" size="lg" className="h-12" onClick={() => setVerseShown({ sceneId: scene.id, count: 0 })}>
+                        Esconder
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {counts && (
                 <div className="rounded-2xl border border-border bg-ink p-4">
                   <p className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-mist">
@@ -329,7 +376,7 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
           )}
 
           <p className="text-xs text-mist">
-            Atalhos: → ou espaço avança · ← volta · D aprofunda · P pausa · V abre/fecha votação · R revela resultado · L libera pista
+            Atalhos: → ou espaço avança · ← volta · D aprofunda · P pausa · V abre/fecha votação ou lembra o versículo (Shift+V: tudo) · R revela resultado · L libera pista
           </p>
         </div>
 
@@ -342,10 +389,10 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
               {scenes.map((s, i) => {
                 const SCue = s.presenterCue ? CUE_ICON[s.presenterCue] : null
                 const spent = state.timing.sceneMs[s.id]
-                const newWeek = s.overview?.week !== undefined && s.overview.week !== scenes[i - 1]?.overview?.week
+                const newEtapa = s.overview?.etapa !== undefined && s.overview.etapa !== scenes[i - 1]?.overview?.etapa
                 return (
                   <li key={s.id}>
-                    {newWeek && <p className="px-3 pb-1 pt-3 text-[0.65rem] uppercase tracking-[0.3em] text-gold">Semana {s.overview!.week}</p>}
+                    {newEtapa && <p className="px-3 pb-1 pt-3 text-[0.65rem] uppercase tracking-[0.3em] text-gold">Etapa {s.overview!.etapa} · {getEtapa(s.overview!.etapa!)?.title}</p>}
                     <button
                       onClick={() => state.status === "running" && send({ type: "goto", index: i })}
                       disabled={state.status !== "running"}

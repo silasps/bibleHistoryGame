@@ -5,23 +5,26 @@ import { useState } from "react"
 import { getCharacter } from "@/content/characters"
 import { CharacterCard } from "../characters/CharacterCard"
 import { ITEM_COLORS, ItemArt } from "@/components/art/ItemArt"
+import { getEtapa, prdMoments } from "@/content/etapas"
 import { formatSpan, getItem, getWeek } from "@/content/overview"
 import { formatRef } from "@/content/refs"
 import type { OverviewView } from "@/domain/projection"
 import { useFx } from "@/fx/useFx"
-import { WeekStrip } from "../timeline/BibleTimeline"
+import { EtapaStrip } from "../timeline/BibleTimeline"
+import { PlanThread } from "./PlanThread"
 
 /** O item da linha do tempo no celular: a mesma imagem do telão, com a linha do resumo. */
 export function OverviewPhoneCard({ overview }: { overview: OverviewView }) {
   const fx = useFx()
   const item = overview.itemId ? getItem(overview.itemId) : undefined
   const week = overview.week ? getWeek(overview.week) : undefined
+  const etapa = overview.etapa ? getEtapa(overview.etapa) : undefined
   const character = item?.characterId ? getCharacter(item.characterId) : undefined
   const [showCard, setShowCard] = useState(false)
   return (
     <div className="space-y-4">
       <div className="h-8 [container-type:size]">
-        <WeekStrip current={overview.week} className="h-full" />
+        <EtapaStrip current={overview.etapa} className="h-full" />
       </div>
       {item ? (
         <motion.article
@@ -54,30 +57,49 @@ export function OverviewPhoneCard({ overview }: { overview: OverviewView }) {
           )}
         </motion.article>
       ) : week && overview.role === "versiculo" ? (
-        <div className="glass space-y-5 rounded-3xl p-5 text-center">
-          <p className="text-xs uppercase tracking-[0.35em]" style={{ color: ITEM_COLORS[week.color] }}>
-            Semana {week.week} · versículo para memorizar
-          </p>
-          {week.memoryVerse.map((r, i) => (
-            <motion.figure key={i} initial={fx.motion ? { opacity: 0, y: 12 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.4 }}>
-              {week.memoryVerseText?.[i] && <blockquote className="font-display text-2xl leading-snug text-parchment">“{week.memoryVerseText[i]}”</blockquote>}
-              <figcaption className="mt-2 text-sm text-gold">
-                {formatRef(r, "long")} <span className="text-mist">(NAA)</span>
-              </figcaption>
-            </motion.figure>
-          ))}
-        </div>
-      ) : week ? (
+        <PhoneVerse overview={overview} />
+      ) : etapa && overview.role === "abertura" ? (
         <div className="glass rounded-3xl p-5 text-center">
-          <p className="text-xs uppercase tracking-[0.35em]" style={{ color: ITEM_COLORS[week.color] }}>
-            Semana {week.week}
+          <p className="text-xs uppercase tracking-[0.35em]" style={{ color: ITEM_COLORS[etapa.color] }}>
+            Etapa {etapa.n}
           </p>
-          <h2 className="mt-1 font-display text-3xl text-parchment">{week.title}</h2>
+          <h2 className="mt-1 font-display text-3xl text-parchment">{etapa.title}</h2>
           {overview.stageLine && <p className="mt-2 text-mist">{overview.stageLine}</p>}
         </div>
       ) : overview.stageLine ? (
         <p className="glass rounded-3xl p-5 text-center font-display text-2xl text-gold-bright">{overview.stageLine}</p>
       ) : null}
     </div>
+  )
+}
+
+/** Momento do PRD no celular: o versículo inteiro, marcado, e o nó no fio do plano. */
+function PhoneVerse({ overview }: { overview: OverviewView }) {
+  const fx = useFx()
+  const week = getWeek(overview.week!)!
+  const i = overview.refIndex ?? 0
+  const text = week.memoryVerseText?.[i]
+  return (
+    <motion.div
+      initial={fx.motion ? { opacity: 0, y: 12 } : false}
+      animate={{ opacity: 1, y: 0 }}
+      className="glass space-y-5 rounded-3xl border border-gold/40 p-5 text-center shadow-[0_0_40px_rgba(216,169,72,0.18)]"
+    >
+      <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-gold-bright">
+        <span className="size-2 rounded-full bg-gold-bright shadow-[0_0_10px_#f4d27a]" aria-hidden /> PRD · Plano Redentor de Deus
+      </p>
+      <figure>
+        {text && <blockquote className="font-display text-2xl leading-snug text-parchment">“{text}”</blockquote>}
+        <figcaption className="mt-2 text-sm text-gold">
+          {formatRef(week.memoryVerse[i], "long")} <span className="text-mist">(NAA)</span>
+        </figcaption>
+      </figure>
+      {overview.knot && (
+        <div className="space-y-2">
+          <PlanThread current={overview.knot} total={prdMoments.length} className="w-full" />
+          <p className="text-sm text-sand">O plano, lembrado pela {overview.knot}ª vez</p>
+        </div>
+      )}
+    </motion.div>
   )
 }

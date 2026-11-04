@@ -4,12 +4,13 @@ import { Check } from "lucide-react"
 import { motion } from "motion/react"
 import { useMemo } from "react"
 import { ITEM_COLORS, ItemArt } from "@/components/art/ItemArt"
+import { etapas, getEtapa } from "@/content/etapas"
 import { formatSpan, formatYear, getWeek } from "@/content/overview"
 import { useFx } from "@/fx/useFx"
 import { cn } from "@/lib/utils"
-import { layoutWeek, type TimelineCard } from "./layout"
+import { layoutEtapa, layoutWeek, type TimelineCard } from "./layout"
 
-// Linha do tempo de uma semana, no estilo das linhas do tempo do autor:
+// Linha do tempo de uma semana ou de uma etapa, no estilo das linhas do tempo do autor:
 // eixo com anos, cartões com ilustração, rótulo e data na cor do item,
 // ligados ao eixo por linhas tracejadas.
 
@@ -17,7 +18,9 @@ const AXIS_Y = 54
 const LANE_Y: Record<TimelineCard["side"], [number, number]> = { acima: [37, 20], abaixo: [71, 88] }
 
 interface Props {
-  week: number
+  /** Trecho da linha do tempo: uma etapa (apresentação) ou uma semana (jogo). */
+  week?: number
+  etapa?: number
   variant?: "stage" | "trail"
   /** Item em destaque (brilha; os demais esmaecem). */
   focusId?: string
@@ -32,17 +35,18 @@ interface Props {
   className?: string
 }
 
-export function BibleTimeline({ week, variant = "stage", focusId, revealed, spotlightId, visited, onSelect, showTitle = true, className }: Props) {
-  const layout = useMemo(() => layoutWeek(week, variant === "trail" ? 12 : 11), [week, variant])
-  const info = getWeek(week)
+export function BibleTimeline({ week, etapa, variant = "stage", focusId, revealed, spotlightId, visited, onSelect, showTitle = true, className }: Props) {
+  const base = variant === "trail" ? 12 : 11
+  const layout = useMemo(() => (etapa !== undefined ? layoutEtapa(etapa, base) : layoutWeek(week ?? 1, base)), [etapa, week, base])
+  const title = etapa !== undefined ? getEtapa(etapa)?.title : getWeek(week ?? 1)?.title
   const fx = useFx()
   const W = layout.cardWidth
 
   return (
-    <div className={cn("relative h-full w-full select-none [container-type:size]", className)} data-week={week}>
-      {showTitle && info && (
+    <div className={cn("relative h-full w-full select-none [container-type:size]", className)} data-week={week} data-etapa={etapa}>
+      {showTitle && title && (
         <div className="absolute inset-x-0 top-[1.5cqh] text-center">
-          <p className="font-display text-[3.6cqh] font-semibold tracking-wide text-parchment">{info.title}</p>
+          <p className="font-display text-[3.6cqh] font-semibold tracking-wide text-parchment">{title}</p>
         </div>
       )}
 
@@ -163,6 +167,29 @@ export function WeekStrip({ current, className }: { current?: number; className?
             title={`Semana ${n} · ${w.title}${pending ? " (em breve)" : ""}`}
           >
             {n}
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+
+/** Faixa com as etapas da história: onde estamos. As etapas ainda sem material ficam apagadas. */
+export function EtapaStrip({ current, className }: { current?: number; className?: string }) {
+  return (
+    <ol className={cn("flex w-full gap-[0.4%]", className)} aria-label="Etapas da história">
+      {etapas.map((e) => {
+        const active = e.n === current
+        const pending = e.status === "aguardando_material"
+        return (
+          <li
+            key={e.n}
+            className={cn("flex-1 rounded-full py-[0.5cqh] text-center text-[1.4cqh] transition-all", pending ? "opacity-30" : "opacity-90")}
+            style={{ background: active ? ITEM_COLORS[e.color] : `${ITEM_COLORS[e.color]}33`, color: active ? "#05070d" : ITEM_COLORS[e.color] }}
+            aria-current={active ? "step" : undefined}
+            title={`Etapa ${e.n} · ${e.title}${pending ? " (em breve)" : ""}`}
+          >
+            {e.n}
           </li>
         )
       })}

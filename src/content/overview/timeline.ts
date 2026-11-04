@@ -53,7 +53,7 @@ export const ITEMS: TimelineItemInput[] = [
   // ── Semana 2 · Pentateuco ──────────────────────────────────────────────
   { id: "alianca-sinai", week: 2, kind: "evento", label: "A Aliança do Sinai", from: -1445, color: "turquesa", art: "alianca-sinai", refs: [chapters("Exod", 19, 24)] },
   { id: "tabernaculo", week: 2, kind: "evento", label: "Construção do Tabernáculo", from: -1445, color: "dourado", art: "tabernaculo", refs: [chapters("Exod", 25, 40)] },
-  { id: "espioes", week: 2, kind: "evento", label: "Espiões enviados", from: -1445, color: "laranja", art: "espioes", refs: [chapters("Num", 13, 14)] },
+  { id: "espioes", week: 2, kind: "evento", label: "Espiões enviados", from: -1445, seq: 1, color: "laranja", art: "espioes", refs: [chapters("Num", 13, 14)] },
   { id: "peregrinacao", week: 2, kind: "evento", label: "Peregrinação pelo deserto", from: -1446, to: -1406, color: "oliva", art: "peregrinacao", refs: [ref("Num", 14, 33, 34), ref("Num", 33, 1, 2)] },
   { id: "alianca-deuteronomica", week: 2, kind: "evento", label: "A Aliança Deuteronômica", from: -1406, color: "verde", art: "alianca-deuteronomica", refs: [ref("Deut", 28, 1, 14), chapters("Deut", 29, 30)] },
   { id: "uncao-josue", week: 2, kind: "evento", label: "Unção de Josué", from: -1406, color: "ceu", art: "uncao-josue", refs: [ref("Num", 27, 18, 23), ref("Deut", 34, 9)] },
