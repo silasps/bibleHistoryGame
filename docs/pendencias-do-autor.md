@@ -12,7 +12,7 @@ Lista para lembrar, atualizada em 4 de novembro de 2026. O estado ao vivo de cad
   - Semana 3: Fiel mesmo quando não somos (Jz 2:1–2); Inclui na sua herança todo o que nele crê (Js 2:9–14)
   - Semana 4: Generoso para com um coração servo (1Rs 3:12–14); Zeloso para com seu nome
   - Semana 5: Compassivo (Jn 4:11); Soberano (Jn 2:10)
-  - Semana 6: a Task 3 que está na pasta da semana 6 é igual à da semana 5. Falta a da semana 6.
+  - Semana 6: a Task 3 ainda está em andamento (começa como cópia da semana 5).
   - Já estão na tela, como selo, os que você citou na sua fala: santo (Queda), bom e amoroso (dilúvio), protetor e zeloso (José), cuidador da promessa (sarça) e a bondade nas vestes de pele.
 - [ ] **Revelação pessoal**, semanas 1 a 6: espaços `s1-revelacao-pessoal` a `s6-revelacao-pessoal`. O Manual pede “alguma revelação pessoal” e a transformação que você viveu.
 - [ ] **Semanas 7 a 11**: resumo, linha do tempo e texto NAA do versículo, quando chegarem (veja `docs/material-autoral.md`).
