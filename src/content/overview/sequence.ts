@@ -137,6 +137,21 @@ function etapaScenes(etapa: Etapa): SceneInput[] {
         estimatedSeconds: g.seconds,
       })
     }
+    for (const b of etapa.beats.filter((b) => b.afterItemId === item.id)) {
+      const fala = FALAS[b.fala]
+      scenes.push({
+        id: `momento-${b.id}`,
+        type: b.pause ? "presenter_pause" : "historical_context",
+        title: b.label,
+        perspective: "historical_observer",
+        visual: "timeline",
+        illumination: b.pause ? 0.35 : 0.55,
+        overview: { role: "beat", week: item.week, etapa: etapa.n, beatId: b.id, stageLine: fala.stageLine },
+        steps: "steps" in fala ? fala.steps.map((text, i) => ({ id: `${b.id}-${i + 1}`, label: "Da sua fala", text })) : undefined,
+        presenterCue: b.pause ? "pausa" : "historia",
+        estimatedSeconds: b.pause ? 45 : 15,
+      })
+    }
     for (const p of prdMoments.filter((m) => m.etapa === etapa.n && m.afterItemId === item.id)) {
       scenes.push(verseScene(p.week, p.refIndex, etapa.n, p.knot))
       if (p.refIndex === getWeek(p.week)!.memoryVerse.length - 1) {

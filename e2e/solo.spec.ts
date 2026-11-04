@@ -59,7 +59,7 @@ test("jornada da semana 1: itens, dossiê, pista e Arquivo", async ({ page }) =>
   }
   await expect(page).toHaveURL(/\/solo\/semana\/1\/pista$/)
   await page.getByRole("button", { name: /Abrir o selo/ }).click()
-  await expect(page.getByRole("heading", { name: "Semana 1 · Origens e Cosmovisão" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Pista 1 do plano" })).toBeVisible()
 
   await page.getByRole("link", { name: "Sair para o mapa da jornada" }).click()
   await page.waitForURL(/\/solo\?semana=1$/)

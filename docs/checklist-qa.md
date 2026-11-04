@@ -18,6 +18,14 @@ Antes de cada apresentação importante, rode os automáticos e percorra o manua
 - [ ] Arquivo: aba Linha do tempo com o progresso por semana; aba Documentos com as pistas e os dossiês abertos
 - [ ] No celular, a barra ← 3/12 → fica fixa no rodapé
 
+## Etapa 1 jogável (`/solo/etapa/1` e apresentação)
+
+- [ ] Toque em “haja luz” e raspagem dos 7 dias (o botão “Revelar” também funciona); cada dia vira conquista
+- [ ] Jardim: a figura de luz caminha com Adão, se afasta, Eva chega; no solo, o caminho termina nas árvores
+- [ ] Árvore: dá para acertar alvos bons; a 5ª jogada sempre vai no fruto
+- [ ] Queda: o celular escurece e a árvore da vida aparece trancada; depois, as vestes de pele (Gn 3:21), “Fora do jardim” e a semente (Gn 3:15)
+- [ ] Ao vivo: o telão mostra “N pessoas criando” e o contador da árvore; avançar a cena encerra o jogo no celular
+
 ## Episódios “por dentro”
 
 - [ ] Completar Gênesis 1–3 do início ao fim, no celular e no desktop (13 cenas, incluindo “A chave de casa”)
@@ -30,9 +38,12 @@ Antes de cada apresentação importante, rode os automáticos e percorra o manua
 
 ## Apresentação
 
-- [ ] Visão Geral: o telão mostra a linha do tempo da semana, um item por vez, com **uma** linha do resumo; **D** troca para a próxima linha
+- [ ] Visão Geral por etapas: nenhuma tela mostra “Semana N”; o telão mostra a linha do tempo da etapa, um item por vez, com **uma** linha do resumo; **D** troca para a próxima linha
+- [ ] Momentos da sua fala (etapas 2–4): ilustração, referência, a linha e o selo “Caráter de Deus” quando houver; “Quem eles eram” aparece como pausa para refletir
 - [ ] Destaque da skin aparece no telão e a ficha no celular; some ao trocar de item
-- [ ] Versículo da semana: telão, painel e celular mostram o texto NAA e a referência; nenhum mostra o PRD
+- [ ] Versículo do plano: telão e celular mostram o texto NAA, a referência e o fio do plano; o celular marca “PRD · Plano Redentor de Deus”; o telão nunca escreve “PRD”
+- [ ] Painel: “Lembrar o versículo” revela uma palavra por clique (V) e “Mostrar tudo” (Shift+V)
+- [ ] Área de preparação: a folha de notas mostra o que falta e o tempo estimado
 - [ ] Pista da semana: o telão mostra só a referência; o celular recebe o texto do autor depois de “Liberar pista”
 - [ ] Espaços do autor vazios viram pausa só com imagem
 - [ ] Lobby do telão com QR code legível a 5 m e código de 6 letras

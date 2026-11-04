@@ -14,6 +14,7 @@ import { ParticleField } from "@/fx/ParticleField"
 import { SplitReveal } from "@/fx/SplitReveal"
 import { useFx } from "@/fx/useFx"
 import { BibleTimeline, EtapaStrip } from "../timeline/BibleTimeline"
+import { BeatStage } from "./BeatCard"
 import { PlanThread } from "./PlanThread"
 
 /**
@@ -46,13 +47,13 @@ export function OverviewStage({ overview, game }: { overview: OverviewView; game
       <ParticleField preset="stars" density={0.5} intensity={0.35} />
 
       <LayoutGroup>
-        {etapa && (overview.role === "abertura" || overview.role === "item") && (
+        {etapa && (overview.role === "abertura" || overview.role === "item" || overview.role === "beat") && (
           <motion.div
             className="absolute inset-x-0 bottom-0 top-[6cqh]"
-            animate={{ opacity: item ? 0.32 : 1, filter: item ? "blur(1.5px)" : "blur(0px)" }}
+            animate={{ opacity: item || overview.beatId ? 0.32 : 1, filter: item || overview.beatId ? "blur(1.5px)" : "blur(0px)" }}
             transition={{ duration: fx.motion ? 0.8 : 0 }}
           >
-            <BibleTimeline etapa={etapa.n} revealed={revealed} focusId={item?.id} spotlightId={item?.id} showTitle={!item} />
+            <BibleTimeline etapa={etapa.n} revealed={revealed} focusId={item?.id} spotlightId={item?.id} showTitle={!item && !overview.beatId} />
           </motion.div>
         )}
 
@@ -141,6 +142,8 @@ export function OverviewStage({ overview, game }: { overview: OverviewView; game
           </div>
         </div>
       )}
+
+      {overview.role === "beat" && overview.beatId && <BeatStage beatId={overview.beatId} line={line} />}
 
       {overview.role === "versiculo" && week && <StageVerse week={week} refIndex={overview.refIndex ?? 0} etapa={etapa} knot={overview.knot} />}
 

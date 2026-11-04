@@ -8,6 +8,7 @@ Hoje as semanas 1–6 têm material. As semanas 7–11 aparecem como “em breve
 
 | Arquivo | O que guarda |
 | --- | --- |
+| `src/content/etapas/index.ts` e `falas.ts` | As etapas (itens, versículos, minijogos) e as suas falas nos momentos |
 | `src/content/overview/timeline.ts` | `WEEKS` (título, período, versículo para memorizar com o texto NAA, cor, status) e `ITEMS` (eventos e personagens da linha do tempo, com datas do Manual) |
 | `src/content/overview/resumos/semana-0N.ts` | O seu resumo dividido em trechos |
 | `src/content/released/overview.ts` | Parágrafos do PRD — **server-only** |
@@ -48,6 +49,18 @@ Hoje as semanas 1–6 têm material. As semanas 7–11 aparecem como “em breve
    Os testes conferem referências, ids, orçamento de texto do palco, tempo total estimado da apresentação (30–45 min) e se o PRD ficou só no servidor. Depois, abra `/editor/linha-do-tempo` e `/presenter/prep` para revisar.
 
 Se a apresentação passar de 45 minutos estimados com a semana nova, o teste avisa: reduza itens ou trechos de profundidade, ou ajuste as estimativas em `src/content/overview/sequence.ts`.
+
+## Etapas: como a história aparece na tela
+
+A apresentação corre por **etapas**, não por semanas (`src/content/etapas/index.ts`). As semanas continuam nos seus arquivos e na folha de notas da Área de preparação; no telão e no celular só aparecem as etapas.
+
+- **Itens da etapa:** `itemIds` reúne itens das linhas do tempo de semanas diferentes. A ordem é cronológica, a mesma das semanas.
+- **Versículo (PRD):** `prd` diz depois de qual item entra o versículo de cada semana. A pista daquela semana vem logo depois do último versículo dela.
+- **Abertura:** `intros` são os trechos de abertura do resumo (sem item) que abrem a etapa.
+- **Minijogos:** `games` (por enquanto, só na Etapa 1).
+- **Momentos da sua fala:** `beats` são gatilhos visuais depois de um item. O texto de cada um fica em `src/content/etapas/falas.ts`: a sua frase em `text`, a linha da tela em `stageLine` (até 140 caracteres, das suas palavras), linhas extras em `steps` (aparecem com **D**) e o Caráter de Deus em `cn` (vira um selo). Leituras suas que vão além do texto ficam com `kind: "interpretacao"`.
+
+Para uma semana nova (7–11), troque a etapa provisória `semana-N` por uma ou mais etapas com os itens dela.
 
 ## Regras que valem sempre
 

@@ -227,7 +227,7 @@ export const Scene = z
     /** Cena da visão geral (linha do tempo + resumo do autor). */
     overview: z
       .object({
-        role: z.enum(["abertura", "item", "jogo", "versiculo", "pista", "reflexao", "conclusao"]),
+        role: z.enum(["abertura", "item", "jogo", "beat", "versiculo", "pista", "reflexao", "conclusao"]),
         week: z.number().int().optional(),
         /** Etapa da história (é o que aparece na tela; a semana fica interna). */
         etapa: z.number().int().optional(),
@@ -237,6 +237,8 @@ export const Scene = z
         refIndex: z.number().int().min(0).optional(),
         /** Versículo: posição no fio do plano (1 = Gn 3:15). */
         knot: z.number().int().min(1).optional(),
+        /** Momento da fala do autor (src/content/etapas). */
+        beatId: z.string().optional(),
         /** Linha de palco (do resumo do autor ou do espaço de reflexão). */
         stageLine: z.string().max(140).optional(),
       })

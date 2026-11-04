@@ -12,6 +12,7 @@ import { formatRef } from "@/content/refs"
 import type { OverviewView } from "@/domain/projection"
 import { useFx } from "@/fx/useFx"
 import { EtapaStrip } from "../timeline/BibleTimeline"
+import { BeatPhone } from "./BeatCard"
 import { PlanThread } from "./PlanThread"
 
 /** O item da linha do tempo no celular: a mesma imagem do telão, com a linha do resumo. */
@@ -57,6 +58,8 @@ export function OverviewPhoneCard({ overview }: { overview: OverviewView }) {
             )
           )}
         </motion.article>
+      ) : overview.role === "beat" && overview.beatId ? (
+        <BeatPhone beatId={overview.beatId} line={overview.depth.at(-1) ?? overview.stageLine} />
       ) : week && overview.role === "versiculo" ? (
         <PhoneVerse overview={overview} />
       ) : etapa && overview.role === "abertura" ? (

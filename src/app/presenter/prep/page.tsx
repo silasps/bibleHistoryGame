@@ -10,6 +10,8 @@ import { getReleasedSynthesis } from "@/content/released"
 import { excerptsForItem } from "@/content/overview"
 import { getSlot, isFilled } from "@/content/reflections"
 import { getReflectionNotes } from "@/content/private/reflections"
+import { getBeat, getEtapaById } from "@/content/etapas"
+import { FALAS } from "@/content/etapas/falas"
 import { RubricChecklist } from "@/features/prep/RubricChecklist"
 import { authorTaskLinks } from "@/lib/author-sources"
 import { presenterUnlocked } from "@/lib/presenter-access"
@@ -91,6 +93,18 @@ export default async function PrepPage({ searchParams }: Props) {
                   ))}
                 </ul>
               )}
+              {(() => {
+                // A fala do autor deste momento (texto completo, para ensaiar).
+                const id = scene.overview?.beatId ? getBeat(scene.overview.beatId)?.fala : getEtapaById("o-comeco")?.games.find((g) => `jogo-${g.id}` === scene.id)?.fala
+                const fala = id ? FALAS[id] : undefined
+                if (!fala) return null
+                return (
+                  <div className="mt-3 space-y-1 rounded-lg border border-border bg-night/50 p-3 text-sm text-parchment/90">
+                    <p className="text-[0.65rem] uppercase tracking-widest text-sand">Sua fala{fala.kind === "interpretacao" ? " · interpretação sua" : ""}</p>
+                    <p>{fala.text}</p>
+                  </div>
+                )
+              })()}
               {scene.overview?.slotId && (() => {
                 const slot = getSlot(scene.overview.slotId)
                 const week = scene.overview.week

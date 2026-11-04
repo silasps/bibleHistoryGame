@@ -28,7 +28,7 @@ export interface PollView {
 
 /** Cena da visão geral no telão/celular: só dados públicos do material do autor. */
 export interface OverviewView {
-  role: "abertura" | "item" | "jogo" | "versiculo" | "pista" | "reflexao" | "conclusao"
+  role: "abertura" | "item" | "jogo" | "beat" | "versiculo" | "pista" | "reflexao" | "conclusao"
   week?: number
   etapa?: number
   itemId?: string
@@ -37,6 +37,7 @@ export interface OverviewView {
   refIndex?: number
   /** Posição do versículo no fio do plano. */
   knot?: number
+  beatId?: string
   /** Linhas de "profundidade" já mostradas pelo apresentador. */
   depth: string[]
   /** Itens da etapa já visitados (a linha do tempo vai se revelando). */
@@ -134,6 +135,7 @@ function overviewView(state: SessionState, narrative: SessionNarrative): Overvie
     stageLine: o.stageLine,
     refIndex: o.refIndex,
     knot: o.knot,
+    beatId: o.beatId,
     depth: (scene.steps ?? []).slice(0, state.step).map((st) => st.text),
     revealedItemIds,
     spotlightSkinId: state.spotlight ?? undefined,

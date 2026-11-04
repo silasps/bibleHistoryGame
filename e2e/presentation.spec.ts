@@ -33,7 +33,8 @@ test("demonstração local: a linha do tempo conduz e a pista da semana só abre
   await gotoScene(host, /^\d+\s*Criação/)
   const stage = projector.locator("[data-surface=projector]")
   await expect(stage).toContainText("Deus cria e organiza, de forma esplêndida, todas as coisas.")
-  await expect(phone.getByRole("heading", { name: "Criação" })).toBeVisible()
+  // Na Criação, o celular vira o minijogo (toque para a luz).
+  await expect(phone.getByRole("button", { name: /haja luz/ })).toBeVisible()
 
   // O versículo (NAA) é público: telão e celular mostram o texto; o parágrafo do PRD não.
   await gotoScene(host, /Versículo do plano · Gênesis 3:15/)

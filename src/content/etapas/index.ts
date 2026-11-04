@@ -31,6 +31,19 @@ export const EtapaGame = z.object({
 })
 export type EtapaGame = z.infer<typeof EtapaGame>
 
+/** Gatilho visual da fala do autor, depois de um item da etapa. */
+export const EtapaBeat = z.object({
+  id: z.string().regex(/^[a-z0-9-]+$/),
+  afterItemId: z.string(),
+  label: z.string().min(1).max(48),
+  fala: z.enum(Object.keys(FALAS) as [FalaId, ...FalaId[]]),
+  /** Ilustração da biblioteca; uma imagem em public/art/items/<id do momento> substitui. */
+  art: z.string(),
+  /** Ponto de reflexão: pausa mais longa, com visual de pausa. */
+  pause: z.boolean().default(false),
+})
+export type EtapaBeat = z.infer<typeof EtapaBeat>
+
 export const Etapa = z.object({
   n: z.number().int().min(1),
   id: z.string().regex(/^[a-z0-9-]+$/),
@@ -42,6 +55,7 @@ export const Etapa = z.object({
   intros: z.array(z.string()).default([]),
   prd: z.array(PrdAnchor).default([]),
   games: z.array(EtapaGame).default([]),
+  beats: z.array(EtapaBeat).default([]),
   /** Semana do Manual de onde vem a etapa, só para as etapas ainda sem material. */
   week: z.number().int().optional(),
 })
@@ -54,22 +68,50 @@ const ETAPAS = z.array(Etapa).parse([
     intros: ["r01-intro"],
     prd: [{ week: 1, afterItemId: "queda" }],
     games: [
-      { id: "criacao", kind: "criacao", max: 8, itemId: "criacao", on: "item", seconds: 90 },
+      { id: "criacao", kind: "criacao", max: 8, itemId: "criacao", on: "item", seconds: 75 },
       { id: "jardim", kind: "jardim", itemId: "adao-eva", on: "item", seconds: 45 },
-      { id: "arvore", kind: "arvore", max: 6, itemId: "adao-eva", on: "depois", title: "Diante da árvore", seconds: 60 },
+      { id: "arvore", kind: "arvore", max: 6, itemId: "adao-eva", on: "depois", title: "Diante da árvore", seconds: 45 },
       { id: "queda", kind: "queda", itemId: "queda", on: "item", seconds: 35 },
       { id: "vestes", kind: "vestes", itemId: "queda", on: "depois", title: "Deus veste o homem", fala: "vestes", seconds: 40 },
       { id: "fora", kind: "fora", itemId: "queda", on: "depois", title: "Fora do jardim", fala: "fora", seconds: 35 },
     ],
   },
-  { n: 2, id: "o-mundo-se-afasta", title: "O mundo se afasta", color: "ceu", status: "com_material", itemIds: ["noe", "diluvio", "babel"] },
-  { n: 3, id: "a-promessa", title: "A promessa", color: "verde", status: "com_material", itemIds: ["abraao", "alianca-abraamica", "isaque", "sacrificio-isaque", "jaco"] },
-  { n: 4, id: "no-egito", title: "No Egito", color: "laranja", status: "com_material", itemIds: ["migracao-egito", "tempo-egito", "moises"], intros: ["r02-intro"] },
+  {
+    n: 2, id: "o-mundo-se-afasta", title: "O mundo se afasta", color: "ceu", status: "com_material",
+    itemIds: ["noe", "diluvio", "babel"],
+    beats: [
+      { id: "bondade-juizo", afterItemId: "diluvio", label: "A bondade de Deus no juízo", fala: "bondade-juizo", art: "diluvio" },
+      { id: "arco-iris", afterItemId: "diluvio", label: "O arco-íris", fala: "arco-iris", art: "diluvio" },
+      { id: "noe-caido", afterItemId: "diluvio", label: "Noé também erra", fala: "noe-caido", art: "noe" },
+    ],
+  },
+  {
+    n: 3, id: "a-promessa", title: "A promessa", color: "verde", status: "com_material",
+    itemIds: ["abraao", "alianca-abraamica", "isaque", "sacrificio-isaque", "jaco"],
+    beats: [
+      { id: "promessa-demora", afterItemId: "alianca-abraamica", label: "A promessa que demora", fala: "promessa-demora", art: "alianca-abraamica" },
+      { id: "doze-filhos", afterItemId: "jaco", label: "Os 12 filhos e José", fala: "doze-filhos", art: "jaco" },
+      { id: "jose-governador", afterItemId: "jaco", label: "José, governador do Egito", fala: "jose-governador", art: "migracao-egito" },
+    ],
+  },
+  {
+    n: 4, id: "no-egito", title: "No Egito", color: "laranja", status: "com_material",
+    itemIds: ["migracao-egito", "tempo-egito", "moises"],
+    beats: [
+      { id: "fome-acolhida", afterItemId: "migracao-egito", label: "A fome e o acolhimento", fala: "fome-acolhida", art: "migracao-egito" },
+      { id: "novo-farao", afterItemId: "tempo-egito", label: "Um novo faraó", fala: "novo-farao", art: "tempo-egito" },
+      { id: "moises-protegido", afterItemId: "moises", label: "Deus protege Moisés", fala: "moises-protegido", art: "moises" },
+      { id: "palacio", afterItemId: "moises", label: "No palácio do faraó", fala: "palacio", art: "moises" },
+      { id: "fuga-midia", afterItemId: "moises", label: "A fuga para Midiã", fala: "fuga-midia", art: "peregrinacao" },
+      { id: "sarca", afterItemId: "moises", label: "A sarça ardente", fala: "sarca", art: "moises" },
+      { id: "identidade", afterItemId: "moises", label: "Quem eles eram", fala: "identidade", art: "tempo-egito", pause: true },
+    ],
+  },
   { n: 5, id: "libertacao", title: "Libertação", color: "carmim", status: "com_material", itemIds: ["exodo"] },
   {
     n: 6, id: "deus-no-meio-do-povo", title: "Deus no meio do povo", color: "dourado", status: "com_material",
     itemIds: ["peregrinacao", "arao", "alianca-sinai", "tabernaculo", "levitico-santidade", "espioes", "alianca-deuteronomica", "uncao-josue", "morte-moises"],
-    intros: ["r02-recapitulacao"],
+    intros: ["r02-intro", "r02-recapitulacao"],
     prd: [{ week: 2, afterItemId: "levitico-santidade" }],
   },
   {
@@ -130,6 +172,13 @@ export function itemsOfEtapa(n: number): TimelineItem[] {
   return (getEtapa(n)?.itemIds ?? []).map((id) => getItem(id)!).sort(compareItems)
 }
 
+export function getBeat(id: string): (EtapaBeat & { etapa: number }) | undefined {
+  for (const e of etapas) {
+    const b = e.beats.find((b) => b.id === id)
+    if (b) return { ...b, etapa: e.n }
+  }
+}
+
 export function etapaOfItem(itemId: string): Etapa | undefined {
   return etapas.find((e) => e.itemIds.includes(itemId))
 }
@@ -151,6 +200,7 @@ export function validateEtapas(): string[] {
       if (placed.has(id)) issues.push(`${id}: está nas etapas ${placed.get(id)} e ${e.n}`)
       placed.set(id, e.n)
     }
+    for (const b of e.beats) if (!e.itemIds.includes(b.afterItemId)) issues.push(`etapa ${e.n}: momento ${b.id} depois de ${b.afterItemId}, que não está na etapa`)
     for (const g of e.games) if (!e.itemIds.includes(g.itemId)) issues.push(`etapa ${e.n}: jogo ${g.id} preso a ${g.itemId}, que não está na etapa`)
     for (const p of e.prd) {
       if (!e.itemIds.includes(p.afterItemId)) issues.push(`etapa ${e.n}: PRD depois de ${p.afterItemId}, que não está na etapa`)
