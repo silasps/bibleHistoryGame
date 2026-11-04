@@ -6,6 +6,7 @@ import { getCharacter } from "@/content/characters"
 import { CharacterCard } from "../characters/CharacterCard"
 import { ITEM_COLORS, ItemArt } from "@/components/art/ItemArt"
 import { getEtapa, prdMoments } from "@/content/etapas"
+import { RELICS } from "@/content/etapas/etapa-1"
 import { formatSpan, getItem, getWeek } from "@/content/overview"
 import { formatRef } from "@/content/refs"
 import type { OverviewView } from "@/domain/projection"
@@ -74,7 +75,7 @@ export function OverviewPhoneCard({ overview }: { overview: OverviewView }) {
 }
 
 /** Momento do PRD no celular: o versículo inteiro, marcado, e o nó no fio do plano. */
-function PhoneVerse({ overview }: { overview: OverviewView }) {
+export function PhoneVerse({ overview }: { overview: OverviewView }) {
   const fx = useFx()
   const week = getWeek(overview.week!)!
   const i = overview.refIndex ?? 0
@@ -99,6 +100,11 @@ function PhoneVerse({ overview }: { overview: OverviewView }) {
           <PlanThread current={overview.knot} total={prdMoments.length} className="w-full" />
           <p className="text-sm text-sand">O plano, lembrado pela {overview.knot}ª vez</p>
         </div>
+      )}
+      {overview.knot === 1 && (
+        <p className="inline-block rounded-full border border-gold/60 bg-night/80 px-4 py-2 text-sm font-semibold text-gold-bright">
+          ✦ Relíquia: {RELICS.semente.label} · {formatRef(RELICS.semente.ref, "long")}
+        </p>
       )}
     </motion.div>
   )

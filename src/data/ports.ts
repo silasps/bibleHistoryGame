@@ -35,6 +35,8 @@ export interface AudienceRoomApi {
   join: (nickname?: string) => Promise<string | undefined>
   vote: (pollId: string, optionId: string) => Promise<string | undefined>
   light: () => Promise<void>
+  /** Resultado no minijogo da cena atual (o progresso nunca anda para trás). */
+  play: (gameId: string, value: number, done: boolean) => Promise<void>
 }
 
 export function joinUrlFor(code: string, mode: RoomMode, origin: string): string {

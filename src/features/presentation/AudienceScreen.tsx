@@ -2,7 +2,7 @@
 
 import { Lock, Pause, Sparkles } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { BlockList } from "@/components/story/BlockList"
 import { ConnectionChips } from "@/components/story/ConnectionChips"
@@ -16,6 +16,8 @@ import { ParticleField } from "@/fx/ParticleField"
 import { SealBreak } from "@/fx/SealBreak"
 import { useStinger } from "@/fx/useSound"
 import { cn } from "@/lib/utils"
+import { useInventory } from "@/stores/inventory"
+import { PhoneGame } from "../etapas/etapa-1/PhoneGame"
 import { HajaLuzPhone } from "./Moments"
 import { OverviewPhoneCard } from "./OverviewPhoneCard"
 import { PollResults } from "./PollResults"
@@ -50,6 +52,13 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
   const [nickname, setNickname] = useState("")
   const [busy, setBusy] = useState(false)
   const stinger = useStinger()
+  const inventoryScope = `sala-${code}`
+  const [, dispatchInventory] = useInventory(inventoryScope)
+  const knot = view?.scene?.overview?.role === "versiculo" ? view.scene.overview.knot : undefined
+  // O primeiro versículo do plano (Gn 3:15) entrega a relíquia da semente.
+  useEffect(() => {
+    if (knot === 1) dispatchInventory({ type: "relic", id: "semente" })
+  }, [knot, dispatchInventory])
 
   const join = async () => {
     setBusy(true)
@@ -129,7 +138,11 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
 
             {view.status === "running" && scene && (
               <section className="space-y-4" aria-live="polite">
-                {scene.overview && <OverviewPhoneCard overview={scene.overview} />}
+                {scene.game ? (
+                  <PhoneGame game={scene.game} line={scene.overview?.stageLine} scope={inventoryScope} play={room.play} />
+                ) : (
+                  scene.overview && <OverviewPhoneCard overview={scene.overview} />
+                )}
                 {!scene.overview && scene.title && <h1 className="font-display text-3xl leading-tight text-parchment">{scene.title}</h1>}
                 {scene.prompt && (!scene.overview || scene.overview.role === "versiculo" || (scene.overview.role === "pista" && opened.length === 0)) && <p className="text-mist">{scene.prompt}</p>}
 

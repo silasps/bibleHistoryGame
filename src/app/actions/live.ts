@@ -5,7 +5,7 @@ import { z } from "zod"
 import { getSequence } from "@/content"
 import { isRoomCode, normalizeRoomCode } from "@/data/room-code"
 import { isLiveConfigured } from "@/data/supabase/admin"
-import { applyHostCommand, broadcast, castVote, createRoom, deleteRoom, joinRoom, lightUp } from "@/data/supabase/rooms"
+import { applyHostCommand, broadcast, castVote, createRoom, deleteRoom, joinRoom, lightUp, recordPlay } from "@/data/supabase/rooms"
 import { COOKIE_OPTIONS, hostCookie, participantCookie } from "@/data/supabase/secrets"
 import type { HostCommand, SessionState } from "@/domain/session"
 
@@ -100,5 +100,15 @@ export async function lightLive(rawCode: string) {
   if (!code.success) return { ok: false }
   const ok = await lightUp(code.data, (await cookies()).get(participantCookie(code.data))?.value)
   if (ok) await broadcast(code.data, "lights")
+  return { ok }
+}
+
+export async function playLive(rawCode: string, gameId: string, value: number, done: boolean) {
+  const code = Code.safeParse(rawCode)
+  const game = Id.safeParse(gameId)
+  const input = z.object({ value: z.number().int().min(0).max(1000), done: z.boolean() }).safeParse({ value, done })
+  if (!code.success || !game.success || !input.success) return { ok: false }
+  const ok = await recordPlay(code.data, (await cookies()).get(participantCookie(code.data))?.value, game.data, input.data.value, input.data.done)
+  if (ok) await broadcast(code.data, "plays")
   return { ok }
 }

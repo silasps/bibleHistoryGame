@@ -9,7 +9,7 @@ import type {
   VisualId,
 } from "@/content/schema"
 import { tally, type PollStatus, type TallyRow } from "./poll"
-import type { CueKind, MomentKind, SessionNarrative, SessionState } from "./session"
+import type { CueKind, MomentKind, PlayResult, SessionNarrative, SessionState } from "./session"
 
 // View-models das superfícies públicas. Os tipos não têm campos editoriais
 // privados: telão e celular só conseguem renderizar o que está aqui.
@@ -28,7 +28,7 @@ export interface PollView {
 
 /** Cena da visão geral no telão/celular: só dados públicos do material do autor. */
 export interface OverviewView {
-  role: "abertura" | "item" | "versiculo" | "pista" | "reflexao" | "conclusao"
+  role: "abertura" | "item" | "jogo" | "versiculo" | "pista" | "reflexao" | "conclusao"
   week?: number
   etapa?: number
   itemId?: string
@@ -43,6 +43,19 @@ export interface OverviewView {
   revealedItemIds: string[]
   /** Objeto da skin em destaque (id dentro da ficha do personagem do item). */
   spotlightSkinId?: string
+}
+
+/** Minijogo da cena: o telão vê a soma da sala; o celular, o próprio resultado. */
+export interface GameView {
+  id: string
+  kind: "criacao" | "jardim" | "arvore" | "queda" | "vestes" | "fora"
+  max: number
+  players: number
+  /** Soma dos valores de todos. */
+  total: number
+  /** Quantos chegaram ao fim. */
+  done: number
+  mine?: PlayResult
 }
 
 export interface ProjectorView {
@@ -70,6 +83,7 @@ export interface ProjectorView {
     totalSteps?: number
     cue: { kind: CueKind; at: number } | null
     overview?: OverviewView
+    game?: GameView
   }
 }
 
@@ -97,6 +111,7 @@ export interface AudienceView {
     prompt?: string
     poll?: PollView & { myVote?: string }
     overview?: OverviewView
+    game?: GameView
   }
   clues: ClueView[]
 }
@@ -122,6 +137,21 @@ function overviewView(state: SessionState, narrative: SessionNarrative): Overvie
     depth: (scene.steps ?? []).slice(0, state.step).map((st) => st.text),
     revealedItemIds,
     spotlightSkinId: state.spotlight ?? undefined,
+  }
+}
+
+function gameView(state: SessionState, narrative: SessionNarrative, participantId?: string | null): GameView | undefined {
+  const game = narrative.scenes[state.index]?.game
+  if (!game) return undefined
+  const results = Object.entries(state.plays?.[game.id] ?? {}).filter(([pid]) => state.participants[pid])
+  return {
+    id: game.id,
+    kind: game.kind,
+    max: game.max,
+    players: results.length,
+    total: results.reduce((n, [, r]) => n + r.value, 0),
+    done: results.filter(([, r]) => r.done).length,
+    mine: participantId ? state.plays?.[game.id]?.[participantId] : undefined,
   }
 }
 
@@ -186,6 +216,7 @@ export function toProjectorView(
       totalSteps: scene.steps?.length,
       cue: state.cue,
       overview,
+      game: gameView(state, narrative),
     },
   }
 }
@@ -260,6 +291,7 @@ export function toAudienceView(
           prompt: scene.audiencePrompt,
           poll: poll ? { ...poll, myVote } : undefined,
           overview: overviewView(state, narrative),
+          game: gameView(state, narrative, participantId),
         }
       : null,
     clues,

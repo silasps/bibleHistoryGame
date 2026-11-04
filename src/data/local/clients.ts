@@ -109,6 +109,13 @@ export function useLocalAudience(code: string): AudienceRoomApi & { error: strin
     if (channel.current && pid) channel.current.post({ t: "audience-cmd", cmd: { type: "light", participantId: pid } })
   }, [pid])
 
+  const play = useCallback(
+    async (gameId: string, value: number, done: boolean) => {
+      if (channel.current && pid) channel.current.post({ t: "audience-cmd", cmd: { type: "play", participantId: pid, gameId, value, done } })
+    },
+    [pid],
+  )
+
   const lost = !view && waited
-  return { view, link: view ? "conectado" : lost ? "offline" : "conectando", joined: !!view?.me, join, vote, light, error: lost ? DEMO_ELSEWHERE : null }
+  return { view, link: view ? "conectado" : lost ? "offline" : "conectando", joined: !!view?.me, join, vote, light, play, error: lost ? DEMO_ELSEWHERE : null }
 }

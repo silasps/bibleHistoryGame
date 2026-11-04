@@ -227,7 +227,7 @@ export const Scene = z
     /** Cena da visão geral (linha do tempo + resumo do autor). */
     overview: z
       .object({
-        role: z.enum(["abertura", "item", "versiculo", "pista", "reflexao", "conclusao"]),
+        role: z.enum(["abertura", "item", "jogo", "versiculo", "pista", "reflexao", "conclusao"]),
         week: z.number().int().optional(),
         /** Etapa da história (é o que aparece na tela; a semana fica interna). */
         etapa: z.number().int().optional(),
@@ -239,6 +239,17 @@ export const Scene = z
         knot: z.number().int().min(1).optional(),
         /** Linha de palco (do resumo do autor ou do espaço de reflexão). */
         stageLine: z.string().max(140).optional(),
+      })
+      .optional(),
+    /**
+     * Minijogo da etapa. No celular, cada pessoa joga; o telão soma a sala.
+     * `max` = maior valor que o celular pode enviar (0: só assistir).
+     */
+    game: z
+      .object({
+        id: z.string().regex(/^[a-z0-9-]+$/),
+        kind: z.enum(["criacao", "jardim", "arvore", "queda", "vestes", "fora"]),
+        max: z.number().int().min(0).default(0),
       })
       .optional(),
     /** Marcador discreto (só ícone) no painel do apresentador. */

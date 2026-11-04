@@ -1,6 +1,7 @@
 import { itemsOfEtapa, presentableEtapas, prdMoments, type Etapa } from "../etapas"
 import { isFilled, reflectionSlots, type ReflectionSlot } from "../reflections"
 import { formatRef, formatRefs } from "../refs"
+import { FALAS } from "../etapas/falas"
 import type { EpisodeInput, EvidenceInput, SceneInput } from "../schema"
 import { excerpts, excerptsForItem, getWeek, stageLineForItem, weeks } from "."
 
@@ -108,6 +109,7 @@ function etapaScenes(etapa: Etapa): SceneInput[] {
   for (const item of itemsOfEtapa(etapa.n)) {
     const main = stageLineForItem(item.id)
     const others = excerptsForItem(item.id).filter((e) => e.id !== main?.id)
+    const game = etapa.games.find((g) => g.itemId === item.id && g.on === "item")
     scenes.push({
       id: `item-${item.id}`,
       type: "historical_context",
@@ -117,9 +119,24 @@ function etapaScenes(etapa: Etapa): SceneInput[] {
       illumination: 0.55,
       overview: { role: "item", week: item.week, etapa: etapa.n, itemId: item.id, stageLine: main?.stageLine },
       steps: depthSteps(others),
+      game: game && { id: game.id, kind: game.kind, max: game.max },
       presenterCue: "historia",
-      estimatedSeconds: 15,
+      estimatedSeconds: game?.seconds ?? 15,
     })
+    for (const g of etapa.games.filter((g) => g.itemId === item.id && g.on === "depois")) {
+      scenes.push({
+        id: `jogo-${g.id}`,
+        type: "historical_context",
+        title: g.title ?? item.label,
+        perspective: "historical_observer",
+        visual: "timeline",
+        illumination: 0.5,
+        overview: { role: "jogo", week: item.week, etapa: etapa.n, stageLine: g.fala && FALAS[g.fala].stageLine },
+        game: { id: g.id, kind: g.kind, max: g.max },
+        presenterCue: "historia",
+        estimatedSeconds: g.seconds,
+      })
+    }
     for (const p of prdMoments.filter((m) => m.etapa === etapa.n && m.afterItemId === item.id)) {
       scenes.push(verseScene(p.week, p.refIndex, etapa.n, p.knot))
       if (p.refIndex === getWeek(p.week)!.memoryVerse.length - 1) {

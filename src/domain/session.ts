@@ -13,6 +13,12 @@ export interface Participant {
   order: number
 }
 
+/** Resultado de uma pessoa num minijogo: quanto avançou e se chegou ao fim. */
+export interface PlayResult {
+  value: number
+  done: boolean
+}
+
 export interface SessionState {
   version: number
   roomCode: string
@@ -27,6 +33,8 @@ export interface SessionState {
   participants: Record<string, Participant>
   /** participantId → instante em que acendeu a luz. */
   lights: Record<string, number>
+  /** Minijogos: gameId → participantId → resultado (salas antigas podem não ter). */
+  plays?: Record<string, Record<string, PlayResult>>
   moment: { kind: MomentKind; startedAt: number } | null
   /** Passos revelados na cena atual (ex.: candidatos a motorista). */
   step: number
@@ -68,6 +76,7 @@ export type AudienceCommand =
   | { type: "join"; participantId: string; nickname?: string }
   | { type: "vote"; participantId: string; pollId: string; optionId: string }
   | { type: "light"; participantId: string }
+  | { type: "play"; participantId: string; gameId: string; value: number; done: boolean }
   | { type: "heartbeat"; participantId: string }
 
 /** Parte da narrativa de que o reducer precisa: as cenas da sequência, em ordem. */
@@ -103,6 +112,7 @@ export function createSession(input: {
     released: [],
     participants: {},
     lights: {},
+    plays: {},
     moment: null,
     step: 0,
     cue: null,
@@ -266,5 +276,21 @@ export function reduceAudience(state: SessionState, cmd: AudienceCommand, ctx: C
       if (!existing) return { state, result: "rejected" }
       if (state.lights[cmd.participantId]) return { state, result: "unchanged" }
       return { state: bump({ ...state, lights: { ...state.lights, [cmd.participantId]: now } }), result: "accepted" }
+    case "play": {
+      if (!existing) return { state, result: "rejected" }
+      const game = narrative.scenes[state.index]?.game
+      // Só vale o jogo da cena atual; avançar a cena encerra a brincadeira.
+      if (!game || game.id !== cmd.gameId || game.max === 0 || !Number.isFinite(cmd.value)) return { state, result: "rejected" }
+      const prev = state.plays?.[game.id]?.[cmd.participantId]
+      const next = mergePlay(prev, { value: Math.min(game.max, Math.max(0, Math.round(cmd.value))), done: !!cmd.done })
+      if (prev && prev.value === next.value && prev.done === next.done) return { state, result: "unchanged" }
+      const plays = { ...state.plays, [game.id]: { ...state.plays?.[game.id], [cmd.participantId]: next } }
+      return { state: bump({ ...state, plays }), result: "accepted" }
+    }
   }
+}
+
+/** O progresso nunca anda para trás (reenvios atrasados não apagam o que já foi feito). */
+export function mergePlay(prev: PlayResult | undefined, next: PlayResult): PlayResult {
+  return { value: Math.max(prev?.value ?? 0, next.value), done: !!prev?.done || next.done }
 }

@@ -8,7 +8,8 @@ import { getEtapa, prdMoments, type Etapa } from "@/content/etapas"
 import { formatSpan, getItem, getWeek } from "@/content/overview"
 import type { TimelineWeek } from "@/content/overview/schema"
 import { formatRef, formatRefs } from "@/content/refs"
-import type { OverviewView } from "@/domain/projection"
+import type { GameView, OverviewView } from "@/domain/projection"
+import { GameStage } from "../etapas/etapa-1/GameStage"
 import { ParticleField } from "@/fx/ParticleField"
 import { SplitReveal } from "@/fx/SplitReveal"
 import { useFx } from "@/fx/useFx"
@@ -19,7 +20,7 @@ import { PlanThread } from "./PlanThread"
  * Telão da Visão Geral: a linha do tempo é o palco. Em cada item, a
  * ilustração sai do cartão e ganha destaque com uma linha do resumo do autor.
  */
-export function OverviewStage({ overview }: { overview: OverviewView }) {
+export function OverviewStage({ overview, game }: { overview: OverviewView; game?: GameView }) {
   const fx = useFx()
   const revealed = useMemo(() => new Set(overview.revealedItemIds), [overview.revealedItemIds])
   const week = overview.week ? getWeek(overview.week) : undefined
@@ -27,6 +28,17 @@ export function OverviewStage({ overview }: { overview: OverviewView }) {
   const item = overview.itemId ? getItem(overview.itemId) : undefined
   const line = overview.depth.at(-1) ?? overview.stageLine
   const skin = item?.characterId && overview.spotlightSkinId ? getCharacter(item.characterId)?.skin.find((s) => s.id === overview.spotlightSkinId) : undefined
+
+  if (game) {
+    return (
+      <div className="absolute inset-0 overflow-hidden bg-night">
+        <GameStage game={game} line={overview.stageLine} />
+        <div className="absolute inset-x-[3cqw] top-[1.6cqh]">
+          <EtapaStrip current={overview.etapa} />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-night">

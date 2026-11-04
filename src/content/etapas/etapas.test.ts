@@ -23,7 +23,8 @@ describe("etapas da história", () => {
 
   it("na sequência, cada versículo vem logo depois do seu item, e a pista depois do último versículo da semana", () => {
     const ids = sequenceScenes("visao-geral").map((s) => s.id)
-    expect(ids.indexOf("versiculo-01")).toBe(ids.indexOf("item-queda") + 1)
+    // Depois da Queda: Deus veste o homem (Gn 3:21), fora do jardim, e então o versículo.
+    expect(ids.slice(ids.indexOf("item-queda"), ids.indexOf("item-queda") + 4)).toEqual(["item-queda", "jogo-vestes", "jogo-fora", "versiculo-01"])
     expect(ids.indexOf("pista-01")).toBe(ids.indexOf("versiculo-01") + 1)
     expect(ids.indexOf("versiculo-03-1")).toBe(ids.indexOf("item-josue") + 1)
     expect(ids.indexOf("pista-03")).toBe(ids.indexOf("versiculo-03-2") + 1)

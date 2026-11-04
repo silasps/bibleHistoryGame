@@ -8,6 +8,7 @@ import {
   reduceHost,
   type HostCommand,
   type Participant,
+  type PlayResult,
   type SessionState,
 } from "@/domain/session"
 import { admin } from "./admin"
@@ -27,7 +28,7 @@ interface RoomRow {
   ended_at: string | null
 }
 
-export type SyncScope = "stage" | "votes" | "people" | "lights"
+export type SyncScope = "stage" | "votes" | "people" | "lights" | "plays"
 
 const ROOM_COLUMNS = "code, host_secret_hash, sequence_id, state, version, expires_at, ended_at"
 
@@ -45,6 +46,7 @@ function stageOnly(state: SessionState): SessionState {
     ...state,
     participants: {},
     lights: {},
+    plays: {},
     polls: Object.fromEntries(Object.entries(state.polls).map(([id, p]) => [id, { ...p, votes: {} }])),
   }
 }
@@ -53,12 +55,15 @@ export async function loadRoom(code: string): Promise<{ row: RoomRow; state: Ses
   const row = await loadRow(code)
   if (!row) return null
   const db = admin()
-  const [people, votes, lights] = await Promise.all([
+  const [people, votes, lights, played] = await Promise.all([
     db.from("participants").select("id, nickname, join_order, joined_at, last_seen_at").eq("room_code", code),
     db.from("votes").select("poll_id, participant_id, option_id").eq("room_code", code),
     db.from("lights").select("participant_id, lit_at").eq("room_code", code),
+    db.from("plays").select("game_id, participant_id, value, done").eq("room_code", code),
   ])
   for (const r of [people, votes, lights]) if (r.error) throw r.error
+  // Sem a tabela dos minijogos (migration ainda não aplicada), a sala segue sem somar os jogos.
+  if (played.error) console.warn("plays indisponível", played.error.message)
 
   const participants: Record<string, Participant> = {}
   for (const p of people.data ?? []) {
@@ -76,7 +81,9 @@ export async function loadRoom(code: string): Promise<{ row: RoomRow; state: Ses
     if (poll) polls[v.poll_id] = { ...poll, votes: { ...poll.votes, [v.participant_id]: v.option_id } }
   }
   const lit = Object.fromEntries((lights.data ?? []).map((l) => [l.participant_id, Date.parse(l.lit_at)]))
-  return { row, state: { ...row.state, participants, polls, lights: lit } }
+  const plays: Record<string, Record<string, PlayResult>> = {}
+  for (const p of played.data ?? []) (plays[p.game_id] ??= {})[p.participant_id] = { value: p.value, done: p.done }
+  return { row, state: { ...row.state, participants, polls, lights: lit, plays } }
 }
 
 export async function createRoom(sequenceId: string, rehearsal: boolean): Promise<{ code: string; secret: string }> {
@@ -212,6 +219,34 @@ export async function castVote(
     )
   if (error) throw error
   return { ok: true }
+}
+
+export async function recordPlay(
+  code: string,
+  token: string | undefined,
+  gameId: string,
+  value: number,
+  done: boolean,
+): Promise<boolean> {
+  const [loaded, participant] = await Promise.all([loadRoom(code), participantFor(code, token)])
+  if (!loaded || !participant) return false
+  // Mesmo reducer da demo: só o jogo da cena atual, valor dentro do limite, sem voltar atrás.
+  const narrative = { scenes: sequenceScenes(loaded.row.sequence_id) }
+  const { state, result } = reduceAudience(loaded.state, { type: "play", participantId: participant.id, gameId, value, done }, { now: Date.now(), narrative })
+  if (result !== "accepted") return result === "unchanged"
+  const next = state.plays![gameId][participant.id]
+  const { error } = await admin()
+    .from("plays")
+    .upsert(
+      { room_code: code, game_id: gameId, participant_id: participant.id, value: next.value, done: next.done, updated_at: new Date().toISOString() },
+      { onConflict: "room_code,game_id,participant_id" },
+    )
+  if (error) {
+    // O jogo continua no celular mesmo que a soma da sala falhe.
+    console.warn("plays: não foi possível gravar", error.message)
+    return false
+  }
+  return true
 }
 
 export async function lightUp(code: string, token: string | undefined): Promise<boolean> {

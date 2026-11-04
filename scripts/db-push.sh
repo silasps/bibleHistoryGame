@@ -3,7 +3,10 @@
 # Monta a URL com a senha codificada em memória (nada é impresso nem gravado).
 set -euo pipefail
 cd "$(dirname "$0")/.."
-set -a; source .env.local; set +a
+# Lê os valores crus (sem `source`, que interpretaria caracteres especiais da senha).
+env_value() { grep "^$1=" .env.local | head -1 | cut -d= -f2- | sed -E 's/^"(.*)"$/\1/'; }
+SUPABASE_DB_URL="${SUPABASE_DB_URL:-$(env_value SUPABASE_DB_URL)}"
+SUPABASE_DB_PASSWORD="$(env_value SUPABASE_DB_PASSWORD)"
 : "${SUPABASE_DB_URL:?Defina SUPABASE_DB_URL (pooler, sem senha) no .env.local}"
 : "${SUPABASE_DB_PASSWORD:?Defina SUPABASE_DB_PASSWORD no .env.local}"
 enc=$(node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' "$SUPABASE_DB_PASSWORD")

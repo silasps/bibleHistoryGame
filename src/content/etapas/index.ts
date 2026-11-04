@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { compareItems, excerpts, getItem, getWeek, items, weeks, type TimelineItem } from "../overview"
 import { ItemColor } from "../overview/schema"
+import { FALAS, type FalaId } from "./falas"
 
 // A história contada por ETAPAS (não por semanas). As semanas continuam nos
 // arquivos do autor e na folha de notas; na tela só aparecem as etapas.
@@ -16,6 +17,20 @@ export const PrdAnchor = z.object({
 })
 export type PrdAnchor = z.infer<typeof PrdAnchor>
 
+/** Minijogo preso a um item da etapa: na própria cena do item, ou numa cena logo depois dele. */
+export const EtapaGame = z.object({
+  id: z.string().regex(/^[a-z0-9-]+$/),
+  kind: z.enum(["criacao", "jardim", "arvore", "queda", "vestes", "fora"]),
+  max: z.number().int().min(0).default(0),
+  itemId: z.string(),
+  on: z.enum(["item", "depois"]),
+  title: z.string().optional(),
+  /** Fala do autor que acompanha o momento (src/content/etapas/falas.ts). */
+  fala: z.enum(Object.keys(FALAS) as [FalaId, ...FalaId[]]).optional(),
+  seconds: z.number().int().positive(),
+})
+export type EtapaGame = z.infer<typeof EtapaGame>
+
 export const Etapa = z.object({
   n: z.number().int().min(1),
   id: z.string().regex(/^[a-z0-9-]+$/),
@@ -26,6 +41,7 @@ export const Etapa = z.object({
   /** Trechos de abertura do resumo (sem item) que abrem esta etapa. */
   intros: z.array(z.string()).default([]),
   prd: z.array(PrdAnchor).default([]),
+  games: z.array(EtapaGame).default([]),
   /** Semana do Manual de onde vem a etapa, só para as etapas ainda sem material. */
   week: z.number().int().optional(),
 })
@@ -37,6 +53,14 @@ const ETAPAS = z.array(Etapa).parse([
     itemIds: ["criacao", "adao-eva", "queda"],
     intros: ["r01-intro"],
     prd: [{ week: 1, afterItemId: "queda" }],
+    games: [
+      { id: "criacao", kind: "criacao", max: 8, itemId: "criacao", on: "item", seconds: 90 },
+      { id: "jardim", kind: "jardim", itemId: "adao-eva", on: "item", seconds: 45 },
+      { id: "arvore", kind: "arvore", max: 6, itemId: "adao-eva", on: "depois", title: "Diante da árvore", seconds: 60 },
+      { id: "queda", kind: "queda", itemId: "queda", on: "item", seconds: 35 },
+      { id: "vestes", kind: "vestes", itemId: "queda", on: "depois", title: "Deus veste o homem", fala: "vestes", seconds: 40 },
+      { id: "fora", kind: "fora", itemId: "queda", on: "depois", title: "Fora do jardim", fala: "fora", seconds: 35 },
+    ],
   },
   { n: 2, id: "o-mundo-se-afasta", title: "O mundo se afasta", color: "ceu", status: "com_material", itemIds: ["noe", "diluvio", "babel"] },
   { n: 3, id: "a-promessa", title: "A promessa", color: "verde", status: "com_material", itemIds: ["abraao", "alianca-abraamica", "isaque", "sacrificio-isaque", "jaco"] },
@@ -127,6 +151,7 @@ export function validateEtapas(): string[] {
       if (placed.has(id)) issues.push(`${id}: está nas etapas ${placed.get(id)} e ${e.n}`)
       placed.set(id, e.n)
     }
+    for (const g of e.games) if (!e.itemIds.includes(g.itemId)) issues.push(`etapa ${e.n}: jogo ${g.id} preso a ${g.itemId}, que não está na etapa`)
     for (const p of e.prd) {
       if (!e.itemIds.includes(p.afterItemId)) issues.push(`etapa ${e.n}: PRD depois de ${p.afterItemId}, que não está na etapa`)
       if (!getWeek(p.week)?.memoryVerse[p.refIndex]) issues.push(`etapa ${e.n}: semana ${p.week} não tem o versículo ${p.refIndex}`)

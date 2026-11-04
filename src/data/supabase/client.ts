@@ -2,13 +2,13 @@
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { castLiveVote, joinLiveRoom, liveHostCommand, lightLive } from "@/app/actions/live"
+import { castLiveVote, joinLiveRoom, liveHostCommand, lightLive, playLive } from "@/app/actions/live"
 import type { LinkState } from "@/components/story/ConnectionStatus"
 import type { AudienceView, ProjectorView } from "@/domain/projection"
 import type { HostCommand, SessionState } from "@/domain/session"
 import { joinUrlFor, siteOrigin, type AudienceRoomApi, type HostRoomApi, type ProjectorRoomApi } from "../ports"
 
-type Scope = "stage" | "votes" | "people" | "lights"
+type Scope = "stage" | "votes" | "people" | "lights" | "plays"
 
 let browserClient: SupabaseClient | null = null
 
@@ -101,7 +101,7 @@ function useSyncedResource<T>(code: string, path: string, scopes: Scope[]) {
 }
 
 export function useLiveHost(code: string): HostRoomApi & { error: string | null } {
-  const { data, setData, link, error } = useSyncedResource<SessionState>(code, "host", ["stage", "votes", "people", "lights"])
+  const { data, setData, link, error } = useSyncedResource<SessionState>(code, "host", ["stage", "votes", "people", "lights", "plays"])
   const command = useCallback(
     async (cmd: HostCommand) => {
       const res = await liveHostCommand(code, cmd)
@@ -114,6 +114,7 @@ export function useLiveHost(code: string): HostRoomApi & { error: string | null 
                 ...stage,
                 participants: prev.participants,
                 lights: prev.lights,
+                plays: prev.plays,
                 polls: Object.fromEntries(Object.entries(stage.polls).map(([id, p]) => [id, { ...p, votes: prev.polls[id]?.votes ?? {} }])),
               }
             : stage,
@@ -127,7 +128,7 @@ export function useLiveHost(code: string): HostRoomApi & { error: string | null 
 }
 
 export function useLiveProjector(code: string): ProjectorRoomApi & { error: string | null } {
-  const { data, link, error } = useSyncedResource<ProjectorView>(code, "projector", ["stage", "votes", "people", "lights"])
+  const { data, link, error } = useSyncedResource<ProjectorView>(code, "projector", ["stage", "votes", "people", "lights", "plays"])
   return { view: data, link, error, joinUrl: joinUrlFor(code, "live", siteOrigin()) }
 }
 
@@ -155,5 +156,12 @@ export function useLiveAudience(code: string): AudienceRoomApi & { error: string
     await lightLive(code)
     await refetch()
   }, [code, refetch])
-  return { view: data, link, error, joined: !!data?.me, join, vote, light }
+  // O jogo roda no próprio celular; o envio só soma na sala (sem refazer a busca).
+  const play = useCallback(
+    async (gameId: string, value: number, done: boolean) => {
+      await playLive(code, gameId, value, done)
+    },
+    [code],
+  )
+  return { view: data, link, error, joined: !!data?.me, join, vote, light, play }
 }
