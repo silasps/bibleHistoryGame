@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest"
 import { sequenceScenes } from "@/content"
 import { items, weeks } from "../overview"
-import { etapaOfItem, itemsOfEtapa, prdMoments, presentableEtapas, validateEtapas } from "."
+import { PRESENTATION_MAX_MINUTES } from "../rubric"
+import { etapaBudgetSeconds, etapaOfItem, etapas, itemsOfEtapa, prdMoments, presentableEtapas, validateEtapas } from "."
 
 describe("etapas da história", () => {
   it("passam na validação: cada item numa etapa só, cada versículo com lugar", () => {
     expect(validateEtapas()).toEqual([])
     for (const i of items) expect(etapaOfItem(i.id), i.id).toBeDefined()
+  })
+
+  it("os tempos de referência das etapas somam os 45 min do Manual", () => {
+    const total = etapas.reduce((n, e) => n + etapaBudgetSeconds(e.n), 0)
+    expect(Math.abs(total - PRESENTATION_MAX_MINUTES * 60)).toBeLessThanOrEqual(etapas.length)
   })
 
   it("começam pela Criação e seguem a ordem dos itens", () => {

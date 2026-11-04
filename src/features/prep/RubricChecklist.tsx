@@ -1,12 +1,13 @@
 import "server-only"
 
 import { sequenceScenes } from "@/content"
-import { etapaOfItem } from "@/content/etapas"
+import { etapaBudgetSeconds, etapaOfItem, etapas } from "@/content/etapas"
 import { items, weeks } from "@/content/overview"
 import { getReflectionNotes } from "@/content/private/reflections"
 import { getWeekConnection } from "@/content/released/overview"
 import { reflectionSlots, isFilled, type ReflectionSlot } from "@/content/reflections"
-import { RUBRIC, RUBRIC_DATES, RUBRIC_SOURCE } from "@/content/rubric"
+import { PRESENTATION_MAX_MINUTES, RUBRIC, RUBRIC_DATES, RUBRIC_SOURCE, SHARE_MINUTES_CUMULATIVE } from "@/content/rubric"
+import { formatDuration } from "@/domain/timing"
 import { authorTaskLinks } from "@/lib/author-sources"
 import { cn } from "@/lib/utils"
 import { ManualChecks } from "./ManualChecks"
@@ -33,7 +34,16 @@ function Pill({ status, children }: { status: Status; children: React.ReactNode 
 export function RubricChecklist() {
   const slot = (id: string) => reflectionSlots.find((s) => s.id === id)
   const tasks = authorTaskLinks()
-  const minutes = Math.round(sequenceScenes("visao-geral").reduce((n, s) => n + s.estimatedSeconds, 0) / 60)
+  const scenes = sequenceScenes("visao-geral")
+  const minutes = Math.round(scenes.reduce((n, s) => n + s.estimatedSeconds, 0) / 60)
+  // Tempo estimado × referência do Manual, por etapa.
+  const timeRows = etapas.map((e) => ({
+    etapa: e,
+    estimated: scenes.filter((s) => s.overview?.etapa === e.n).reduce((n, s) => n + s.estimatedSeconds, 0),
+    budget: etapaBudgetSeconds(e.n),
+  }))
+  const lastWeek = Math.max(...weeks.filter((w) => w.status === "com_material").map((w) => w.week))
+  const referenceSoFar = SHARE_MINUTES_CUMULATIVE[lastWeek - 1]
 
   const weekRows = weeks.map((w) => {
     const has = w.status === "com_material"
@@ -64,7 +74,11 @@ export function RubricChecklist() {
     { ...RUBRIC.character, status: characterDone === withMaterial.length ? "ok" : "falta", note: `${characterDone} de ${withMaterial.length} espaços de C&N preenchidos.` },
     { ...RUBRIC.conclusion, status: written(slot("conclusao")) ? "ok" : "falta", note: written(slot("conclusao")) ? "Espaço da conclusão preenchido." : "Falta o seu texto no espaço “conclusão”." },
     { ...RUBRIC.timeline, status: "ok", note: "A faixa da linha do tempo fica visível em todas as etapas." },
-    { ...RUBRIC.time, status: minutes >= 30 && minutes <= 45 ? "ok" : "falta", note: `Estimativa atual: ${minutes} min. Confira no ensaio com o cronômetro.` },
+    {
+      ...RUBRIC.time,
+      status: minutes <= referenceSoFar ? "ok" : "falta",
+      note: `Estimativa atual: ${minutes} min só com as semanas 1–${lastWeek}. Pela referência do Manual, até a semana ${lastWeek} são ${referenceSoFar} min, e a apresentação inteira (11 semanas) tem no máximo ${PRESENTATION_MAX_MINUTES} min.`,
+    },
     { ...RUBRIC.guests, status: "lembrete", note: "Convide com antecedência." },
   ]
 
@@ -130,6 +144,41 @@ export function RubricChecklist() {
             })}
           </tbody>
         </table>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[30rem] text-sm">
+          <caption className="pb-2 text-left text-xs uppercase tracking-[0.2em] text-mist">Tempo por etapa: estimado × referência do Manual</caption>
+          <thead>
+            <tr className="text-left text-[0.65rem] uppercase tracking-[0.2em] text-mist">
+              <th className="py-2 pr-3 font-medium">Etapa</th>
+              <th className="py-2 pr-3 font-medium">Estimado</th>
+              <th className="py-2 pr-3 font-medium">Referência</th>
+              <th className="py-2 pr-3 font-medium" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border font-mono tabular-nums">
+            {timeRows.map(({ etapa, estimated, budget }) => {
+              const pending = etapa.status === "aguardando_material"
+              const over = estimated - budget
+              return (
+                <tr key={etapa.n} className={pending ? "text-mist" : "text-parchment"}>
+                  <td className="py-2 pr-3 font-sans">
+                    {etapa.n} · {etapa.title}
+                  </td>
+                  <td className="py-2 pr-3">{pending ? "—" : formatDuration(estimated * 1000)}</td>
+                  <td className="py-2 pr-3">{formatDuration(budget * 1000)}</td>
+                  <td className="py-2 pr-3 font-sans">
+                    {pending ? <span className="text-xs">aguarda material</span> : over > 15 ? <Pill status="falta">{`+${formatDuration(over * 1000)}`}</Pill> : <Pill status="ok">ok</Pill>}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+        <p className="mt-2 text-xs text-mist">
+          Referência: o tempo de compartilhamento de cada semana no Manual (10, 13, 16, 22, 25, 28, 31, 34, 37, 40 e 45 min, acumulados), dividido entre as etapas pela quantidade de itens. Abertura e conclusão saem desse mesmo total.
+        </p>
       </div>
 
       <ManualChecks items={[{ id: "convidado-1", label: "1º convidado de fora da escola" }, { id: "convidado-2", label: "2º convidado de fora da escola" }, { id: "ensaio-at", label: RUBRIC_DATES.rehearsal }]} />

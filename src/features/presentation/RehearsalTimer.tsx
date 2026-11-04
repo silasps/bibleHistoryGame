@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { getSceneEntry } from "@/content"
-import { getEtapa } from "@/content/etapas"
+import { etapaBudgetSeconds, getEtapa } from "@/content/etapas"
 import type { Scene } from "@/content/schema"
 import type { SessionState } from "@/domain/session"
 import { formatDuration, timingReport } from "@/domain/timing"
@@ -20,7 +20,10 @@ function useNow(active: boolean) {
 
 const groupOf = (scene: Scene) => {
   const etapa = scene.overview?.etapa
-  if (scene.overview) return etapa ? { key: `etapa-${etapa}`, label: `Etapa ${etapa} · ${getEtapa(etapa)?.title}` } : { key: "abertura-conclusao", label: "Abertura e conclusão" }
+  if (scene.overview)
+    return etapa
+      ? { key: `etapa-${etapa}`, label: `Etapa ${etapa} · ${getEtapa(etapa)?.title} (ref. ${formatDuration(etapaBudgetSeconds(etapa) * 1000)})` }
+      : { key: "abertura-conclusao", label: "Abertura e conclusão" }
   const ep = getSceneEntry(scene.id)?.episode
   return { key: ep?.id ?? "?", label: ep?.title ?? "?" }
 }

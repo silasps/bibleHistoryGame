@@ -8,6 +8,21 @@ export const RUBRIC_DATES = {
   final: "Apresentação final: 10 e 11 de dezembro",
 }
 
+/**
+ * Tempo de compartilhamento recomendado no Manual (tarefa 2, item C de cada
+ * semana), ACUMULADO: a visão geral do começo até a semana N. A semana 11
+ * chega a 45 min, o limite da apresentação final.
+ */
+export const SHARE_MINUTES_CUMULATIVE = [10, 13, 16, 22, 25, 28, 31, 34, 37, 40, 45] as const
+
+/** Minutos de referência de cada semana (a diferença do acumulado). */
+export function weekBudgetMinutes(week: number): number {
+  const i = week - 1
+  return SHARE_MINUTES_CUMULATIVE[i] - (i > 0 ? SHARE_MINUTES_CUMULATIVE[i - 1] : 0)
+}
+
+export const PRESENTATION_MAX_MINUTES = 45
+
 export const RUBRIC = {
   intro: { label: "Introdução que mencione a finalidade de mostrar o PRD", points: "3" },
   weeks: { label: "Cada semana com histórias principais, versículo e PRD", points: "3 por semana" },

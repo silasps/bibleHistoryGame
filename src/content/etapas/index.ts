@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { compareItems, excerpts, getItem, getWeek, items, weeks, type TimelineItem } from "../overview"
 import { ItemColor } from "../overview/schema"
+import { weekBudgetMinutes } from "../rubric"
 import { FALAS, type FalaId } from "./falas"
 
 // A história contada por ETAPAS (não por semanas). As semanas continuam nos
@@ -177,6 +178,24 @@ export function getBeat(id: string): (EtapaBeat & { etapa: number }) | undefined
     const b = e.beats.find((b) => b.id === id)
     if (b) return { ...b, etapa: e.n }
   }
+}
+
+/**
+ * Tempo de referência da etapa: os minutos de cada semana (Manual) divididos
+ * entre as etapas na proporção dos itens daquela semana em cada uma.
+ * É referência para o autor ajustar, não uma regra do app.
+ */
+export function etapaBudgetSeconds(n: number): number {
+  const etapa = getEtapa(n)
+  if (!etapa) return 0
+  if (etapa.week) return weekBudgetMinutes(etapa.week) * 60
+  let seconds = 0
+  for (const w of weeks) {
+    const ofWeek = items.filter((i) => i.week === w.week)
+    const here = ofWeek.filter((i) => etapa.itemIds.includes(i.id)).length
+    if (here) seconds += (weekBudgetMinutes(w.week) * 60 * here) / ofWeek.length
+  }
+  return Math.round(seconds)
 }
 
 export function etapaOfItem(itemId: string): Etapa | undefined {
