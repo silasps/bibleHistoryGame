@@ -9,7 +9,7 @@ import { formatRef } from "@/content/refs"
 import type { Inventory } from "@/domain/relics"
 import { useFx } from "@/fx/useFx"
 import { cn } from "@/lib/utils"
-import { Tree } from "./art"
+import { RelicIcon, Tree } from "./art"
 
 // Depois do fruto: a escuridão (Gn 3:6–8), Deus veste o homem (Gn 3:21) e
 // fora do jardim (Gn 3:22–24). Mesmas peças no celular, no telão e no solo.
@@ -84,7 +84,7 @@ export function AfterFallPhone({ kind, line, inventory }: { kind: AfterFallKind;
             <p className="text-sm text-sand">{formatRef(ETAPA1_LABELS.fallRef, "long")}</p>
           </>
         )}
-        {line && <p className="font-display text-2xl leading-snug text-parchment">{line}</p>}
+        {line && <p className="font-display text-2xl leading-snug text-parchment [text-shadow:0_2px_14px_rgba(0,0,0,0.95)]">{line}</p>}
       </div>
       <RelicBar inventory={inventory} className="relative w-full" />
     </motion.div>
@@ -99,7 +99,7 @@ export function RelicBar({ inventory, className }: { inventory: Inventory; class
   return (
     <div className={cn("flex items-center gap-3 rounded-2xl border border-border bg-night/80 p-3 text-left", className)} aria-label="Inventário">
       <div className={cn("relative grid size-12 shrink-0 place-items-center rounded-xl border", locked ? "border-border bg-black/40" : "border-gold/60 bg-gold/10")} title={RELICS["arvore-vida"].label}>
-        <Tree kind="vida" className={cn("h-10 w-auto", locked && "opacity-30 grayscale")} />
+        <RelicIcon id="arvore-vida" fallback={<Tree kind="vida" className="h-10 w-auto" />} className={cn("size-10", locked && "opacity-30 grayscale")} />
         {locked && <Lock className="absolute size-4 text-mist" aria-label={ETAPA1_LABELS.lockedTree} />}
       </div>
       <div className="min-w-0 flex-1 text-xs">
@@ -115,7 +115,8 @@ export function RelicBar({ inventory, className }: { inventory: Inventory; class
             title={RELICS[id].label}
             className={cn("grid size-9 place-items-center rounded-lg border text-base", inventory.relics.includes(id) ? "border-gold/60 bg-gold/15 text-gold-bright" : "border-dashed border-border text-transparent")}
           >
-            ✦<span className="sr-only">{inventory.relics.includes(id) ? RELICS[id].label : "Relíquia ainda não encontrada"}</span>
+            {inventory.relics.includes(id) ? <RelicIcon id={id} fallback="✦" className="size-8" /> : "✦"}
+            <span className="sr-only">{inventory.relics.includes(id) ? RELICS[id].label : "Relíquia ainda não encontrada"}</span>
           </span>
         ))}
       </div>
@@ -138,7 +139,7 @@ export function AfterFallStage({ kind, line }: { kind: AfterFallKind; line?: str
         {kind === "fora" && !scene && <FlamingSword className="h-[30cqh] w-auto" />}
         {kind === "fora" && <p className="font-display text-[4.4cqw] text-[#ffb98a]">{ETAPA1_LABELS.fallTitle}</p>}
         {line && (
-          <motion.p initial={fx.motion ? { opacity: 0, y: 12 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2, duration: 0.8 }} className="max-w-[70cqw] font-display text-[3.2cqw] leading-snug text-parchment">
+          <motion.p initial={fx.motion ? { opacity: 0, y: 12 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2, duration: 0.8 }} className="max-w-[70cqw] font-display text-[3.2cqw] leading-snug text-parchment [text-shadow:0_2px_18px_rgba(0,0,0,0.95),0_0_6px_rgba(0,0,0,0.8)]">
             {line}
           </motion.p>
         )}

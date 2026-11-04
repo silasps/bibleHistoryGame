@@ -8,7 +8,7 @@ import type { GameView } from "@/domain/projection"
 import { useFx } from "@/fx/useFx"
 import { cn } from "@/lib/utils"
 import { AfterFallStage } from "./AfterFall"
-import { Backdrop, Fruit } from "./art"
+import { Backdrop, Fruit, Serpent } from "./art"
 import { GardenWalk } from "./GardenWalk"
 
 /** Telão durante um minijogo da Etapa 1: a sala jogando junta. */
@@ -90,6 +90,7 @@ function TreeStage({ game }: { game: GameView }) {
         <motion.div animate={fx.motion ? { scale: [1, 1.06, 1] } : undefined} transition={{ duration: 2.4, repeat: Infinity }}>
           <Fruit glow={0.5 + share * 0.5} className="h-[30cqh] w-auto" />
         </motion.div>
+        <Serpent className="absolute left-[70%] top-[-20%] h-[20cqh] w-auto" />
       </div>
       <ul className="absolute inset-x-[6cqw] top-[10cqh] grid grid-cols-3 gap-x-[30cqw] gap-y-[20cqh] text-center">
         {GARDEN_TARGETS.map((t) => (

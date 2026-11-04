@@ -88,14 +88,14 @@ export function GardenWalk({ interactive = false, onDone, className }: Props) {
   return (
     <div className={cn("relative h-full w-full overflow-hidden [container-type:size]", className)}>
       <GardenLayers shift={adamX * 10} />
-      <div className="absolute bottom-[6%] right-[4%] flex h-[62%] items-end gap-[2%]">
-        <Tree kind="vida" className="h-[88%] w-auto" />
-        <Tree kind="conhecimento" className="h-full w-auto" />
+      <div className="absolute bottom-[5%] right-0 flex h-[52%] items-end">
+        <Tree kind="vida" className="h-[85%] w-auto max-w-[42cqw] object-contain object-bottom" />
+        <Tree kind="conhecimento" className="h-full w-auto max-w-[48cqw] object-contain object-bottom" />
       </div>
 
       {/* Figura de luz: caminha ao lado de Adão e depois se afasta. */}
       <motion.div
-        className="absolute h-[46%] w-[12%]"
+        className="absolute aspect-[3/8] h-[44%]"
         initial={{ left: `${(START_X - 0.08) * 100}%`, bottom: "8%", opacity: 0 }}
         animate={walking ? { left: `${(adamX - 0.08) * 100}%`, bottom: "8%", opacity: 1 } : { left: `${(adamX - 0.03) * 100}%`, bottom: "34%", opacity: 0 }}
         transition={walking ? { ...walkTransition, opacity: { duration: 1 } } : { duration: fx.motion ? SECONDS.leave : 0, ease: "easeIn" }}
@@ -104,7 +104,7 @@ export function GardenWalk({ interactive = false, onDone, className }: Props) {
       </motion.div>
 
       <motion.div
-        className="absolute bottom-[8%] h-[40%] w-[10%]"
+        className="absolute bottom-[8%] aspect-[2/3] h-[38%]"
         initial={{ left: `${START_X * 100}%` }}
         animate={{ left: `${adamX * 100}%` }}
         transition={walkTransition}
@@ -116,7 +116,7 @@ export function GardenWalk({ interactive = false, onDone, className }: Props) {
 
       {showEve && (
         <motion.div
-          className="absolute bottom-[8%] h-[38%] w-[10%]"
+          className="absolute bottom-[8%] aspect-[2/3] h-[36%]"
           initial={{ left: "90%", opacity: 0 }}
           animate={{ left: `${(adamX + 0.08) * 100}%`, opacity: 1 }}
           transition={{ duration: fx.motion ? SECONDS.eve : 0 }}

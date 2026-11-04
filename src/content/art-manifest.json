@@ -1,7 +1,39 @@
 {
   "items": {},
-  "cenas": {},
-  "personagens": {},
-  "objetos": {},
-  "reliquias": {}
+  "cenas": {
+    "criacao-2-celular": "/art/cenas/criacao-2-celular.webp",
+    "criacao-2": "/art/cenas/criacao-2.webp",
+    "criacao-3-celular": "/art/cenas/criacao-3-celular.webp",
+    "criacao-3": "/art/cenas/criacao-3.webp",
+    "criacao-4": "/art/cenas/criacao-4.webp",
+    "criacao-5-celular": "/art/cenas/criacao-5-celular.webp",
+    "criacao-5": "/art/cenas/criacao-5.webp",
+    "criacao-6-celular": "/art/cenas/criacao-6-celular.webp",
+    "criacao-6": "/art/cenas/criacao-6.webp",
+    "criacao-6b-celular": "/art/cenas/criacao-6b-celular.webp",
+    "criacao-6b": "/art/cenas/criacao-6b.webp",
+    "criacao-7-celular": "/art/cenas/criacao-7-celular.webp",
+    "criacao-7": "/art/cenas/criacao-7.webp",
+    "eden-frente": "/art/cenas/eden-frente.webp",
+    "eden-fundo": "/art/cenas/eden-fundo.webp",
+    "eden-meio": "/art/cenas/eden-meio.webp",
+    "fora-do-eden": "/art/cenas/fora-do-eden.webp",
+    "querubins": "/art/cenas/querubins.webp",
+    "vestes": "/art/cenas/vestes.webp"
+  },
+  "personagens": {
+    "adao": "/art/personagens/adao.webp",
+    "eva": "/art/personagens/eva.webp",
+    "serpente": "/art/personagens/serpente.webp"
+  },
+  "objetos": {
+    "arvore-conhecimento": "/art/objetos/arvore-conhecimento.webp",
+    "arvore-vida": "/art/objetos/arvore-vida.webp",
+    "fruto": "/art/objetos/fruto.webp"
+  },
+  "reliquias": {
+    "arvore-vida": "/art/reliquias/arvore-vida.webp",
+    "semente": "/art/reliquias/semente.webp",
+    "vestes": "/art/reliquias/vestes.webp"
+  }
 }

@@ -43,15 +43,24 @@ export function TreeAim({ onProgress, onConquest }: Props) {
   const raf = useRef(0)
   const stinger = useStinger()
   const fx = useFx()
-  const bg = artFile("cenas", "eden-fundo")
   const bgImg = useRef<HTMLImageElement | null>(null)
+  const fruitImg = useRef<HTMLImageElement | null>(null)
+  const serpentImg = useRef<HTMLImageElement | null>(null)
+  const [loaded, setLoaded] = useState(0)
 
+  // Imagens do autor (fundo, fruto e serpente); o canvas redesenha quando chegam.
   useEffect(() => {
-    if (!bg) return
-    const img = new Image()
-    img.src = bg
-    bgImg.current = img
-  }, [bg])
+    const load = (src: string | undefined, ref: React.RefObject<HTMLImageElement | null>) => {
+      if (!src) return
+      const img = new Image()
+      img.onload = () => setLoaded((n) => n + 1)
+      img.src = src
+      ref.current = img
+    }
+    load(artFile("cenas", "eden-fundo"), bgImg)
+    load(artFile("objetos", "fruto"), fruitImg)
+    load(artFile("personagens", "serpente"), serpentImg)
+  }, [])
 
   const draw = useCallback(() => {
     const c = canvas.current
@@ -84,13 +93,25 @@ export function TreeAim({ onProgress, onConquest }: Props) {
     ctx.beginPath()
     ctx.arc(X(FRUIT), Y(FRUIT), FRUIT.r * s * (2.2 + glow * 2), 0, Math.PI * 2)
     ctx.fill()
-    ctx.fillStyle = "#e0533a"
-    ctx.strokeStyle = "#ffd27a"
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    ctx.arc(X(FRUIT), Y(FRUIT), FRUIT.r * s, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.stroke()
+    const serpent = serpentImg.current
+    if (serpent?.complete && serpent.naturalWidth) {
+      const w = FRUIT.r * s * 3.4
+      ctx.drawImage(serpent, X(FRUIT) + FRUIT.r * s * 0.2, Y(FRUIT) - FRUIT.r * s * 2.4, w, (w * serpent.naturalHeight) / serpent.naturalWidth)
+    }
+    const fruit = fruitImg.current
+    if (fruit?.complete && fruit.naturalWidth) {
+      const w = FRUIT.r * s * 2.6
+      const h = (w * fruit.naturalHeight) / fruit.naturalWidth
+      ctx.drawImage(fruit, X(FRUIT) - w / 2, Y(FRUIT) - h / 2, w, h)
+    } else {
+      ctx.fillStyle = "#e0533a"
+      ctx.strokeStyle = "#ffd27a"
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.arc(X(FRUIT), Y(FRUIT), FRUIT.r * s, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.stroke()
+    }
 
     // Alvos bons.
     ctx.textAlign = "center"
@@ -158,6 +179,7 @@ export function TreeAim({ onProgress, onConquest }: Props) {
   }, [draw])
 
   useEffect(() => () => cancelAnimationFrame(raf.current), [])
+  useEffect(() => draw(), [loaded, draw])
 
   const fire = useCallback(
     (velocity: Point) => {

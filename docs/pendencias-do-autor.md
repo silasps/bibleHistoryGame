@@ -52,9 +52,9 @@ Hoje, só com as semanas 1 a 6, a estimativa é de **cerca de 44 minutos**; a re
 
 ## Imagens
 
-- [ ] **Lote 1 (Etapa 1):** a lista com nomes de arquivo e prompts está na página “Etapas da Jornada”: https://claude.ai/artifact/DNXiFpJuiLT9foqahCtxRi
-  - Salve em `public/art/<pasta>/` e rode `npm run art:scan`.
-- [ ] **Créditos:** anote a ferramenta e a data de cada imagem em `public/art/credits.json`.
+- [x] **Lote 1 (Etapa 1):** 28 imagens instaladas em 4/11 (créditos em `public/art/credits.json`).
+- [ ] **Opcional:** gerar de novo “sol, lua e estrelas” **em pé** (9:16). A que veio tem faixas borradas em cima e embaixo; por enquanto o celular mostra a versão deitada inteira.
+- [ ] **Próximos lotes:** a lista de cada etapa vem quando ela for construída.
 
 ## Para conferir
 

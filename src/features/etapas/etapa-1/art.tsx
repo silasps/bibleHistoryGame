@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import { useId } from "react"
-import { artFile, sceneFile } from "@/components/art/art-files"
+import { artFile } from "@/components/art/art-files"
 import { cn } from "@/lib/utils"
 
 // Peças visuais da Etapa 1. Cada uma usa a imagem do autor quando existe
@@ -81,6 +81,20 @@ export function Tree({ kind, fruitGlow = 1, className }: { kind: "vida" | "conhe
   )
 }
 
+/** Serpente (imagem do autor; sem ela, nada é desenhado). */
+export function Serpent({ className }: { className?: string }) {
+  const file = artFile("personagens", "serpente")
+  if (!file) return null
+  return <img src={file} alt="A serpente" className={cn("object-contain", className)} draggable={false} />
+}
+
+/** Ícone de relíquia: imagem do autor ou o desenho provisório. */
+export function RelicIcon({ id, fallback, className }: { id: string; fallback: React.ReactNode; className?: string }) {
+  const file = artFile("reliquias", id)
+  if (!file) return <>{fallback}</>
+  return <img src={file} alt="" className={cn("object-contain", className)} draggable={false} />
+}
+
 /** O fruto brilhando (minijogo da árvore). */
 export function Fruit({ glow = 1, className }: { glow?: number; className?: string }) {
   const id = useId()
@@ -105,12 +119,26 @@ export function Fruit({ glow = 1, className }: { glow?: number; className?: stri
   )
 }
 
-/** Fundo de cena: imagem do autor (versão em pé no celular) ou gradiente provisório. */
+/**
+ * Fundo de cena: imagem do autor ou gradiente provisório. No celular, usa a
+ * versão em pé; sem ela, mostra a cena deitada inteira sobre um fundo
+ * desfocado dela mesma (assim nada importante fica cortado).
+ */
 export function Backdrop({ name, portrait, palette, className, children }: { name: string; portrait: boolean; palette: [string, string, string]; className?: string; children?: React.ReactNode }) {
-  const file = sceneFile(name, portrait)
+  const tall = portrait ? artFile("cenas", `${name}-celular`) : undefined
+  const wide = artFile("cenas", name)
   return (
     <div className={cn("absolute inset-0 overflow-hidden", className)} style={{ background: `radial-gradient(120% 90% at 50% 25%, ${palette[0]} 0%, ${palette[1]} 45%, ${palette[2]} 100%)` }}>
-      {file && <img src={file} alt="" className="absolute inset-0 h-full w-full object-cover" draggable={false} />}
+      {tall ? (
+        <img src={tall} alt="" className="absolute inset-0 h-full w-full object-cover" draggable={false} />
+      ) : wide && portrait ? (
+        <>
+          <img src={wide} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover blur-xl brightness-75" draggable={false} />
+          <img src={wide} alt="" className="absolute inset-x-0 top-1/2 w-full -translate-y-1/2 object-contain" draggable={false} />
+        </>
+      ) : (
+        wide && <img src={wide} alt="" className="absolute inset-0 h-full w-full object-cover" draggable={false} />
+      )}
       {children}
     </div>
   )
@@ -121,12 +149,18 @@ export function GardenLayers({ shift = 0, className }: { shift?: number; classNa
   const back = artFile("cenas", "eden-fundo")
   const mid = artFile("cenas", "eden-meio")
   const front = artFile("cenas", "eden-frente")
-  const layer = "absolute inset-y-0 left-[-10%] h-full w-[120%] max-w-none object-cover"
+  // Fundo cobre tudo. As faixas do meio e da frente seguem a largura (proporção
+  // original, sem cortar as copas) e ficam presas embaixo; a paralaxe nunca
+  // passa da margem extra de cada camada.
   return (
     <div className={cn("absolute inset-0 overflow-hidden bg-[linear-gradient(180deg,#f6dca0_0%,#9cc59a_55%,#2f5a3a_100%)]", className)}>
-      {back ? <img src={back} alt="" className={layer} style={{ transform: `translateX(${-shift * 2}%)` }} /> : <Hills shift={shift} />}
-      {mid && <img src={mid} alt="" className={layer} style={{ transform: `translateX(${-shift * 5}%)` }} />}
-      {front && <img src={front} alt="" className={layer} style={{ transform: `translateX(${-shift * 9}%)` }} />}
+      {back ? (
+        <img src={back} alt="" className="absolute inset-y-0 left-[-15%] h-full w-[130%] max-w-none object-cover" style={{ transform: `translateX(${-shift * 1}%)` }} />
+      ) : (
+        <Hills shift={shift} />
+      )}
+      {mid && <img src={mid} alt="" className="absolute bottom-0 left-[-15%] h-auto w-[130%] max-w-none" style={{ transform: `translateX(${-shift * 1.8}%)` }} />}
+      {front && <img src={front} alt="" className="absolute bottom-[-9cqw] left-[-10%] h-auto w-[120%] max-w-none" style={{ transform: `translateX(${-shift * 1.2}%)` }} />}
     </div>
   )
 }
