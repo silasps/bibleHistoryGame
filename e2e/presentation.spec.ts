@@ -26,6 +26,14 @@ test("demonstração local: a linha do tempo conduz e a pista da semana só abre
   await expect(projector.getByText("1 pessoa conectada")).toBeVisible()
 
   await host.getByRole("button", { name: /Começar a apresentação/ }).click()
+  // Passador de slides: Page Down no painel e também com o foco na janela do telão.
+  await expect(host.getByText(/^Cena 1 de/)).toBeVisible()
+  await host.keyboard.press("PageDown")
+  await expect(host.getByText(/^Cena 2 de/)).toBeVisible()
+  await projector.keyboard.press("PageDown")
+  await expect(host.getByText(/^Cena 3 de/)).toBeVisible()
+  await projector.keyboard.press("PageUp")
+  await expect(host.getByText(/^Cena 2 de/)).toBeVisible()
   await gotoScene(host, /Etapa 1 · O começo/)
   await expect(projector.getByText("O começo").first()).toBeVisible()
   await expect(projector.locator("[data-surface=projector]")).not.toContainText(/Semana \d/)

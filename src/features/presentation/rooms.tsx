@@ -1,9 +1,11 @@
 "use client"
 
-import { Maximize, Volume2, VolumeX } from "lucide-react"
+import { Volume2, VolumeX } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { deleteLiveRoom } from "@/app/actions/live"
+import { FullscreenButton } from "@/components/app/FullscreenButton"
+import { useFullscreen } from "@/components/app/useFullscreen"
 import { DemoBadge } from "@/components/story/DemoBadge"
 import { soundEngine } from "@/fx/sound"
 import { useSoundState } from "@/fx/useSound"
@@ -14,6 +16,7 @@ import { joinUrlFor, siteOrigin, type ProjectorRoomApi, type RoomMode } from "@/
 import { useLiveAudience, useLiveHost, useLiveProjector } from "@/data/supabase/client"
 import { AudienceScreen } from "./AudienceScreen"
 import { PresenterConsole } from "./PresenterConsole"
+import { clickerAction } from "./clicker"
 import { ProjectorStage } from "./ProjectorStage"
 
 // Liga cada superfície ao transporte certo. Os componentes de tela não
@@ -50,6 +53,27 @@ function ProjectorScreen({ room, mode }: { room: ProjectorRoomApi & { error?: st
   const setSound = usePreferences((s) => s.setSound)
   const engine = useSoundState()
   const waitingGesture = sound && engine !== "ready"
+  const { toggle: toggleFullscreen } = useFullscreen()
+  const [notice, setNotice] = useState<string | null>(null)
+
+  // Passador de slides com o foco nesta janela: avançar, voltar, tela preta (pausa) e tela cheia.
+  const { view, control } = room
+  useEffect(() => {
+    const onKey = async (e: KeyboardEvent) => {
+      const action = clickerAction(e, { verticalArrows: true })
+      if (!action) return
+      e.preventDefault()
+      if (action === "fullscreen") return toggleFullscreen()
+      if (view?.status !== "running") return
+      const err = await control(action === "blank" ? (view.paused ? "resume" : "pause") : action)
+      if (err) {
+        setNotice("Este telão não controla a apresentação: use o painel do apresentador.")
+        setTimeout(() => setNotice(null), 4000)
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [view, control, toggleFullscreen])
   useEffect(() => {
     const t = setTimeout(() => setChrome(false), 4000)
     const show = () => {
@@ -66,6 +90,7 @@ function ProjectorScreen({ room, mode }: { room: ProjectorRoomApi & { error?: st
         {mode === "demo" && <DemoBadge className="absolute bottom-3 right-3 opacity-80" />}
         {room.error && !room.view && <p className="absolute inset-x-0 bottom-6 text-center text-rose">{room.error}</p>}
       </div>
+      {notice && <p className="fixed inset-x-0 bottom-6 mx-auto w-fit rounded-full bg-navy/90 px-4 py-2 text-sm text-parchment" role="status">{notice}</p>}
       {(chrome || waitingGesture) && (
         <div className="fixed right-4 top-4 flex gap-2">
           <button
@@ -79,14 +104,7 @@ function ProjectorScreen({ room, mode }: { room: ProjectorRoomApi & { error?: st
             {sound && engine === "ready" ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
             {waitingGesture ? "Clique para ativar o som" : sound ? "Som ligado" : "Ligar som"}
           </button>
-          {chrome && (
-            <button
-              onClick={() => document.documentElement.requestFullscreen?.()}
-              className="inline-flex items-center gap-2 rounded-full bg-navy/80 px-4 py-2 text-sm text-parchment backdrop-blur"
-            >
-              <Maximize className="size-4" /> Tela cheia
-            </button>
-          )}
+          {chrome && <FullscreenButton className="bg-navy/80 text-parchment" />}
         </div>
       )}
     </div>

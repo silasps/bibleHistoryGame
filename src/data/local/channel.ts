@@ -7,6 +7,7 @@ export type LocalMessage =
   | { t: "audience-view"; participantId: string | null; view: AudienceView }
   | { t: "audience-cmd"; cmd: AudienceCommand }
   | { t: "hello"; role: "projector" | "audience"; participantId?: string }
+  | { t: "projector-cmd"; cmd: "next" | "prev" | "pause" | "resume" }
 
 export interface LocalChannel {
   post: (msg: LocalMessage) => void

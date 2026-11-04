@@ -33,6 +33,8 @@ import { getItem, getWeek } from "@/content/overview"
 import { formatRef } from "@/content/refs"
 import { ConfirmDialog } from "@/components/app/ConfirmDialog"
 import { ExitLink } from "@/components/app/ExitLink"
+import { FullscreenButton } from "@/components/app/FullscreenButton"
+import { useFullscreen } from "@/components/app/useFullscreen"
 import { ConnectionStatus } from "@/components/story/ConnectionStatus"
 import { DemoBadge } from "@/components/story/DemoBadge"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -42,6 +44,7 @@ import { toProjectorView } from "@/domain/projection"
 import type { HostCommand } from "@/domain/session"
 import { cn } from "@/lib/utils"
 import { SilentSound } from "@/fx/useSound"
+import { clickerAction } from "./clicker"
 import { ProjectorStage } from "./ProjectorStage"
 import { RehearsalTimer } from "./RehearsalTimer"
 
@@ -101,6 +104,7 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
     [scene, verse],
   )
 
+  const { toggle: toggleFullscreen } = useFullscreen()
   const send = useCallback(
     async (cmd: HostCommand) => {
       const err = await room.command(cmd)
@@ -112,14 +116,23 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest("input, textarea, select")) return
+      // Passador de slides: Page Down/Page Up ou setas; B/ponto = tela preta (pausa); F5 = tela cheia.
+      const action = clickerAction(e)
+      if (action === "fullscreen") {
+        e.preventDefault()
+        return toggleFullscreen()
+      }
       if (!state || state.status !== "running") return
       const k = e.key.toLowerCase()
-      if (k === "arrowright" || k === " ") {
+      if (action === "next") {
         e.preventDefault()
         void send({ type: "next" })
       }
-      else if (k === "arrowleft") void send({ type: "prev" })
-      else if (k === "p") void send({ type: state.paused ? "resume" : "pause" })
+      else if (action === "prev") {
+        e.preventDefault()
+        void send({ type: "prev" })
+      }
+      else if (action === "blank" || k === "p") void send({ type: state.paused ? "resume" : "pause" })
       else if (k === "v" && poll) void send({ type: pollState?.status === "open" ? "close_poll" : "open_poll", pollId: poll.id })
       else if (k === "v" && verse) revealVerse(e.shiftKey)
       else if (k === "r" && poll && pollState) void send({ type: pollState.resultsVisible ? "hide_results" : "show_results", pollId: poll.id })
@@ -128,7 +141,7 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [state, poll, pollState, scene, send, verse, revealVerse])
+  }, [state, poll, pollState, scene, send, verse, revealVerse, toggleFullscreen])
 
   if (!state) {
     return <p className="p-8 text-mist" role="status">Carregando a sala…</p>
@@ -151,6 +164,7 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
         </div>
         <RehearsalTimer state={state} scenes={scenes} compact />
         <div className="flex flex-wrap gap-2">
+          <FullscreenButton className="h-11 border border-border bg-transparent text-parchment hover:bg-navy-2" />
           <Button variant="outline" size="lg" onClick={() => window.open(projectorUrl, `bph-projector-${code}`)}>
             <MonitorPlay /> Abrir telão
           </Button>
@@ -376,7 +390,7 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
           )}
 
           <p className="text-xs text-mist">
-            Atalhos: → ou espaço avança · ← volta · D aprofunda · P pausa · V abre/fecha votação ou lembra o versículo (Shift+V: tudo) · R revela resultado · L libera pista
+            Atalhos: → , espaço ou Page Down avança · ← ou Page Up volta · D aprofunda · P ou B pausa · F tela cheia · V abre/fecha votação ou lembra o versículo (Shift+V: tudo) · R revela resultado · L libera pista. O passador de slides funciona aqui e na janela do telão.
           </p>
         </div>
 

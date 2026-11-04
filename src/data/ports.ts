@@ -22,10 +22,15 @@ export interface HostRoomApi {
   }
 }
 
+/** Comandos que o telão repassa (passador de slides com o foco na janela do telão). */
+export type ProjectorControl = "next" | "prev" | "pause" | "resume"
+
 export interface ProjectorRoomApi {
   view: ProjectorView | null
   link: LinkState
   joinUrl: string
+  /** Devolve erro quando este telão não pode controlar a sala (ex.: aberto em outro aparelho). */
+  control: (cmd: ProjectorControl) => Promise<string | undefined>
 }
 
 export interface AudienceRoomApi {

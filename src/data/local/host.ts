@@ -107,6 +107,9 @@ export class LocalHostController {
       if (msg.cmd.type === "join") this.tabs.add(msg.cmd.participantId)
       this.audience(msg.cmd)
       this.publish()
+    } else if (msg.t === "projector-cmd") {
+      // O telão (mesmo navegador) repassa o passador de slides: só avançar, voltar e pausar.
+      void this.command({ type: msg.cmd })
     } else if (msg.t === "hello") {
       if (msg.participantId) this.tabs.add(msg.participantId)
       this.publish()

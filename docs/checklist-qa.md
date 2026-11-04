@@ -43,6 +43,8 @@ Antes de cada apresentação importante, rode os automáticos e percorra o manua
 - [ ] Destaque da skin aparece no telão e a ficha no celular; some ao trocar de item
 - [ ] Versículo do plano: telão e celular mostram o texto NAA, a referência e o fio do plano; o celular marca “PRD · Plano Redentor de Deus”; o telão nunca escreve “PRD”
 - [ ] Painel: “Lembrar o versículo” revela uma palavra por clique (V) e “Mostrar tudo” (Shift+V)
+- [ ] Passador de slides: Page Down/Page Up (ou setas) avança e volta, com o foco no painel **ou** na janela do telão; B ou ponto pausa o telão; F5 ou F alterna a tela cheia
+- [ ] Tela cheia: botão no painel e no telão (no telão aparece ao mexer o mouse)
 - [ ] Área de preparação: a folha de notas mostra o que falta e o tempo estimado
 - [ ] Pista da semana: o telão mostra só a referência; o celular recebe o texto do autor depois de “Liberar pista”
 - [ ] Espaços do autor vazios viram pausa só com imagem

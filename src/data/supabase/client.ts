@@ -6,7 +6,7 @@ import { castLiveVote, joinLiveRoom, liveHostCommand, lightLive, playLive } from
 import type { LinkState } from "@/components/story/ConnectionStatus"
 import type { AudienceView, ProjectorView } from "@/domain/projection"
 import type { HostCommand, SessionState } from "@/domain/session"
-import { joinUrlFor, siteOrigin, type AudienceRoomApi, type HostRoomApi, type ProjectorRoomApi } from "../ports"
+import { joinUrlFor, siteOrigin, type AudienceRoomApi, type HostRoomApi, type ProjectorControl, type ProjectorRoomApi } from "../ports"
 
 type Scope = "stage" | "votes" | "people" | "lights" | "plays"
 
@@ -129,7 +129,9 @@ export function useLiveHost(code: string): HostRoomApi & { error: string | null 
 
 export function useLiveProjector(code: string): ProjectorRoomApi & { error: string | null } {
   const { data, link, error } = useSyncedResource<ProjectorView>(code, "projector", ["stage", "votes", "people", "lights", "plays"])
-  return { view: data, link, error, joinUrl: joinUrlFor(code, "live", siteOrigin()) }
+  // O servidor só aceita se este navegador for o do apresentador (cookie da sala).
+  const control = useCallback(async (cmd: ProjectorControl) => (await liveHostCommand(code, { type: cmd })).error, [code])
+  return { view: data, link, error, joinUrl: joinUrlFor(code, "live", siteOrigin()), control }
 }
 
 export function useLiveAudience(code: string): AudienceRoomApi & { error: string | null } {

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react"
 import type { AudienceView, ProjectorView } from "@/domain/projection"
-import { joinUrlFor, siteOrigin, type AudienceRoomApi, type ProjectorRoomApi } from "../ports"
+import { joinUrlFor, siteOrigin, type AudienceRoomApi, type ProjectorControl, type ProjectorRoomApi } from "../ports"
 import { openLocalChannel, projectorCacheKey, readJSON, type LocalChannel } from "./channel"
 
 /** Assinatura genérica de um valor que chega pelo canal local. */
@@ -29,16 +29,26 @@ function useMailbox<T>(box: Mailbox<T> | null): T | null {
 
 export function useLocalProjector(code: string): ProjectorRoomApi {
   const [box] = useState(() => (typeof window === "undefined" ? null : new Mailbox<ProjectorView>(readJSON(projectorCacheKey(code)))))
+  const channel = useRef<LocalChannel | null>(null)
   useEffect(() => {
     if (!box) return
     const ch = openLocalChannel(code, (msg) => {
       if (msg.t === "projector-view") box.set(msg.view)
     })
     ch.post({ t: "hello", role: "projector" })
-    return () => ch.close()
+    channel.current = ch
+    return () => {
+      ch.close()
+      channel.current = null
+    }
   }, [box, code])
   const view = useMailbox(box)
-  return { view, link: view ? "conectado" : "conectando", joinUrl: joinUrlFor(code, "demo", siteOrigin()) }
+  const control = useCallback(async (cmd: ProjectorControl) => {
+    if (!channel.current) return "Sem conexão com a sala"
+    channel.current.post({ t: "projector-cmd", cmd })
+    return undefined
+  }, [])
+  return { view, link: view ? "conectado" : "conectando", joinUrl: joinUrlFor(code, "demo", siteOrigin()), control }
 }
 
 function tabParticipantId(code: string): string | null {
