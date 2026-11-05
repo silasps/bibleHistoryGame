@@ -1,13 +1,13 @@
 "use client"
 
 import { motion } from "motion/react"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useState } from "react"
 import { CREATION, ETAPA1_LABELS, type CreationReveal as Reveal } from "@/content/etapas/etapa-1"
 import { formatRef } from "@/content/refs"
-import { clearedFraction, SCRATCH_DONE } from "@/domain/scratch"
 import { HAPTIC, vibrate } from "@/fx/haptics"
 import { useFx } from "@/fx/useFx"
 import { useStinger } from "@/fx/useSound"
+import { ScratchLayer } from "../games/ScratchLayer"
 import { Backdrop } from "./art"
 
 interface Props {
@@ -78,30 +78,9 @@ export function CreationReveal({ onProgress, onConquest }: Props) {
 }
 
 function ScratchDay({ reveal, index, total, onCleared }: { reveal: Reveal; index: number; total: number; onCleared: () => void }) {
-  const canvas = useRef<HTMLCanvasElement>(null)
-  const last = useRef<{ x: number; y: number } | null>(null)
-  const moves = useRef(0)
-  const [touched, setTouched] = useState(false)
   const [cleared, setCleared] = useState(false)
   const stinger = useStinger()
   const fx = useFx()
-
-  // Pinta a camada escura (do tamanho da tela, em pixels CSS: a máscara não precisa de retina).
-  useEffect(() => {
-    const c = canvas.current
-    if (!c) return
-    const { width, height } = c.getBoundingClientRect()
-    c.width = Math.max(1, Math.round(width))
-    c.height = Math.max(1, Math.round(height))
-    const ctx = c.getContext("2d", { willReadFrequently: true })!
-    const g = ctx.createLinearGradient(0, 0, 0, c.height)
-    g.addColorStop(0, "#05070d")
-    g.addColorStop(1, "#0f182b")
-    ctx.fillStyle = g
-    ctx.fillRect(0, 0, c.width, c.height)
-    ctx.fillStyle = "rgba(244,210,122,0.5)"
-    for (let i = 0; i < 40; i++) ctx.fillRect((i * 97) % c.width, (i * 211) % c.height, 1.5, 1.5)
-  }, [])
 
   const finish = useCallback(() => {
     if (cleared) return
@@ -111,28 +90,6 @@ function ScratchDay({ reveal, index, total, onCleared }: { reveal: Reveal; index
     setTimeout(onCleared, fx.motion ? 1600 : 400)
   }, [cleared, fx.motion, onCleared, stinger])
 
-  const scratch = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const c = canvas.current
-    if (!c || cleared || (e.pointerType === "mouse" && e.buttons === 0)) return
-    const rect = c.getBoundingClientRect()
-    const p = { x: e.clientX - rect.left, y: e.clientY - rect.top }
-    const ctx = c.getContext("2d", { willReadFrequently: true })!
-    ctx.globalCompositeOperation = "destination-out"
-    ctx.lineCap = "round"
-    ctx.lineJoin = "round"
-    ctx.lineWidth = Math.min(c.width, c.height) * 0.22
-    ctx.beginPath()
-    ctx.moveTo(last.current?.x ?? p.x, last.current?.y ?? p.y)
-    ctx.lineTo(p.x, p.y)
-    ctx.stroke()
-    last.current = p
-    if (!touched) setTouched(true)
-    if (++moves.current % 6 === 0) {
-      const data = ctx.getImageData(0, 0, c.width, c.height).data
-      if (clearedFraction(data, c.width, c.height, 10) >= SCRATCH_DONE) finish()
-    }
-  }
-
   return (
     <div className="relative h-full w-full overflow-hidden">
       <Backdrop name={reveal.art} portrait palette={reveal.palette}>
@@ -141,24 +98,7 @@ function ScratchDay({ reveal, index, total, onCleared }: { reveal: Reveal; index
           <p className="text-sm text-white/80">{formatRef(reveal.ref, "long")}</p>
         </div>
       </Backdrop>
-      <motion.canvas
-        ref={canvas}
-        className="absolute inset-0 h-full w-full touch-none"
-        animate={{ opacity: cleared ? 0 : 1 }}
-        transition={{ duration: fx.motion ? 0.8 : 0 }}
-        onPointerDown={(e) => {
-          e.currentTarget.setPointerCapture(e.pointerId)
-          last.current = null
-          scratch(e)
-        }}
-        onPointerMove={scratch}
-        onPointerUp={() => (last.current = null)}
-        aria-label={`${ETAPA1_LABELS.scratch}: ${reveal.label}`}
-        role="img"
-      />
-      {!touched && !cleared && (
-        <p className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center font-display text-2xl text-parchment/90">{ETAPA1_LABELS.scratch}</p>
-      )}
+      <ScratchLayer cover="escuro" cleared={cleared} onCleared={finish} hint={ETAPA1_LABELS.scratch} label={reveal.label} />
       {cleared && (
         <motion.p
           initial={fx.motion ? { opacity: 0, scale: 0.8 } : false}

@@ -5,6 +5,7 @@ import { Lock } from "lucide-react"
 import { motion } from "motion/react"
 import { artFile, sceneFile } from "@/components/art/art-files"
 import { CREATION, ETAPA1_LABELS, GARDEN_TARGETS, RELICS } from "@/content/etapas/etapa-1"
+import { ALL_RELICS } from "@/content/etapas/relics"
 import { formatRef } from "@/content/refs"
 import type { Inventory } from "@/domain/relics"
 import { useFx } from "@/fx/useFx"
@@ -91,11 +92,12 @@ export function AfterFallPhone({ kind, line, inventory }: { kind: AfterFallKind;
   )
 }
 
-/** Inventário: árvore da vida (no jardim ou trancada), conquistas e relíquias. */
+/** Inventário: árvore da vida (no jardim ou trancada), conquistas da Etapa 1 e as relíquias de todas as etapas. */
 export function RelicBar({ inventory, className }: { inventory: Inventory; className?: string }) {
   const creation = CREATION.filter((c) => inventory.conquests.includes(c.id)).length
   const garden = GARDEN_TARGETS.filter((t) => inventory.conquests.includes(t.id)).length
   const locked = inventory.fallen
+  const owned = ALL_RELICS.filter((r) => inventory.relics.includes(r.id))
   return (
     <div className={cn("flex items-center gap-3 rounded-2xl border border-border bg-night/80 p-3 text-left", className)} aria-label="Inventário">
       <div className={cn("relative grid size-12 shrink-0 place-items-center rounded-xl border", locked ? "border-border bg-black/40" : "border-gold/60 bg-gold/10")} title={RELICS["arvore-vida"].label}>
@@ -103,20 +105,22 @@ export function RelicBar({ inventory, className }: { inventory: Inventory; class
         {locked && <Lock className="absolute size-4 text-mist" aria-label={ETAPA1_LABELS.lockedTree} />}
       </div>
       <div className="min-w-0 flex-1 text-xs">
-        <p className={cn("text-sand", locked && "text-mist line-through decoration-mist/60")}>
-          Criação {creation}/{CREATION.length} · Jardim {garden}/{GARDEN_TARGETS.length}
+        {creation + garden > 0 && (
+          <p className={cn("text-sand", locked && "text-mist line-through decoration-mist/60")}>
+            Criação {creation}/{CREATION.length} · Jardim {garden}/{GARDEN_TARGETS.length}
+          </p>
+        )}
+        <p className="text-mist">
+          Relíquias {owned.length}/{ALL_RELICS.length}
+          {locked ? ` · ${ETAPA1_LABELS.lockedTree}` : ""}
         </p>
-        <p className="text-mist">{locked ? ETAPA1_LABELS.lockedTree : RELICS["arvore-vida"].label}</p>
       </div>
-      <div className="flex gap-1.5">
-        {(["vestes", "semente"] as const).map((id) => (
-          <span
-            key={id}
-            title={RELICS[id].label}
-            className={cn("grid size-9 place-items-center rounded-lg border text-base", inventory.relics.includes(id) ? "border-gold/60 bg-gold/15 text-gold-bright" : "border-dashed border-border text-transparent")}
-          >
-            {inventory.relics.includes(id) ? <RelicIcon id={id} fallback="✦" className="size-8" /> : "✦"}
-            <span className="sr-only">{inventory.relics.includes(id) ? RELICS[id].label : "Relíquia ainda não encontrada"}</span>
+      <div className="flex max-w-[45%] flex-wrap justify-end gap-1">
+        {owned.length === 0 && <span className="grid size-9 place-items-center rounded-lg border border-dashed border-border text-transparent">✦</span>}
+        {owned.slice(-4).map((r) => (
+          <span key={r.id} title={r.label} className="grid size-9 place-items-center rounded-lg border border-gold/60 bg-gold/15 text-base text-gold-bright">
+            <RelicIcon id={r.art} fallback="✦" className="size-8" />
+            <span className="sr-only">{r.label}</span>
           </span>
         ))}
       </div>

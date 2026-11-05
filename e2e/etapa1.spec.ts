@@ -6,7 +6,7 @@ test.use({ reducedMotion: "reduce" })
 test("Etapa 1 no solo: Criação, jardim, árvore, Queda, vestes e a semente", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto("/solo")
-  await page.getByRole("link", { name: "Jogar a etapa" }).click()
+  await page.getByRole("link", { name: /O começo/ }).click()
   await page.waitForURL(/\/solo\/etapa\/1$/)
   await expect(page.getByRole("heading", { name: "O começo" })).toBeVisible()
   await page.getByRole("button", { name: /Continuar/ }).click()

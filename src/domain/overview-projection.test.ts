@@ -23,9 +23,11 @@ describe("Visão Geral no telão", () => {
     expect(seq.presentable).toBe(true)
     const weeks = new Set(scenes.map((s) => s.overview?.week).filter(Boolean))
     expect([...weeks].sort()).toEqual([1, 2, 3, 4, 5, 6])
-    const minutes = scenes.reduce((sum, s) => sum + s.estimatedSeconds, 0) / 60
+    // Cenas opcionais (minijogos das etapas 2–11) o apresentador pula quando faltar tempo.
+    const minutes = scenes.filter((s) => !s.optional).reduce((sum, s) => sum + s.estimatedSeconds, 0) / 60
     expect(minutes).toBeGreaterThanOrEqual(30)
     expect(minutes).toBeLessThanOrEqual(45)
+    expect(scenes.filter((s) => s.optional).every((s) => s.game)).toBe(true)
   })
 
   it("respeita o orçamento de texto em todos os estados", () => {

@@ -1,3 +1,4 @@
+import type { GameKind } from "@/content/game-kinds"
 import { formatRef } from "@/content/refs"
 import type {
   ConnectionType,
@@ -49,7 +50,7 @@ export interface OverviewView {
 /** Minijogo da cena: o telão vê a soma da sala; o celular, o próprio resultado. */
 export interface GameView {
   id: string
-  kind: "criacao" | "jardim" | "arvore" | "queda" | "vestes" | "fora"
+  kind: GameKind
   max: number
   players: number
   /** Soma dos valores de todos. */

@@ -1,8 +1,10 @@
 import { z } from "zod"
+import { GAME_KINDS } from "../game-kinds"
 import { compareItems, excerpts, getItem, getWeek, items, weeks, type TimelineItem } from "../overview"
 import { ItemColor } from "../overview/schema"
 import { weekBudgetMinutes } from "../rubric"
 import { FALAS, type FalaId } from "./falas"
+import { gameMax, ROOM_GAMES } from "./jogos"
 
 // A história contada por ETAPAS (não por semanas). As semanas continuam nos
 // arquivos do autor e na folha de notas; na tela só aparecem as etapas.
@@ -21,11 +23,13 @@ export type PrdAnchor = z.infer<typeof PrdAnchor>
 /** Minijogo preso a um item da etapa: na própria cena do item, ou numa cena logo depois dele. */
 export const EtapaGame = z.object({
   id: z.string().regex(/^[a-z0-9-]+$/),
-  kind: z.enum(["criacao", "jardim", "arvore", "queda", "vestes", "fora"]),
+  kind: z.enum(GAME_KINDS),
   max: z.number().int().min(0).default(0),
   itemId: z.string(),
   on: z.enum(["item", "depois"]),
   title: z.string().optional(),
+  /** Cena que o apresentador pode pular quando faltar tempo. */
+  optional: z.boolean().default(false),
   /** Fala do autor que acompanha o momento (src/content/etapas/falas.ts). */
   fala: z.enum(Object.keys(FALAS) as [FalaId, ...FalaId[]]).optional(),
   seconds: z.number().int().positive(),
@@ -157,7 +161,16 @@ const ETAPAS = z.array(Etapa).parse([
   })),
 ])
 
-export const etapas: Etapa[] = ETAPAS
+// Minijogos das etapas 2–11 (src/content/etapas/jogos.ts): curtos e opcionais no telão.
+export const etapas: Etapa[] = ETAPAS.map((e) => ({
+  ...e,
+  games: [
+    ...e.games,
+    ...ROOM_GAMES.filter((g) => g.etapa === e.n).map((g) =>
+      EtapaGame.parse({ id: g.id, kind: g.kind, max: gameMax(g), itemId: g.afterItemId, on: "depois", title: g.title, optional: true, seconds: 25 }),
+    ),
+  ],
+}))
 export const presentableEtapas = etapas.filter((e) => e.status === "com_material")
 
 export function getEtapa(n: number): Etapa | undefined {

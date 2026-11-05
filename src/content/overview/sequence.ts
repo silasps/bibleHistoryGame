@@ -133,6 +133,7 @@ function etapaScenes(etapa: Etapa): SceneInput[] {
         illumination: 0.5,
         overview: { role: "jogo", week: item.week, etapa: etapa.n, stageLine: g.fala && FALAS[g.fala].stageLine },
         game: { id: g.id, kind: g.kind, max: g.max },
+        optional: g.optional,
         presenterCue: "historia",
         estimatedSeconds: g.seconds,
       })

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { GAME_KINDS } from "./game-kinds"
 import { BOOK_IDS } from "./books"
 
 // ─── Vocabulário editorial ───────────────────────────────────────────────
@@ -250,10 +251,12 @@ export const Scene = z
     game: z
       .object({
         id: z.string().regex(/^[a-z0-9-]+$/),
-        kind: z.enum(["criacao", "jardim", "arvore", "queda", "vestes", "fora"]),
+        kind: z.enum(GAME_KINDS),
         max: z.number().int().min(0).default(0),
       })
       .optional(),
+    /** Cena que o apresentador pode pular quando faltar tempo (ex.: minijogos das etapas 2–11). */
+    optional: z.boolean().default(false),
     /** Marcador discreto (só ícone) no painel do apresentador. */
     presenterCue: z.enum(["conexao", "votacao", "historia", "pausa"]).optional(),
     estimatedSeconds: z.number().int().positive(),

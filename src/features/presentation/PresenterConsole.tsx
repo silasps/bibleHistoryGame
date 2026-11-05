@@ -418,6 +418,7 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
                     >
                       <span className="w-6 text-right font-mono text-xs tabular-nums text-mist">{i + 1}</span>
                       <span className="flex-1 truncate">{s.title}</span>
+                      {s.optional && <span className="rounded-full border border-border px-1.5 text-[0.6rem] uppercase tracking-wider text-mist" title="Pode pular quando faltar tempo">opcional</span>}
                       {SCue && <SCue className="size-3.5 shrink-0 text-gold/80" />}
                       <span className="w-12 text-right font-mono text-xs tabular-nums text-mist/70">
                         {spent ? `${Math.round(spent / 1000)}s` : `~${Math.round(s.estimatedSeconds / 60)}m`}

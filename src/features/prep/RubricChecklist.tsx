@@ -35,7 +35,8 @@ export function RubricChecklist() {
   const slot = (id: string) => reflectionSlots.find((s) => s.id === id)
   const tasks = authorTaskLinks()
   const scenes = sequenceScenes("visao-geral")
-  const minutes = Math.round(scenes.reduce((n, s) => n + s.estimatedSeconds, 0) / 60)
+  const minutes = Math.round(scenes.filter((s) => !s.optional).reduce((n, s) => n + s.estimatedSeconds, 0) / 60)
+  const optionalMinutes = Math.round(scenes.filter((s) => s.optional).reduce((n, s) => n + s.estimatedSeconds, 0) / 60)
   // Tempo estimado × referência do Manual, por etapa.
   const timeRows = etapas.map((e) => ({
     etapa: e,
@@ -77,7 +78,7 @@ export function RubricChecklist() {
     {
       ...RUBRIC.time,
       status: minutes <= referenceSoFar ? "ok" : "falta",
-      note: `Estimativa atual: ${minutes} min só com as semanas 1–${lastWeek}. Pela referência do Manual, até a semana ${lastWeek} são ${referenceSoFar} min, e a apresentação inteira (11 semanas) tem no máximo ${PRESENTATION_MAX_MINUTES} min.`,
+      note: `Estimativa atual: ${minutes} min só com as semanas 1–${lastWeek}, mais ${optionalMinutes} min de minijogos opcionais. Pela referência do Manual, até a semana ${lastWeek} são ${referenceSoFar} min, e a apresentação inteira (11 semanas) tem no máximo ${PRESENTATION_MAX_MINUTES} min.`,
     },
     { ...RUBRIC.guests, status: "lembrete", note: "Convide com antecedência." },
   ]

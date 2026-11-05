@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef } from "react"
 import type { GameView } from "@/domain/projection"
+import { getRoomGame } from "@/content/etapas/jogos"
 import { useInventory } from "@/stores/inventory"
+import { RoomGamePlay } from "../games/RoomGamePlay"
 import { AfterFallPhone, RelicBar } from "./AfterFall"
 import { CreationReveal } from "./CreationReveal"
 import { GardenWalk } from "./GardenWalk"
@@ -55,6 +57,24 @@ export function PhoneGame({ game, line, scope, play }: Props) {
 
   if (game.kind === "queda" || game.kind === "vestes" || game.kind === "fora") {
     return <AfterFallPhone kind={game.kind} line={line} inventory={inventory} />
+  }
+
+  const room = getRoomGame(game.id)
+  if (room) {
+    return (
+      <div className="space-y-3">
+        <div className="relative h-[68dvh] overflow-hidden rounded-3xl border border-border">
+          <RoomGamePlay
+            game={room}
+            onProgress={(value, done) => {
+              report(value, done)
+              if (done) dispatch({ type: "relic", id: room.relic.id })
+            }}
+          />
+        </div>
+        <RelicBar inventory={inventory} />
+      </div>
+    )
   }
 
   return (
