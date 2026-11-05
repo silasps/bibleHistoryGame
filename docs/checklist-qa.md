@@ -26,6 +26,13 @@ Antes de cada apresentação importante, rode os automáticos e percorra o manua
 - [ ] Queda: o celular escurece e a árvore da vida aparece trancada; depois, as vestes de pele (Gn 3:21), “Fora do jardim” e a semente (Gn 3:15)
 - [ ] Ao vivo: o telão mostra “N pessoas criando” e o contador da árvore; avançar a cena encerra o jogo no celular
 
+## Etapas 2 a 11 (`/solo` e `/solo/etapa/N`)
+
+- [ ] Mapa das etapas em `/solo`: cada etapa abre; a relíquia acende quando é conquistada
+- [ ] Cada etapa segue a ordem da apresentação; “Continuar” trava no minijogo até terminar
+- [ ] Os dez minijogos chegam ao desfecho do relato e entregam a relíquia (arca, estrelas, cesto, mar, maná, Jericó, funda, altar, Nínive, coração)
+- [ ] Ao vivo: os minijogos aparecem como “opcional” no roteiro; o telão mostra a cena, a instrução e “N pessoas jogando”
+
 ## Episódios “por dentro”
 
 - [ ] Completar Gênesis 1–3 do início ao fim, no celular e no desktop (13 cenas, incluindo “A chave de casa”)

@@ -53,10 +53,12 @@ Hoje, só com as semanas 1 a 6, a estimativa é de **cerca de 44 minutos**; a re
 ## Imagens
 
 - [x] **Lote 1 (Etapa 1):** 28 imagens instaladas em 4/11 (créditos em `public/art/credits.json`).
+- [ ] **Lote 2 (etapas 2 a 11):** 22 imagens (cenas dos minijogos, relíquias, o cesto e Golias), com prompts na mesma página. Pode salvar sem renomear, na ordem da lista.
 - [ ] **Opcional:** gerar de novo “sol, lua e estrelas” **em pé** (9:16). A que veio tem faixas borradas em cima e embaixo; por enquanto o celular mostra a versão deitada inteira.
-- [ ] **Próximos lotes:** a lista de cada etapa vem quando ela for construída.
 
 ## Para conferir
+
+- [ ] **Minijogos das etapas 2 a 11** (`src/content/etapas/jogos.ts`): título, instrução, desfecho e relíquia de cada um. No telão eles são **opcionais** (marcados no roteiro): decida quais ficam na apresentação final.
 
 - [ ] **Linhas da tela tiradas da sua fala** (etapas 1 a 4): veja se dizem o que você quer.
   - **Onde estão:** em `src/content/etapas/falas.ts`. A Área de preparação mostra a sua fala completa ao lado de cada momento.

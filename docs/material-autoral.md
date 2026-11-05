@@ -57,7 +57,7 @@ A apresentação corre por **etapas**, não por semanas (`src/content/etapas/ind
 - **Itens da etapa:** `itemIds` reúne itens das linhas do tempo de semanas diferentes. A ordem é cronológica, a mesma das semanas.
 - **Versículo (PRD):** `prd` diz depois de qual item entra o versículo de cada semana. A pista daquela semana vem logo depois do último versículo dela.
 - **Abertura:** `intros` são os trechos de abertura do resumo (sem item) que abrem a etapa.
-- **Minijogos:** `games` (por enquanto, só na Etapa 1).
+- **Minijogos:** a Etapa 1 tem os seus em `games`; as etapas 2 a 11 têm um cada em `src/content/etapas/jogos.ts` (título, instrução, desfecho, relíquia e a mecânica: juntar, segurar, ritmo, guiar, funda ou raspar). No telão, esses entram como cenas **opcionais** de cerca de 25 segundos.
 - **Momentos da sua fala:** `beats` são gatilhos visuais depois de um item. O texto de cada um fica em `src/content/etapas/falas.ts`: a sua frase em `text`, a linha da tela em `stageLine` (até 140 caracteres, das suas palavras), linhas extras em `steps` (aparecem com **D**) e o Caráter de Deus em `cn` (vira um selo). Leituras suas que vão além do texto ficam com `kind: "interpretacao"`.
 
 Para uma semana nova (7–11), troque a etapa provisória `semana-N` por uma ou mais etapas com os itens dela.
