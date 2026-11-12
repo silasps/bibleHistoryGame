@@ -106,7 +106,7 @@ export function PhoneVerse({ overview }: { overview: OverviewView }) {
       )}
       {overview.knot === 1 && (
         <p className="inline-block rounded-full border border-gold/60 bg-night/80 px-4 py-2 text-sm font-semibold text-gold-bright">
-          ✦ Relíquia: {RELICS.semente.label} · {formatRef(RELICS.semente.ref, "long")}
+          ✦ Relíquia: {RELICS.semente.label} · <span className="whitespace-nowrap">{formatRef(RELICS.semente.ref, "long")}</span>
         </p>
       )}
     </motion.div>

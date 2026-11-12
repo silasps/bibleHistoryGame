@@ -74,7 +74,7 @@ export function AfterFallPhone({ kind, line, inventory }: { kind: AfterFallKind;
           <motion.div initial={fx.motion ? { opacity: 0, scale: 0.8 } : false} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 1.5, duration: 1 }} className="space-y-2">
             {!portraitScene && <Garment className="mx-auto size-28" />}
             <p className="rounded-full border border-gold/60 bg-night/80 px-4 py-2 text-sm font-semibold text-gold-bright">
-              ✦ Relíquia: {RELICS.vestes.label} · {formatRef(RELICS.vestes.ref, "long")}
+              ✦ Relíquia: {RELICS.vestes.label} · <span className="whitespace-nowrap">{formatRef(RELICS.vestes.ref, "long")}</span>
             </p>
           </motion.div>
         )}

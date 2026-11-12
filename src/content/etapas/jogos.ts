@@ -94,7 +94,7 @@ export const ROOM_GAMES: EtapaRoomGame[] = [
     art: "estrelas", palette: ["#3a4a8a", "#141c44", "#05070d"],
     rounds: [30], pieces: ["estrela"], spawn: "surgir",
     finale: { label: "Uma descendência que não se pode contar", ref: ref("Gen", 15, 5) },
-    relic: relic("estrela", "A estrela da promessa", ref("Gen", 15, 5)),
+    relic: relic("estrela", "Uma posteridade numerosa", ref("Gen", 15, 5)),
   },
   {
     id: "cesto", kind: "cesto", etapa: 4, afterItemId: "moises", mechanic: "guiar",

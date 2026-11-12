@@ -11,6 +11,7 @@ import { excerptsForItem } from "@/content/overview"
 import { getSlot, isFilled } from "@/content/reflections"
 import { getReflectionNotes } from "@/content/private/reflections"
 import { getBeat, getEtapaById } from "@/content/etapas"
+import { APOIO } from "@/content/etapas/apoio"
 import { FALAS } from "@/content/etapas/falas"
 import { RubricChecklist } from "@/features/prep/RubricChecklist"
 import { authorTaskLinks } from "@/lib/author-sources"
@@ -102,6 +103,13 @@ export default async function PrepPage({ searchParams }: Props) {
                   <div className="mt-3 space-y-1 rounded-lg border border-border bg-night/50 p-3 text-sm text-parchment/90">
                     <p className="text-[0.65rem] uppercase tracking-widest text-sand">Sua fala{fala.kind === "interpretacao" ? " · interpretação sua" : ""}</p>
                     <p>{fala.text}</p>
+                    {id && APOIO[id] && (
+                      <>
+                        <p className="pt-2 text-[0.65rem] uppercase tracking-widest text-sand">Material de apoio · interpretação · não vai ao telão</p>
+                        <p>{APOIO[id].text}</p>
+                        <p className="text-mist">{formatRefs(APOIO[id].refs, "long")}</p>
+                      </>
+                    )}
                   </div>
                 )
               })()}

@@ -60,7 +60,7 @@ export interface Relic {
 export const RELICS: Record<"arvore-vida" | "vestes" | "semente", Relic> = {
   "arvore-vida": { id: "arvore-vida", label: "A árvore da vida", ref: ref("Gen", 3, 22, 24), art: "arvore-vida" },
   vestes: { id: "vestes", label: "As vestes de pele", ref: ref("Gen", 3, 21), art: "vestes" },
-  semente: { id: "semente", label: "A semente", ref: ref("Gen", 3, 15), art: "semente" },
+  semente: { id: "semente", label: "A promessa", ref: ref("Gen", 3, 15), art: "semente" },
 }
 
 /** Textos curtos dos momentos sem fala do autor na tela (rótulos, não interpretação). */
@@ -69,11 +69,12 @@ export const ETAPA1_LABELS = {
   scratch: "Deslize o dedo para revelar",
   garden: "No jardim do Éden",
   aim: "Puxe e solte para mirar",
-  darkness: "A luz do jardim se apagou",
-  darknessRef: ref("Gen", 3, 6, 8),
-  creationDone: "Tudo foi criado",
+  // Revisão do autor (11/11/2026): do texto, Gn 3:8.
+  darkness: "Eles se esconderam da presença do Senhor Deus",
+  darknessRef: ref("Gen", 3, 8),
+  creationDone: "Tudo foi criado… e tudo era bom!",
   creationDoneRef: ref("Gen", 1, 31),
   fallTitle: "Fora do jardim",
   fallRef: ref("Gen", 3, 22, 24),
-  lockedTree: "A árvore da vida ficou trancada",
+  lockedTree: "O caminho da árvore da vida ficou guardado",
 }

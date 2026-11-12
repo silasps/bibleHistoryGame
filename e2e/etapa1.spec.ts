@@ -27,20 +27,25 @@ test("Etapa 1 no solo: Criação, jardim, árvore, Queda, vestes e a semente", a
   // Árvore: a última jogada sempre vai no fruto.
   const launch = page.getByRole("button", { name: "Lançar" })
   for (let i = 0; i < 5 && (await launch.isVisible()); i++) await launch.click()
-  await expect(page.getByText("A luz do jardim se apagou")).toBeVisible()
-  await expect(page.getByLabel("A árvore da vida ficou trancada")).toBeVisible()
+  await expect(page.getByText("Eles se esconderam da presença do Senhor Deus")).toBeVisible()
+  await expect(page.getByLabel("O caminho da árvore da vida ficou guardado")).toBeVisible()
 
   await page.getByRole("button", { name: /Continuar/ }).click()
   await expect(page.getByText(/Relíquia: As vestes de pele/)).toBeVisible()
   await expect(page.getByText(/primeiro sacrifício para vestir o homem/)).toBeVisible()
+  // Material de apoio do autor: fechado até o jogador abrir.
+  await page.getByText("Para aprofundar").click()
+  await expect(page.getByText(/o Cordeiro de Deus/)).toBeVisible()
+  await page.getByText("Para aprofundar").scrollIntoViewIfNeeded()
+  await page.screenshot({ path: "test-results/vestes-aprofundar.png", fullPage: true })
   await page.getByRole("button", { name: /Continuar/ }).click()
   await expect(page.getByText("Fora do jardim")).toBeVisible()
   await page.getByRole("button", { name: /Continuar/ }).click()
   await expect(page.getByText("PRD · Plano Redentor de Deus")).toBeVisible()
-  await expect(page.getByText(/Relíquia: A semente/)).toBeVisible()
+  await expect(page.getByText(/Relíquia: A promessa/)).toBeVisible()
   await page.getByRole("button", { name: /Continuar/ }).click()
   await expect(page.getByText(/Etapa 1 concluída/)).toBeVisible()
-  await expect(page.getByText(/As vestes de pele · A semente/)).toBeVisible()
+  await expect(page.getByText(/As vestes de pele · A promessa/)).toBeVisible()
 })
 
 test("Etapa 1 na apresentação: o celular joga, o telão soma e a Queda apaga o celular", async ({ context }) => {
@@ -69,7 +74,7 @@ test("Etapa 1 na apresentação: o celular joga, o telão soma e a Queda apaga o
   await expect(projector.locator("[data-surface=projector]")).toContainText("Acertos nos alvos bons")
 
   await go(/^\d+\s*Queda\s*~/)
-  await expect(phone.getByText("A luz do jardim se apagou")).toBeVisible()
+  await expect(phone.getByText("Eles se esconderam da presença do Senhor Deus")).toBeVisible()
   await go(/Deus veste o homem/)
   await expect(projector.locator("[data-surface=projector]")).toContainText("primeiro sacrifício para vestir o homem")
   await expect(projector.locator("[data-surface=projector]")).not.toContainText(/\bPRD\b/)

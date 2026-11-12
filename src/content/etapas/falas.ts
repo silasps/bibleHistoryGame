@@ -11,6 +11,8 @@ export interface Fala {
   stageLine: string
   /** Linhas extras que o apresentador revela com "Aprofundar". */
   steps?: string[]
+  /** Trecho da linha que aparece em destaque (pedido do autor). */
+  emphasis?: string
   kind: "interpretacao" | "narracao"
   refs: ReturnType<typeof ref>[]
   cn?: string
@@ -36,8 +38,8 @@ export const FALAS = {
   // Etapa 2 · O mundo se afasta
   "bondade-juizo": {
     text: "No dilúvio, a ênfase está na bondade de Deus, no caráter dele, que é bom e amoroso, porque o amor é fazer o bem maior para todos sem egoísmo. Quando Deus traz juízo sobre a humanidade, a humanidade já tinha colocado esse juízo sobre si mesma. Deus só executa o juízo por causa da sua bondade, porque ele pensava em toda a criação: se o homem continuasse daquele jeito, ia destruir toda a criação.",
-    stageLine: "Deus é bom e amoroso: Ele executa o juízo pensando em toda a criação, que o homem ia destruir.",
-    steps: ["O amor é fazer o bem maior para todos, sem egoísmo.", "A humanidade já tinha colocado o juízo sobre si mesma."],
+    // Revisão do autor (11/11/2026): na tela fica só a frase do amor.
+    stageLine: "O amor é fazer o bem maior para todos, sem egoísmo.",
     kind: "interpretacao",
     refs: [ref("Gen", 6, 5), ref("Gen", 6, 11, 13)],
     cn: "Bom e amoroso",
@@ -50,7 +52,8 @@ export const FALAS = {
   },
   "noe-caido": {
     text: "A narrativa segue e mostra que Noé também erra. Logo depois de sair da arca, ele está ali jogado no chão, como se fosse um segundo Adão. Tinha sido escolhido pelo Senhor e agora está ali, bêbado, jogado. A natureza caída do homem ainda estava levando ele para esse lugar de destruição, de autodestruição.",
-    stageLine: "Noé também erra: escolhido pelo Senhor, agora está caído, bêbado, como um segundo Adão.",
+    // Revisão do autor (11/11/2026): Gn 9:21 diz que ele ficou nu dentro da sua tenda.
+    stageLine: "Noé também erra: escolhido pelo Senhor, agora está nu dentro da sua tenda, como se fosse Adão.",
     steps: ["A natureza caída do homem ainda o levava para a autodestruição."],
     kind: "interpretacao",
     refs: [ref("Gen", 9, 20, 21)],
@@ -59,9 +62,11 @@ export const FALAS = {
   // Etapa 3 · A promessa
   "promessa-demora": {
     text: "Deus chama um homem chamado Abraão e promete para ele um filho, Isaque. Uma promessa que demora a acontecer, mas que, assim como toda promessa de Deus, se cumpre.",
-    stageLine: "Deus promete a Abraão um filho. A promessa demora, mas, como toda promessa de Deus, se cumpre.",
+    // Revisão do autor (11/11/2026): ênfase nos 25 anos (75 anos em Gn 12:4; 100 anos em Gn 21:5).
+    stageLine: "Deus promete a Abraão um filho. A promessa demora 25 anos, mas, como toda promessa de Deus, se cumpre.",
+    emphasis: "25 anos",
     kind: "narracao",
-    refs: [ref("Gen", 15, 4), ref("Gen", 21, 1, 2)],
+    refs: [ref("Gen", 12, 4), ref("Gen", 15, 4), ref("Gen", 21, 1, 5)],
   },
   "doze-filhos": {
     text: "Depois de Isaque vem Jacó. De Jacó vêm 12 filhos, dos quais um deles era José, que foi vendido pelos seus irmãos como escravo e foi parar no Egito.",
@@ -110,18 +115,20 @@ export const FALAS = {
   },
   sarca: {
     text: "Até que um dia Deus aparece para ele e lhe dá a missão de libertar o seu povo. De novo, Deus mostra o seu caráter de cuidador da sua promessa e zeloso.",
-    stageLine: "Deus aparece a Moisés e lhe dá a missão de libertar o seu povo: Ele cuida da sua promessa.",
+    // Revisão do autor (11/11/2026).
+    stageLine: "Deus aparece a Moisés e lhe dá a missão de libertar o seu povo. Ele fez a promessa a Abraão e Ele mesmo a cumpre.",
     kind: "interpretacao",
-    refs: [ref("Exod", 3, 1, 10)],
+    refs: [ref("Exod", 2, 24), ref("Exod", 3, 1, 10)],
     cn: "Cuidador da promessa",
   },
   identidade: {
     text: "Depois de 400 anos no Egito, trabalhando como escravos, os israelitas já tinham perdido até a sua identidade. Não sabiam quem eram: na cabeça deles, eram escravos. Quando se falava “senhor”, imaginavam alguém que sempre ia cobrar alguma coisa. Então Deus começa uma trilha de relacionamento próximo, ensinando que foi Ele que criou. Gênesis, a criação, tudo isso era para mostrar aos israelitas quem era o Criador deles, e que o mundo estava mal porque o homem tinha pecado e transgredido o que Deus falou.",
-    stageLine: "Depois de 400 anos como escravos, o povo já não sabia quem era. Deus começa a mostrar quem Ele é.",
+    // Revisão do autor (11/11/2026): o texto dele, dividido em uma frase por vez na tela.
+    stageLine: "Depois de 400 anos como escravos, o povo já havia perdido sua identidade.",
     steps: [
-      "Para eles, “senhor” era alguém que sempre ia cobrar alguma coisa.",
-      "Gênesis mostra ao povo quem é o Criador deles.",
-      "O mundo estava mal porque o homem pecou e transgrediu o que Deus falou.",
+      "Por isso Deus começa a mostrar quem Ele é para este povo, o qual entendia agora que “senhor” era alguém que cobrava algo deles.",
+      "Aí então faz sentido a história de Gênesis.",
+      "Deus está se revelando ao seu povo.",
     ],
     kind: "interpretacao",
     refs: [ref("Gen", 15, 13), ref("Exod", 1, 13, 14)],

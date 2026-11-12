@@ -59,7 +59,8 @@ Hoje, só com as semanas 1 a 6, a estimativa é de **45,5 minutos** sem os minij
 
 ## Para conferir
 
-- [ ] **Revisar todos os textos da tela** na página “Revisão dos textos” (https://claude.ai/artifact/QaKbAT6P7JBbLnm7uLd5kU): 215 textos, com 25 perguntas que só você pode decidir. Marque “Aprovado” ou “Mudar” e escreva a correção; eu leio as marcações e altero só o que você decidir.
+- [x] **Revisar todos os textos da tela** na página “Revisão dos textos” (https://claude.ai/artifact/QaKbAT6P7JBbLnm7uLd5kU): feito em 11/11/2026 (194 aprovados, 12 mudanças já aplicadas).
+- [ ] **Escrever a correção de 9 textos** marcados “Mudar” sem nota (aba “Falta escrever” da mesma página): Noé (resumo), as pragas, a expiação, Números, a abertura e o “grande arquiteto” da Etapa 8, Jonas, a abertura da Etapa 11 e “Puxe e solte para mirar”.
 
 - [ ] **Minijogos das etapas 2 a 11** (`src/content/etapas/jogos.ts`): título, instrução, desfecho e relíquia de cada um. No telão eles são **opcionais** (marcados no roteiro): decida quais ficam na apresentação final.
 

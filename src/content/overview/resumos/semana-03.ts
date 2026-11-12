@@ -99,8 +99,9 @@ export const resumo03: ResumoExcerptInput[] = [
     id: "r03-arca",
     week: 3,
     text: "Num dia, numa guerra contra os filisteus, grande potência da época, o povo perde a batalha e a arca do Senhor é roubada e levada embora, e aí toda a tragédia começa: os filhos de Eli são mortos; Eli, ao receber a notícia do roubo da arca, cai e morre; sua nora, que estava prestes a dar à luz, entrou em trabalho de parto, e a criança nasceu no meio desse caos; então sua mãe deu a ele o nome de Icabô (“Foi-se a glória do Senhor”). Depois de toda essa fatalidade, Samuel assume como sacerdote do povo.",
-    stageLine: "A arca do Senhor é levada pelos filisteus, e a tragédia cai sobre a casa de Eli.",
-    refs: [ref("1Sam", 4, 10, 22)],
+    // Revisão do autor (11/11/2026): o anúncio a Samuel está em 1Sm 3:11–18.
+    stageLine: "A arca do Senhor é levada pelos filisteus, e a tragédia cai sobre a casa de Eli, como Samuel já havia profetizado.",
+    refs: [ref("1Sam", 3, 11, 18), ref("1Sam", 4, 10, 22)],
     itemIds: ["samuel"],
     pendingFact: "f18",
   },

@@ -8,9 +8,11 @@ import { ExitLink } from "@/components/app/ExitLink"
 import { PreferencesMenu } from "@/components/app/PreferencesMenu"
 import { Button } from "@/components/ui/button"
 import { getEtapa } from "@/content/etapas"
+import { APOIO, type Apoio } from "@/content/etapas/apoio"
 import { FALAS } from "@/content/etapas/falas"
 import { CREATION, RELICS } from "@/content/etapas/etapa-1"
 import { excerpts, stageLineForItem } from "@/content/overview"
+import { formatRefs } from "@/content/refs"
 import { isFilled, reflectionSlots } from "@/content/reflections"
 import type { Mood } from "@/fx/sound"
 import { useFx } from "@/fx/useFx"
@@ -133,7 +135,12 @@ export function EtapaUmSolo() {
               </div>
             )}
             {step === "queda" && <AfterFallPhone kind="queda" line={stageLineForItem("queda")?.stageLine} inventory={inventory} />}
-            {step === "vestes" && <AfterFallPhone kind="vestes" line={FALAS.vestes.stageLine} inventory={inventory} />}
+            {step === "vestes" && (
+              <>
+                <AfterFallPhone kind="vestes" line={FALAS.vestes.stageLine} inventory={inventory} />
+                {APOIO.vestes && <Aprofundar apoio={APOIO.vestes} />}
+              </>
+            )}
             {step === "fora" && <AfterFallPhone kind="fora" line={FALAS.fora.stageLine} inventory={inventory} />}
             {step === "semente" && <PhoneVerse overview={{ role: "versiculo", week: 1, etapa: 1, refIndex: 0, knot: 1, depth: [], revealedItemIds: [] }} />}
             {step === "pausa" &&
@@ -187,5 +194,16 @@ export function EtapaUmSolo() {
         )}
       </main>
     </div>
+  )
+}
+
+/** Material de apoio do autor para o momento, aberto só se o jogador quiser. */
+function Aprofundar({ apoio }: { apoio: Apoio }) {
+  return (
+    <details className="glass rounded-3xl p-5 text-left">
+      <summary className="cursor-pointer font-semibold text-gold-bright">Para aprofundar</summary>
+      <p className="mt-3 leading-relaxed text-parchment/90">{apoio.text}</p>
+      <p className="mt-2 text-sm text-sand">{formatRefs(apoio.refs, "long")}</p>
+    </details>
   )
 }
