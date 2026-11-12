@@ -59,6 +59,8 @@ Hoje, só com as semanas 1 a 6, a estimativa é de **45,5 minutos** sem os minij
 
 ## Para conferir
 
+- [ ] **Revisar todos os textos da tela** na página “Revisão dos textos” (https://claude.ai/artifact/QaKbAT6P7JBbLnm7uLd5kU): 215 textos, com 25 perguntas que só você pode decidir. Marque “Aprovado” ou “Mudar” e escreva a correção; eu leio as marcações e altero só o que você decidir.
+
 - [ ] **Minijogos das etapas 2 a 11** (`src/content/etapas/jogos.ts`): título, instrução, desfecho e relíquia de cada um. No telão eles são **opcionais** (marcados no roteiro): decida quais ficam na apresentação final.
 
 - [ ] **Linhas da tela tiradas da sua fala** (etapas 1 a 4): veja se dizem o que você quer.
