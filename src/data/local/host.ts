@@ -9,6 +9,8 @@ import {
   createSession,
   reduceAudience,
   reduceHost,
+  SEAL_TAPS,
+  sealGameId,
   type AudienceCommand,
   type HostCommand,
   type SessionState,
@@ -171,6 +173,28 @@ export class LocalHostController {
       this.timers.push(setTimeout(() => this.audience({ type: "light", participantId: id }), 200 + Math.random() * 5000))
     }
   }
+
+  playRandomly() {
+    const game = this.state ? sequenceScenes(this.state.sequenceId)[this.state.index]?.game : undefined
+    if (!game || game.max === 0) return
+    for (const id of this.simIds()) {
+      const value = Math.max(1, Math.round(game.max * (0.3 + Math.random() * 0.7)))
+      const delay = 500 + Math.random() * 7000
+      this.timers.push(setTimeout(() => this.audience({ type: "play", participantId: id, gameId: game.id, value, done: value >= game.max }), delay))
+    }
+  }
+
+  breakSeals() {
+    const scene = this.state ? sequenceScenes(this.state.sequenceId)[this.state.index] : undefined
+    const evidenceId = scene?.releases
+    if (!evidenceId || !this.state?.released.includes(evidenceId)) return
+    for (const id of this.simIds()) {
+      const delay = 600 + Math.random() * 6000
+      this.timers.push(
+        setTimeout(() => this.audience({ type: "play", participantId: id, gameId: sealGameId(evidenceId), value: SEAL_TAPS, done: true }), delay),
+      )
+    }
+  }
 }
 
 export function useLocalHost(code: string, init: LocalRoomInit | null): HostRoomApi {
@@ -194,6 +218,8 @@ export function useLocalHost(code: string, init: LocalRoomInit | null): HostRoom
           addParticipants: (n) => controller.addParticipants(n),
           voteRandomly: () => controller.voteRandomly(),
           lightAll: () => controller.lightAll(),
+          breakSeals: () => controller.breakSeals(),
+          playRandomly: () => controller.playRandomly(),
         }
       : undefined,
   }

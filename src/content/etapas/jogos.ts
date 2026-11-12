@@ -55,9 +55,13 @@ export interface RhythmGame extends BaseGame {
   finalAction: string
 }
 
-export interface SteerGame extends BaseGame {
-  mechanic: "guiar"
-  seconds: number
+/** Vedar e entregar: passar betume nas frestas do cesto e depois levá-lo até alguém. */
+export interface CaulkGame extends BaseGame {
+  mechanic: "vedar"
+  /** Instrução da segunda parte (o cesto já no rio). */
+  riverHint: string
+  /** Quem recebe o cesto na margem. */
+  receiver: string
 }
 
 export interface SlingGame extends BaseGame {
@@ -71,7 +75,7 @@ export interface ScratchGame extends BaseGame {
   cover: "escuro" | "pedra"
 }
 
-export type EtapaRoomGame = (CollectGame | HoldGame | RhythmGame | SteerGame | SlingGame | ScratchGame) & { kind: GameKind }
+export type EtapaRoomGame = (CollectGame | HoldGame | RhythmGame | SlingGame | ScratchGame | CaulkGame) & { kind: GameKind }
 
 const relic = (id: string, label: string, r: Ref): EtapaRelic => ({ id, label, ref: r, art: id })
 
@@ -97,12 +101,13 @@ export const ROOM_GAMES: EtapaRoomGame[] = [
     relic: relic("estrela", "Uma posteridade numerosa", ref("Gen", 15, 5)),
   },
   {
-    id: "cesto", kind: "cesto", etapa: 4, afterItemId: "moises", mechanic: "guiar",
+    id: "cesto", kind: "cesto", etapa: 4, afterItemId: "moises", mechanic: "vedar",
     title: "O cesto no Nilo",
-    instruction: "Arraste para guiar o cesto entre os juncos",
+    instruction: "Passe o dedo nas frestas para vedar o cesto com betume",
+    riverHint: "A filha do faraó viu o cesto entre os juncos. Busque o cesto para ela",
+    receiver: "A filha do faraó",
     ref: ref("Exod", 2, 3),
     art: "nilo", palette: ["#d8e8c0", "#4f8f8a", "#123a3a"],
-    seconds: 18,
     finale: { label: "A filha do faraó encontra o menino", ref: ref("Exod", 2, 5, 6) },
     relic: relic("cesto", "O cesto de junco", ref("Exod", 2, 3)),
   },

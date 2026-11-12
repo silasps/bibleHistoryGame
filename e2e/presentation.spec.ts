@@ -4,6 +4,12 @@ const FORBIDDEN = /\bPRD\b|plano redentivo/i
 // Trecho do parágrafo do PRD do autor (semana 1), liberado só depois da fala.
 const AUTHOR_PRD = "ensinando um povo como exemplo"
 
+/** Os toques que quebram o selo da pista no celular. */
+async function tapSeal(phone: Page) {
+  const seal = phone.getByRole("button", { name: /Quebrar o selo/ })
+  for (let i = 0; i < 6; i++) await seal.click()
+}
+
 async function gotoScene(host: Page, title: RegExp) {
   await host.getByRole("navigation", { name: "Roteiro da sequência" }).getByRole("button", { name: title }).click()
 }
@@ -62,12 +68,26 @@ test("demonstração local: a linha do tempo conduz e a pista da semana só abre
   await host.getByRole("button", { name: "Mostrar tudo" }).click()
   await expect(host.getByRole("button", { name: /Lembrar o versículo/ })).toBeDisabled()
 
+  // A pista chega selada: o telão mostra o selo e a dica; o celular, a recompensa.
   await gotoScene(host, /Pista 1 do plano/)
-  await expect(phone.getByText("Pista selada").first()).toBeVisible()
+  await expect(stage).toContainText("1º selo do trilho")
+  await expect(stage).toContainText("Abre depois do versículo Gênesis 3:15")
+  await expect(phone.getByText("Você ganhou o 1º selo do trilho!")).toBeVisible()
   await expect(phone.locator("body")).not.toContainText(AUTHOR_PRD)
+  // Antes da liberação, tocar no selo não abre nada.
+  await phone.getByRole("button", { name: /Espere o sinal/ }).click()
+  await expect(phone.getByText("Ainda não! Espere o sinal.")).toBeVisible()
+
   await host.getByRole("button", { name: /Liberar pista/ }).click()
+  await expect(stage).toContainText("Toquem no selo pelo celular")
+  await expect(stage).toContainText("0 de 1 já quebraram o selo")
+  await expect(phone.locator("body")).not.toContainText(AUTHOR_PRD)
+  await tapSeal(phone)
   await expect(phone.getByText(AUTHOR_PRD, { exact: false })).toBeVisible({ timeout: 10_000 })
-  await expect(projector.getByText("Gênesis 3:15")).toBeVisible()
+  // Todos quebraram: o selo do telão abre sozinho e mostra só a referência.
+  await expect(stage).not.toContainText("Toquem no selo")
+  await expect(stage).toContainText("Gênesis 3:15")
+  await expect(host.getByRole("button", { name: /Selo aberto no telão/ })).toBeDisabled()
   await expect(stage).not.toContainText(AUTHOR_PRD)
   await expect(stage).not.toContainText(FORBIDDEN)
 })
@@ -97,7 +117,13 @@ test.describe("ao vivo com Supabase", () => {
     const before = await phones[0].evaluate(async (c) => (await fetch(`/api/rooms/${c}/audience`)).text(), code)
     expect(before).not.toContain(AUTHOR_PRD)
     await host.getByRole("button", { name: /Liberar pista/ }).click()
-    for (const p of phones) await expect(p.getByText(AUTHOR_PRD, { exact: false })).toBeVisible({ timeout: 10_000 })
+    for (const p of phones) await expect(p.getByText(/Toque no selo para quebrar/)).toBeVisible({ timeout: 10_000 })
+    await tapSeal(phones[0])
+    await expect(phones[0].getByText(AUTHOR_PRD, { exact: false })).toBeVisible({ timeout: 10_000 })
+    // Um de dois quebrou: o telão conta e o selo dele continua fechado.
+    await expect.poll(async () => (await phones[1].evaluate(async (c) => (await fetch(`/api/rooms/${c}/projector`)).json(), code)).scene?.sealInfo?.opened, { timeout: 10_000 }).toBe(1)
+    await tapSeal(phones[1])
+    await expect(phones[1].getByText(AUTHOR_PRD, { exact: false })).toBeVisible({ timeout: 10_000 })
 
     const projector = await phones[1].evaluate(async (c) => (await fetch(`/api/rooms/${c}/projector`)).text(), code)
     expect(projector).not.toMatch(FORBIDDEN)

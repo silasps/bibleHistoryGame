@@ -8,6 +8,7 @@ import {
   Eye,
   EyeOff,
   Footprints,
+  Hammer,
   Lightbulb,
   MonitorPlay,
   Pause,
@@ -17,6 +18,7 @@ import {
   Smartphone,
   Sparkle,
   TrainFront,
+  Trophy,
   Unlock,
   Users,
   Vote,
@@ -83,6 +85,8 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
   const pollState = poll && state ? state.polls[poll.id] : undefined
   const released = !!(scene?.releases && state?.released.includes(scene.releases))
   const preview = useMemo(() => (state ? toProjectorView(state, { scenes }, getEvidence) : null), [state, scenes])
+  const seal = preview?.scene?.seal
+  const sealInfo = preview?.scene?.sealInfo
   const counts = poll ? tally(pollState?.votes ?? {}, poll) : null
   const participants = state ? Object.keys(state.participants).length : 0
   const itemCharacter = scene?.overview?.itemId ? getCharacter(getItem(scene.overview.itemId)?.characterId ?? "") : undefined
@@ -136,12 +140,16 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
       else if (k === "v" && poll) void send({ type: pollState?.status === "open" ? "close_poll" : "open_poll", pollId: poll.id })
       else if (k === "v" && verse) revealVerse(e.shiftKey)
       else if (k === "r" && poll && pollState) void send({ type: pollState.resultsVisible ? "hide_results" : "show_results", pollId: poll.id })
-      else if (k === "l" && scene?.releases) void send({ type: "release", evidenceId: scene.releases })
+      // L: libera a pista; de novo, quebra o selo no telão.
+      else if (k === "l" && scene?.releases) {
+        if (!state.released.includes(scene.releases)) void send({ type: "release", evidenceId: scene.releases })
+        else if (seal === "liberado") void send({ type: "cue", kind: "selo" })
+      }
       else if (k === "d" && scene?.steps && state.step < scene.steps.length) void send({ type: "step", delta: 1 })
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [state, poll, pollState, scene, send, verse, revealVerse, toggleFullscreen])
+  }, [state, poll, pollState, scene, seal, send, verse, revealVerse, toggleFullscreen])
 
   if (!state) {
     return <p className="p-8 text-mist" role="status">Carregando a sala…</p>
@@ -271,11 +279,22 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
                   </>
                 )}
 
-                {scene.releases && (
-                  <Button size="lg" className="h-12" disabled={released} onClick={() => send({ type: "release", evidenceId: scene.releases! })}>
-                    <Unlock /> {released ? "Pista liberada" : "Liberar pista"}
-                  </Button>
-                )}
+                {scene.releases &&
+                  (!released ? (
+                    <Button size="lg" className="h-12" onClick={() => send({ type: "release", evidenceId: scene.releases! })}>
+                      <Unlock /> Liberar pista
+                    </Button>
+                  ) : (
+                    <Button size="lg" className="h-12" disabled={seal === "aberto"} onClick={() => send({ type: "cue", kind: "selo" })}>
+                      <Hammer />
+                      {seal === "aberto" ? "Selo aberto no telão" : "Quebrar selo no telão"}
+                      {sealInfo && seal !== "aberto" && (
+                        <span className="tabular-nums opacity-80">
+                          ({sealInfo.opened}/{sealInfo.players})
+                        </span>
+                      )}
+                    </Button>
+                  ))}
 
                 {scene.steps && scene.steps.length > 0 && (
                   <>
@@ -386,11 +405,17 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
               <Button variant="outline" disabled={state.moment?.kind !== "luzes"} onClick={() => room.simulation!.lightAll()}>
                 <Lightbulb /> Simular luzes
               </Button>
+              <Button variant="outline" disabled={!scene?.game?.max} onClick={() => room.simulation!.playRandomly()}>
+                <Trophy /> Simular jogadas
+              </Button>
+              <Button variant="outline" disabled={seal !== "liberado"} onClick={() => room.simulation!.breakSeals()}>
+                <Hammer /> Simular selos
+              </Button>
             </div>
           )}
 
           <p className="text-xs text-mist">
-            Atalhos: → , espaço ou Page Down avança · ← ou Page Up volta · D aprofunda · P ou B pausa · F tela cheia · V abre/fecha votação ou lembra o versículo (Shift+V: tudo) · R revela resultado · L libera pista. O passador de slides funciona aqui e na janela do telão.
+            Atalhos: → , espaço ou Page Down avança · ← ou Page Up volta · D aprofunda · P ou B pausa · F tela cheia · V abre/fecha votação ou lembra o versículo (Shift+V: tudo) · R revela resultado · L libera a pista (de novo: quebra o selo no telão). O passador de slides funciona aqui e na janela do telão.
           </p>
         </div>
 

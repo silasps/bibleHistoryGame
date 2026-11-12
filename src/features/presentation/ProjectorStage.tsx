@@ -4,8 +4,6 @@ import { Pause } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { useEffect, useMemo, useRef } from "react"
 import type { ProjectorView } from "@/domain/projection"
-import { GoldThread } from "@/fx/GoldThread"
-import { SealBreak } from "@/fx/SealBreak"
 import { SplitReveal } from "@/fx/SplitReveal"
 import { moodForScene } from "@/fx/sound"
 import { useMood, useStinger } from "@/fx/useSound"
@@ -14,8 +12,10 @@ import { cn } from "@/lib/utils"
 import { StageBackground } from "../solo/StageBackground"
 import { HajaLuzStage, LightsSky } from "./Moments"
 import { OverviewStage } from "./OverviewStage"
+import { LivePodium, ResultsStage, useFreshResults } from "./Podium"
 import { PollResults } from "./PollResults"
 import { QRJoin } from "./QRJoin"
+import { StageSeal } from "./StageSeal"
 
 interface Props {
   view: ProjectorView | null
@@ -34,6 +34,7 @@ export function ProjectorStage({ view, joinUrl, className, preview = false }: Pr
   const stinger = useStinger()
   const fx = useFx()
   useMood(preview ? null : moodForScene(view?.status === "running" ? scene : null))
+  const [results] = useFreshResults(view?.results)
 
   // Estado visual derivado dos comandos do apresentador.
   const visual = useMemo(() => {
@@ -86,19 +87,8 @@ export function ProjectorStage({ view, joinUrl, className, preview = false }: Pr
           <StageBackground scene={scene} visual={visual} className="absolute inset-0" />
           {view.lightsCount > 0 && <LightsSky count={view.lightsCount} className="absolute inset-x-0 top-0 h-2/3" />}
 
-          {/* Selo / fio dourado da conexão: só imagem e referência. */}
-          {scene.seal && (
-            <div className="absolute inset-0 grid place-items-center">
-              {scene.seal === "aberto" && <GoldThread className="absolute inset-0 h-full w-full" d="M -20 640 C 300 300 520 760 800 450 S 1300 120 1620 300" duration={4} />}
-              <div className="relative w-[34cqw] text-center">
-                <SealBreak open={scene.seal === "aberto"}>
-                  {scene.releasedRefs && (
-                    <p className="font-display text-[5cqw] text-gold-bright [text-shadow:0_0_3cqw_rgba(216,169,72,0.6)]">{scene.releasedRefs.join(" · ")}</p>
-                  )}
-                </SealBreak>
-              </div>
-            </div>
-          )}
+          {/* Selo / fio dourado da conexão: só imagem, dica, contagem e referência. */}
+          {scene.seal && <StageSeal seal={scene.seal} info={scene.sealInfo} refs={scene.releasedRefs} />}
 
           {/* Candidatos revelados um a um. */}
           {scene.steps && scene.steps.length > 0 && (
@@ -131,7 +121,7 @@ export function ProjectorStage({ view, joinUrl, className, preview = false }: Pr
           )}
 
           {/* Título e legenda (terço inferior, estilo cinema) */}
-          {(scene.title || scene.caption) && !(scene.poll && scene.poll.status !== "idle") && (
+          {(scene.title || scene.caption) && !scene.seal && !(scene.poll && scene.poll.status !== "idle") && (
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-[5cqw] pb-[4cqh] pt-[12cqh]">
               <div className="mx-auto max-w-[80cqw] text-center">
                 {scene.title && <SplitReveal key={scene.id} text={scene.title} as="h2" by="words" className="font-display text-[4.6cqw] leading-[1.05] text-parchment [text-shadow:0_0.3cqw_2cqw_rgba(0,0,0,0.7)]" />}
@@ -155,7 +145,10 @@ export function ProjectorStage({ view, joinUrl, className, preview = false }: Pr
         </div>
       )}
 
+      {view?.status === "running" && scene?.game?.top && scene.game.top.length > 0 && <LivePodium entries={scene.game.top} max={scene.game.max} />}
+
       <AnimatePresence>
+        {results && <ResultsStage key={results.key} results={results} />}
         {view?.paused && view.status === "running" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-20 grid place-items-center bg-night/80 backdrop-blur-sm">
             <div className="flex flex-col items-center gap-[1.5cqw] text-mist">

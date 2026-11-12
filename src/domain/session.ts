@@ -2,7 +2,18 @@ import type { Poll, Scene } from "@/content/schema"
 import { castVote, closePoll, createPoll, openPoll, type PollState, type VoteResult } from "./poll"
 
 export type MomentKind = "haja-luz" | "luzes"
-export type CueKind = "trem" | "muro"
+/** "selo": o apresentador quebra o selo da pista no telão. */
+export type CueKind = "trem" | "muro" | "selo"
+
+/** Toques que cada pessoa dá no celular para quebrar o selo de uma pista. */
+export const SEAL_TAPS = 6
+const SEAL_PREFIX = "selo-"
+/**
+ * O selo de uma pista usa o mesmo registro dos minijogos (tabela `plays`):
+ * `done` = a pessoa já quebrou o selo no celular.
+ */
+export const sealGameId = (evidenceId: string) => `${SEAL_PREFIX}${evidenceId}`
+const sealEvidenceId = (gameId: string) => (gameId.startsWith(SEAL_PREFIX) ? gameId.slice(SEAL_PREFIX.length) : undefined)
 
 export interface Participant {
   id: string
@@ -17,6 +28,8 @@ export interface Participant {
 export interface PlayResult {
   value: number
   done: boolean
+  /** Quando o resultado subiu pela última vez (desempate do pódio: quem chegou antes). */
+  at?: number
 }
 
 export interface SessionState {
@@ -42,6 +55,8 @@ export interface SessionState {
   cue: { kind: CueKind; at: number } | null
   /** Objeto da skin do personagem em destaque na cena atual. */
   spotlight?: string | null
+  /** Último minijogo encerrado (ao sair da cena): o telão e os celulares mostram o pódio por alguns segundos. */
+  lastGame?: { gameId: string; sceneIndex: number; at: number } | null
   timing: {
     startedAt?: number
     sceneEnteredAt?: number
@@ -140,8 +155,12 @@ function stopClock(state: SessionState, now: number): SessionState["timing"] {
   return { ...t, sceneEnteredAt: undefined, sceneMs: { ...t.sceneMs, [id]: (t.sceneMs[id] ?? 0) + (now - t.sceneEnteredAt) } }
 }
 
-function moveTo(state: SessionState, index: number, now: number): SessionState {
+function moveTo(state: SessionState, index: number, now: number, narrative: SessionNarrative): SessionState {
   if (index < 0 || index >= state.sceneIds.length || index === state.index) return state
+  // Saindo de um minijogo com resultados: guarda para o pódio de fim de jogo.
+  const game = narrative.scenes[state.index]?.game
+  const played = game && game.max > 0 && Object.values(state.plays?.[game.id] ?? {}).some((r) => r.value > 0)
+  const lastGame = played ? { gameId: game.id, sceneIndex: state.index, at: now } : (state.lastGame ?? null)
   const timing = stopClock(state, now)
   // Enquetes abertas na cena que sai são fechadas: nada de votos atrasados.
   const polls = Object.fromEntries(Object.entries(state.polls).map(([id, p]) => [id, closePoll(p)]))
@@ -153,6 +172,7 @@ function moveTo(state: SessionState, index: number, now: number): SessionState {
     step: 0,
     cue: null,
     spotlight: null,
+    lastGame,
     timing: { ...timing, sceneEnteredAt: state.paused ? undefined : now },
   }
 }
@@ -173,11 +193,11 @@ export function reduceHost(state: SessionState, cmd: HostCommand, ctx: Ctx): Hos
         state: bump({ ...state, status: "running", timing: { ...state.timing, startedAt: now, sceneEnteredAt: now } }),
       }
     case "next":
-      return { state: bump(moveTo(state, state.index + 1, now)) }
+      return { state: bump(moveTo(state, state.index + 1, now, narrative)) }
     case "prev":
-      return { state: bump(moveTo(state, state.index - 1, now)) }
+      return { state: bump(moveTo(state, state.index - 1, now, narrative)) }
     case "goto":
-      return { state: bump(moveTo(state, cmd.index, now)) }
+      return { state: bump(moveTo(state, cmd.index, now, narrative)) }
     case "pause":
       if (state.paused) return { state }
       return { state: bump({ ...state, paused: true, timing: { ...stopClock(state, now), pausedAt: now } }) }
@@ -277,14 +297,23 @@ export function reduceAudience(state: SessionState, cmd: AudienceCommand, ctx: C
       if (state.lights[cmd.participantId]) return { state, result: "unchanged" }
       return { state: bump({ ...state, lights: { ...state.lights, [cmd.participantId]: now } }), result: "accepted" }
     case "play": {
-      if (!existing) return { state, result: "rejected" }
+      if (!existing || !Number.isFinite(cmd.value)) return { state, result: "rejected" }
+      const sealOf = sealEvidenceId(cmd.gameId)
       const game = narrative.scenes[state.index]?.game
-      // Só vale o jogo da cena atual; avançar a cena encerra a brincadeira.
-      if (!game || game.id !== cmd.gameId || game.max === 0 || !Number.isFinite(cmd.value)) return { state, result: "rejected" }
-      const prev = state.plays?.[game.id]?.[cmd.participantId]
-      const next = mergePlay(prev, { value: Math.min(game.max, Math.max(0, Math.round(cmd.value))), done: !!cmd.done })
+      let max: number
+      if (sealOf) {
+        // Selo de pista: só depois da liberação; vale também depois da cena (no Arquivo).
+        if (!state.released.includes(sealOf)) return { state, result: "rejected" }
+        max = SEAL_TAPS
+      } else {
+        // Só vale o jogo da cena atual; avançar a cena encerra a brincadeira.
+        if (!game || game.id !== cmd.gameId || game.max === 0) return { state, result: "rejected" }
+        max = game.max
+      }
+      const prev = state.plays?.[cmd.gameId]?.[cmd.participantId]
+      const next = mergePlay(prev, { value: Math.min(max, Math.max(0, Math.round(cmd.value))), done: !!cmd.done, at: now })
       if (prev && prev.value === next.value && prev.done === next.done) return { state, result: "unchanged" }
-      const plays = { ...state.plays, [game.id]: { ...state.plays?.[game.id], [cmd.participantId]: next } }
+      const plays = { ...state.plays, [cmd.gameId]: { ...state.plays?.[cmd.gameId], [cmd.participantId]: next } }
       return { state: bump({ ...state, plays }), result: "accepted" }
     }
   }
@@ -292,5 +321,10 @@ export function reduceAudience(state: SessionState, cmd: AudienceCommand, ctx: C
 
 /** O progresso nunca anda para trás (reenvios atrasados não apagam o que já foi feito). */
 export function mergePlay(prev: PlayResult | undefined, next: PlayResult): PlayResult {
-  return { value: Math.max(prev?.value ?? 0, next.value), done: !!prev?.done || next.done }
+  const value = Math.max(prev?.value ?? 0, next.value)
+  const done = !!prev?.done || next.done
+  // O instante só muda quando o resultado melhora: é ele que desempata o pódio.
+  const improved = !prev || value > prev.value || (done && !prev.done)
+  const at = improved ? (next.at ?? prev?.at) : prev?.at
+  return at === undefined ? { value, done } : { value, done, at }
 }

@@ -10,7 +10,7 @@ import type {
   VisualId,
 } from "@/content/schema"
 import { tally, type PollStatus, type TallyRow } from "./poll"
-import type { CueKind, MomentKind, PlayResult, SessionNarrative, SessionState } from "./session"
+import { sealGameId, type CueKind, type MomentKind, type PlayResult, type SessionNarrative, type SessionState } from "./session"
 
 // View-models das superfícies públicas. Os tipos não têm campos editoriais
 // privados: telão e celular só conseguem renderizar o que está aqui.
@@ -47,6 +47,27 @@ export interface OverviewView {
   spotlightSkinId?: string
 }
 
+/** Um lugar no pódio. Só o apelido (ou "Jogador N"), nunca o id. */
+export interface PodiumEntry {
+  place: number
+  name: string
+  value: number
+  done: boolean
+}
+
+/** Pódio de fim de jogo: aparece por alguns segundos depois que o apresentador sai do minijogo. */
+export interface GameResults {
+  /** Muda a cada fim de jogo (o cliente mostra uma vez por chave). */
+  key: string
+  at: number
+  title: string
+  max: number
+  players: number
+  top: PodiumEntry[]
+  /** Só no celular: a colocação de quem está vendo. */
+  me?: { place: number; value: number }
+}
+
 /** Minijogo da cena: o telão vê a soma da sala; o celular, o próprio resultado. */
 export interface GameView {
   id: string
@@ -58,9 +79,13 @@ export interface GameView {
   /** Quantos chegaram ao fim. */
   done: number
   mine?: PlayResult
+  /** 1º, 2º e 3º lugares ao vivo (só no telão). */
+  top?: PodiumEntry[]
 }
 
 export interface ProjectorView {
+  /** Versão do palco: o telão descarta views mais antigas que a que já tem. */
+  version: number
   roomCode: string
   status: SessionState["status"]
   paused: boolean
@@ -76,8 +101,14 @@ export interface ProjectorView {
     fxCue?: FxCue
     illumination: number
     poll?: PollView
-    /** Selo de uma cena evidence_unlock: aberto ou fechado. */
-    seal?: "fechado" | "aberto"
+    /**
+     * Selo de uma cena evidence_unlock. "liberado": o apresentador liberou e o
+     * público está quebrando no celular; "aberto": quebrou no telão (todos
+     * quebraram ou o apresentador abriu).
+     */
+    seal?: "fechado" | "liberado" | "aberto"
+    /** Dados públicos do selo: posição no trilho, dica e quantos já quebraram. */
+    sealInfo?: SealInfo
     /** Só a referência, depois da liberação. Nunca a explicação. */
     releasedRefs?: string[]
     /** Passos já revelados pelo apresentador (ex.: candidatos). */
@@ -87,10 +118,28 @@ export interface ProjectorView {
     overview?: OverviewView
     game?: GameView
   }
+  results?: GameResults
+}
+
+/** Posição de uma pista no trilho da sequência (1ª, 2ª…). */
+export interface TrailPos {
+  n: number
+  total: number
+}
+
+export interface SealInfo {
+  trail: TrailPos
+  hint: string
+  /** Pessoas na sala que já quebraram o selo no celular. */
+  opened: number
+  players: number
 }
 
 export interface ClueView {
   evidenceId: string
+  trail: TrailPos
+  /** Esta pessoa já quebrou o selo no celular (só faz sentido depois da liberação). */
+  broken: boolean
   status: "selada" | "aberta" | "futura"
   /** Antes da liberação o título é genérico, para não antecipar a conexão. */
   title: string
@@ -114,11 +163,25 @@ export interface AudienceView {
     poll?: PollView & { myVote?: string }
     overview?: OverviewView
     game?: GameView
+    /** Pista (evidência) desta cena, quando ela entrega um selo. */
+    clueId?: string
   }
   clues: ClueView[]
+  results?: GameResults
 }
 
 type EvidenceLookup = (id: string) => Evidence | undefined
+
+/** Ordem das pistas no trilho: as cenas que liberam algo, na ordem da sequência. */
+function trailOf(narrative: SessionNarrative, evidenceId: string): TrailPos {
+  const ids = [...new Set(narrative.scenes.flatMap((s) => (s.releases ? [s.releases] : [])))]
+  return { n: ids.indexOf(evidenceId) + 1, total: ids.length }
+}
+
+/** Quantas pessoas presentes já quebraram o selo da pista. */
+function sealOpened(state: SessionState, evidenceId: string): number {
+  return Object.entries(state.plays?.[sealGameId(evidenceId)] ?? {}).filter(([pid, r]) => r.done && state.participants[pid]).length
+}
 
 function overviewView(state: SessionState, narrative: SessionNarrative): OverviewView | undefined {
   const scene = narrative.scenes[state.index]
@@ -143,7 +206,39 @@ function overviewView(state: SessionState, narrative: SessionNarrative): Overvie
   }
 }
 
-function gameView(state: SessionState, narrative: SessionNarrative, participantId?: string | null): GameView | undefined {
+/** Classificação de um jogo: maior resultado; no empate, quem chegou antes. */
+function ranking(state: SessionState, gameId: string) {
+  return Object.entries(state.plays?.[gameId] ?? {})
+    .filter(([pid, r]) => state.participants[pid] && r.value > 0)
+    .sort(([a, x], [b, y]) => y.value - x.value || Number(y.done) - Number(x.done) || (x.at ?? Infinity) - (y.at ?? Infinity) || state.participants[a].order - state.participants[b].order)
+    .map(([pid, r], i) => ({ pid, place: i + 1, value: r.value, done: r.done }))
+}
+
+function top3(state: SessionState, ranked: ReturnType<typeof ranking>): PodiumEntry[] {
+  return ranked.slice(0, 3).map(({ pid, place, value, done }) => {
+    const p = state.participants[pid]
+    return { place, name: p.nickname || `Jogador ${p.order + 1}`, value, done }
+  })
+}
+
+function resultsView(state: SessionState, narrative: SessionNarrative, participantId?: string | null): GameResults | undefined {
+  const last = state.lastGame
+  const scene = last ? narrative.scenes[last.sceneIndex] : undefined
+  if (!last || !scene?.game || scene.game.id !== last.gameId) return undefined
+  const ranked = ranking(state, last.gameId)
+  const mine = participantId ? ranked.find((r) => r.pid === participantId) : undefined
+  return {
+    key: `${last.gameId}-${last.at}`,
+    at: last.at,
+    title: scene.title,
+    max: scene.game.max,
+    players: ranked.length,
+    top: top3(state, ranked),
+    me: mine ? { place: mine.place, value: mine.value } : undefined,
+  }
+}
+
+function gameView(state: SessionState, narrative: SessionNarrative, participantId?: string | null, withTop = false): GameView | undefined {
   const game = narrative.scenes[state.index]?.game
   if (!game) return undefined
   const results = Object.entries(state.plays?.[game.id] ?? {}).filter(([pid]) => state.participants[pid])
@@ -155,6 +250,7 @@ function gameView(state: SessionState, narrative: SessionNarrative, participantI
     total: results.reduce((n, [, r]) => n + r.value, 0),
     done: results.filter(([, r]) => r.done).length,
     mine: participantId ? state.plays?.[game.id]?.[participantId] : undefined,
+    top: withTop && game.max > 0 ? top3(state, ranking(state, game.id)) : undefined,
   }
 }
 
@@ -184,6 +280,7 @@ export function toProjectorView(
   lookup: EvidenceLookup,
 ): ProjectorView {
   const base = {
+    version: state.version,
     roomCode: state.roomCode,
     status: state.status,
     paused: state.paused,
@@ -192,7 +289,7 @@ export function toProjectorView(
     lightsCount: Object.keys(state.lights).length,
   }
   const scene = state.status === "running" ? narrative.scenes[state.index] : undefined
-  if (!scene) return { ...base, scene: null }
+  if (!scene) return { ...base, scene: null, results: resultsView(state, narrative) }
 
   // No momento de conexão o telão mostra só a imagem: nada de título nem legenda.
   // Na visão geral, a própria cena desenha rótulos; título/legenda genéricos ficam de fora.
@@ -200,6 +297,10 @@ export function toProjectorView(
   const silent = scene.type === "presenter_pause" || (!!overview && overview.role !== "pista")
   const released = scene.releases ? state.released.includes(scene.releases) : false
   const ev = scene.releases ? lookup(scene.releases) : undefined
+  const players = base.participantCount
+  const opened = scene.releases ? sealOpened(state, scene.releases) : 0
+  // O selo do telão quebra quando todos quebraram o seu ou quando o apresentador abre.
+  const stageOpen = released && (state.cue?.kind === "selo" || (players > 0 && opened >= players))
 
   return {
     ...base,
@@ -212,15 +313,18 @@ export function toProjectorView(
       fxCue: scene.fxCue,
       illumination: scene.illumination,
       poll: pollView(state, narrative, state.index),
-      seal: scene.releases ? (released ? "aberto" : "fechado") : undefined,
+      seal: scene.releases ? (stageOpen ? "aberto" : released ? "liberado" : "fechado") : undefined,
+      sealInfo:
+        scene.releases && ev ? { trail: trailOf(narrative, ev.id), hint: ev.lockedHint, opened, players } : undefined,
       releasedRefs:
         released && ev && scene.stage.showRefsAfterRelease ? ev.refs.map((r) => formatRef(r)) : undefined,
       steps: overview ? undefined : scene.steps?.slice(0, state.step).map((s) => ({ id: s.id, label: s.label, text: s.text, value: s.value })),
       totalSteps: scene.steps?.length,
       cue: state.cue,
       overview,
-      game: gameView(state, narrative),
+      game: gameView(state, narrative, null, true),
     },
+    results: resultsView(state, narrative),
   }
 }
 
@@ -255,6 +359,8 @@ export function toAudienceView(
       return [
         {
           evidenceId: id,
+          trail: trailOf(narrative, id),
+          broken: !!(participantId && state.plays?.[sealGameId(id)]?.[participantId]?.done),
           status: "aberta" as const,
           title: ev.title,
           lockedHint: ev.lockedHint,
@@ -269,6 +375,8 @@ export function toAudienceView(
     return [
       {
         evidenceId: id,
+        trail: trailOf(narrative, id),
+        broken: false,
         status: ev.availability === "futura" ? ("futura" as const) : ("selada" as const),
         title: "Pista selada",
         lockedHint: ev.lockedHint,
@@ -295,8 +403,10 @@ export function toAudienceView(
           poll: poll ? { ...poll, myVote } : undefined,
           overview: overviewView(state, narrative),
           game: gameView(state, narrative, participantId),
+          clueId: scene.releases,
         }
       : null,
     clues,
+    results: resultsView(state, narrative, participantId),
   }
 }

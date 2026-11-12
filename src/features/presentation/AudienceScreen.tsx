@@ -1,50 +1,27 @@
 "use client"
 
-import { Lock, Pause, Sparkles } from "lucide-react"
+import { Pause } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
-import { BlockList } from "@/components/story/BlockList"
-import { ConnectionChips } from "@/components/story/ConnectionChips"
 import { ConnectionStatus } from "@/components/story/ConnectionStatus"
 import { DemoBadge } from "@/components/story/DemoBadge"
 import { Button } from "@/components/ui/button"
 import type { AudienceRoomApi, RoomMode } from "@/data/ports"
 import type { ClueView } from "@/domain/projection"
+import { SEAL_TAPS, sealGameId } from "@/domain/session"
 import { HAPTIC, vibrate } from "@/fx/haptics"
 import { ParticleField } from "@/fx/ParticleField"
-import { SealBreak } from "@/fx/SealBreak"
 import { useStinger } from "@/fx/useSound"
 import { cn } from "@/lib/utils"
 import { useInventory } from "@/stores/inventory"
 import { PhoneGame } from "../etapas/etapa-1/PhoneGame"
 import { HajaLuzPhone } from "./Moments"
 import { OverviewPhoneCard } from "./OverviewPhoneCard"
+import { Achievements, PhoneDock, PhoneSheet, type DockPanel } from "./PhoneDock"
+import { ResultsPhone, useFreshResults } from "./Podium"
 import { PollResults } from "./PollResults"
-
-function Clue({ clue }: { clue: ClueView }) {
-  const open = clue.status === "aberta"
-  return (
-    <article className={cn("rounded-2xl border p-4", open ? "border-gold/60 bg-[linear-gradient(180deg,rgb(216_169_72/0.14),transparent),var(--ink)]" : "border-dashed border-gold/40 bg-night")}>
-      <div className="flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.3em] text-gold">
-        {open ? <Sparkles className="size-3.5" aria-hidden /> : <Lock className="size-3.5" aria-hidden />}
-        {open ? "Pista aberta" : clue.status === "futura" ? "Conexão futura" : "Pista selada"}
-      </div>
-      <SealBreak open={open} hint={clue.lockedHint}>
-        {open && (
-          <div className="space-y-4 pt-2">
-            <div>
-              <h3 className="font-display text-2xl text-gold-bright">{clue.title}</h3>
-              <p className="text-sm text-sand">{clue.refs?.join(" · ")} <span className="text-mist">(NAA)</span></p>
-            </div>
-            {clue.synthesis && <BlockList blocks={clue.synthesis} stagger={0.25} />}
-            {clue.classification && <ConnectionChips primary={clue.classification.primary} secondary={clue.classification.secondary} note={clue.classification.note} />}
-          </div>
-        )}
-      </SealBreak>
-    </article>
-  )
-}
+import { SealedClue } from "./SealedClue"
 
 /** Celular do público: sem cadastro, só apelido opcional. */
 export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & { error?: string | null }; mode: RoomMode; code: string }) {
@@ -53,7 +30,11 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
   const [busy, setBusy] = useState(false)
   const stinger = useStinger()
   const inventoryScope = `sala-${code}`
-  const [, dispatchInventory] = useInventory(inventoryScope)
+  const [inventory, dispatchInventory] = useInventory(inventoryScope)
+  const [panel, setPanel] = useState<DockPanel | null>(null)
+  const [results, closeResults] = useFreshResults(joined ? view?.results : undefined)
+  // Selos quebrados neste aparelho (o servidor confirma depois; a pista abre na hora).
+  const [brokenHere, setBrokenHere] = useState<string[]>([])
   const knot = view?.scene?.overview?.role === "versiculo" ? view.scene.overview.knot : undefined
   // O primeiro versículo do plano (Gn 3:15) entrega a relíquia da semente.
   useEffect(() => {
@@ -74,18 +55,32 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
     if (err) toast.error(err)
   }
 
+  const { play } = room
+  const breakSeal = useCallback(
+    (evidenceId: string) => {
+      setBrokenHere((ids) => (ids.includes(evidenceId) ? ids : [...ids, evidenceId]))
+      void play(sealGameId(evidenceId), SEAL_TAPS, true)
+    },
+    [play],
+  )
+  const isBroken = (c: ClueView) => c.broken || brokenHere.includes(c.evidenceId)
+
   const scene = view?.scene
   const poll = scene?.poll
   const canVote = poll?.status === "open"
-  const opened = view?.clues.filter((c) => c.status === "aberta") ?? []
-  const sealed = view?.clues.filter((c) => c.status !== "aberta") ?? []
+  // A pista da cena atual aparece em destaque; o Arquivo guarda as outras.
+  const featured = scene?.clueId ? view?.clues.find((c) => c.evidenceId === scene.clueId) : undefined
+  const archive = view?.clues.filter((c) => c.evidenceId !== featured?.evidenceId) ?? []
+  const opened = archive.filter((c) => c.status === "aberta" && isBroken(c))
+  const sealed = archive.filter((c) => !(c.status === "aberta" && isBroken(c)))
 
   return (
-    <div className="relative min-h-dvh overflow-x-hidden bg-night pb-24" style={{ ["--illumination" as string]: 0.35 }}>
-      <div className="stage-glow pointer-events-none fixed inset-0" />
-      <ParticleField preset="stars" density={0.4} intensity={0.4} className="fixed" />
+    // Tela fixa, como um app: só o miolo rola (na vertical); o resto fica parado.
+    <div className="fixed inset-0 flex flex-col overflow-hidden overscroll-none bg-night" style={{ ["--illumination" as string]: 0.35 }}>
+      <div className="stage-glow pointer-events-none absolute inset-0" />
+      <ParticleField preset="stars" density={0.4} intensity={0.4} className="absolute" />
 
-      <header className="relative z-10 flex items-center justify-between px-4 py-3">
+      <header className="relative z-10 flex shrink-0 items-center justify-between px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <div>
           <p className="font-display text-lg tracking-[0.18em] text-parchment">BÍBLIA</p>
           <p className="text-xs tracking-widest text-mist">Sala {code}</p>
@@ -96,7 +91,8 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
         </div>
       </header>
 
-      <main id="conteudo" className="relative z-10 mx-auto max-w-md space-y-6 px-4">
+      <main id="conteudo" className="relative z-10 min-h-0 w-full flex-1 touch-pan-y overflow-y-auto overflow-x-hidden overscroll-contain">
+        <div className="mx-auto flex min-h-full max-w-md flex-col gap-6 px-4 pb-4">
         {room.error && !view && <p className="rounded-xl border border-rose/40 bg-rose/10 p-4 text-rose">{room.error}</p>}
 
         {view?.status === "ended" && !joined && (
@@ -109,7 +105,7 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
         {!joined && view?.status !== "ended" && !(room.error && !view) && (
           <section className="glass space-y-4 rounded-3xl p-5">
             <h1 className="font-display text-3xl text-parchment">Entrar na investigação</h1>
-            <p className="text-sm text-mist">Sem cadastro. O apelido é opcional e só aparece para você.</p>
+            <p className="text-sm text-mist">Sem cadastro. O apelido é opcional e pode aparecer no pódio dos jogos, no telão.</p>
             <label className="block space-y-1.5">
               <span className="text-xs uppercase tracking-widest text-mist">Apelido (opcional)</span>
               <input
@@ -137,14 +133,15 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
             )}
 
             {view.status === "running" && scene && (
-              <section className="space-y-4" aria-live="polite">
+              <section className={cn("flex flex-col gap-4", scene.game && "flex-1")} aria-live="polite">
                 {scene.game ? (
                   <PhoneGame game={scene.game} line={scene.overview?.stageLine} scope={inventoryScope} play={room.play} />
                 ) : (
                   scene.overview && <OverviewPhoneCard overview={scene.overview} />
                 )}
                 {!scene.overview && scene.title && <h1 className="font-display text-3xl leading-tight text-parchment">{scene.title}</h1>}
-                {scene.prompt && (!scene.overview || scene.overview.role === "versiculo" || (scene.overview.role === "pista" && opened.length === 0)) && <p className="text-mist">{scene.prompt}</p>}
+                {scene.prompt && (!scene.overview || scene.overview.role === "versiculo") && <p className="text-mist">{scene.prompt}</p>}
+                {featured && <SealedClue key={featured.evidenceId} clue={featured} broken={isBroken(featured)} onBroken={() => breakSeal(featured.evidenceId)} featured />}
 
                 {poll && poll.status !== "idle" && (
                   <div className="glass space-y-3 rounded-3xl p-4">
@@ -198,21 +195,34 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
             {view.status === "ended" && (
               <section className="glass rounded-3xl p-6 text-center">
                 <p className="font-display text-3xl text-gold-bright">Obrigado por investigar!</p>
-                <p className="mt-2 text-sm text-mist">A sala foi encerrada e os dados de participação foram apagados. As pistas abaixo ficam só nesta tela.</p>
+                <p className="mt-2 text-sm text-mist">A sala foi encerrada e os dados de participação foram apagados. Suas pistas e conquistas ficam nos ícones abaixo, só nesta tela.</p>
               </section>
             )}
 
-            {(opened.length > 0 || sealed.length > 0) && (
-              <section className="space-y-3">
-                <h2 className="text-xs uppercase tracking-[0.35em] text-gold">Seu arquivo</h2>
-                {[...sealed, ...opened].map((c) => (
-                  <Clue key={c.evidenceId} clue={c} />
-                ))}
-              </section>
-            )}
           </>
         )}
+        </div>
       </main>
+
+      {joined && view && (
+        <>
+          <PhoneDock
+            relics={inventory.relics.length}
+            clues={archive.length}
+            fresh={archive.some((c) => c.status === "aberta" && !isBroken(c))}
+            onOpen={setPanel}
+          />
+          <PhoneSheet title="Conquistas" open={panel === "conquistas"} onClose={() => setPanel(null)}>
+            <Achievements inventory={inventory} />
+          </PhoneSheet>
+          <PhoneSheet title="Seu arquivo" open={panel === "arquivo"} onClose={() => setPanel(null)}>
+            {archive.length === 0 && <p className="py-6 text-center text-sm text-mist">As pistas que você ganhar ficam guardadas aqui.</p>}
+            {[...sealed, ...opened].map((c) => (
+              <SealedClue key={c.evidenceId} clue={c} broken={isBroken(c)} onBroken={() => breakSeal(c.evidenceId)} />
+            ))}
+          </PhoneSheet>
+        </>
+      )}
 
       <AnimatePresence>
         {view?.paused && view.status === "running" && (
@@ -220,6 +230,7 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
             <Pause className="size-4 text-gold" aria-hidden /> Pausa
           </motion.div>
         )}
+        {results && <ResultsPhone key={results.key} results={results} onClose={closeResults} />}
         {view?.moment?.kind === "haja-luz" && <HajaLuzPhone key={view.moment.startedAt} startedAt={view.moment.startedAt} myOrder={view.moment.myOrder} total={view.moment.total} />}
       </AnimatePresence>
     </div>

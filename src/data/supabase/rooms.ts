@@ -59,7 +59,7 @@ export async function loadRoom(code: string): Promise<{ row: RoomRow; state: Ses
     db.from("participants").select("id, nickname, join_order, joined_at, last_seen_at").eq("room_code", code),
     db.from("votes").select("poll_id, participant_id, option_id").eq("room_code", code),
     db.from("lights").select("participant_id, lit_at").eq("room_code", code),
-    db.from("plays").select("game_id, participant_id, value, done").eq("room_code", code),
+    db.from("plays").select("game_id, participant_id, value, done, updated_at").eq("room_code", code),
   ])
   for (const r of [people, votes, lights]) if (r.error) throw r.error
   // Sem a tabela dos minijogos (migration ainda não aplicada), a sala segue sem somar os jogos.
@@ -82,7 +82,8 @@ export async function loadRoom(code: string): Promise<{ row: RoomRow; state: Ses
   }
   const lit = Object.fromEntries((lights.data ?? []).map((l) => [l.participant_id, Date.parse(l.lit_at)]))
   const plays: Record<string, Record<string, PlayResult>> = {}
-  for (const p of played.data ?? []) (plays[p.game_id] ??= {})[p.participant_id] = { value: p.value, done: p.done }
+  // updated_at = quando o resultado melhorou (só se grava o que mudou): desempata o pódio.
+  for (const p of played.data ?? []) (plays[p.game_id] ??= {})[p.participant_id] = { value: p.value, done: p.done, at: Date.parse(p.updated_at) }
   return { row, state: { ...row.state, participants, polls, lights: lit, plays } }
 }
 

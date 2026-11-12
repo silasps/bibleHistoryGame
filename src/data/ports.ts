@@ -19,6 +19,10 @@ export interface HostRoomApi {
     addParticipants: (n: number) => void
     voteRandomly: () => void
     lightAll: () => void
+    /** Participantes fictícios quebram o selo da pista liberada. */
+    breakSeals: () => void
+    /** Participantes fictícios jogam o minijogo da cena (para ensaiar o pódio). */
+    playRandomly: () => void
   }
 }
 

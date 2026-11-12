@@ -16,8 +16,8 @@ export function useStinger() {
   const sound = usePreferences((s) => s.sound)
   const silent = useContext(SilentSound)
   return useCallback(
-    (kind: Stinger) => {
-      if (sound && !silent) soundEngine.stinger(kind)
+    (kind: Stinger, level?: number) => {
+      if (sound && !silent) soundEngine.stinger(kind, level)
     },
     [sound, silent],
   )

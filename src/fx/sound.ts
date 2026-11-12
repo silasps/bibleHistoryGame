@@ -12,7 +12,7 @@ export type AmbientMood = "night" | "garden" | "tension" | "warm" | "wonder" | "
 /** Trilhas de jogo: animadas, no estilo dos games, com melodia gerada aqui (não é cópia de nenhum jogo). */
 export type ArcadeMood = "play" | "play-tense" | "play-epic"
 export type Mood = AmbientMood | ArcadeMood
-export type Stinger = "reveal" | "seal" | "whoosh" | "heartbeat" | "train" | "vote" | "light" | "rewind"
+export type Stinger = "reveal" | "seal" | "whoosh" | "heartbeat" | "train" | "vote" | "light" | "rewind" | "tap"
 
 interface MoodDef {
   bpm: number
@@ -411,7 +411,8 @@ class SoundEngine {
     return { mood, bus, nodes: [send, kick, snareFilter, snare, hatFilter, hat, bass, leadFilter, lead, arp], loops: [loop] }
   }
 
-  stinger(kind: Stinger) {
+  /** `level` (0 a 1): só no "tap", o toque sobe de tom conforme o selo racha. */
+  stinger(kind: Stinger, level = 0) {
     if (this.state !== "ready" || !this.tone || !this.sfx) return
     const T = this.tone
     const out = this.sfx
@@ -494,6 +495,18 @@ class SoundEngine {
         mallet.volume.value = -16
         mallet.triggerAttackRelease("A5", 0.2, now)
         later([mallet], 1500)
+        break
+      }
+      case "tap": {
+        // Batida na cera: um "toc" grave e um estalo que fica mais agudo a cada toque.
+        const knock = new T.MembraneSynth({ pitchDecay: 0.02, octaves: 2, envelope: { attack: 0.001, decay: 0.12, sustain: 0 } }).connect(out)
+        knock.volume.value = -10
+        const clickFilter = new T.Filter(1800 + level * 3000, "bandpass").connect(out)
+        const click = new T.NoiseSynth({ noise: { type: "white" }, envelope: { attack: 0.001, decay: 0.04, sustain: 0 } }).connect(clickFilter)
+        click.volume.value = -16
+        knock.triggerAttackRelease(T.Frequency("G2").transpose(Math.round(level * 12)).toNote(), 0.1, now)
+        click.triggerAttackRelease(0.04, now + 0.005)
+        later([knock, click, clickFilter], 1200)
         break
       }
       case "light": {
