@@ -8,7 +8,10 @@ type ToneModule = typeof import("tone")
 type Node = { dispose: () => unknown }
 
 export type EngineState = "off" | "loading" | "ready"
-export type Mood = "night" | "garden" | "tension" | "warm" | "wonder" | "hope" | "sorrow" | "triumph"
+export type AmbientMood = "night" | "garden" | "tension" | "warm" | "wonder" | "hope" | "sorrow" | "triumph"
+/** Trilhas de jogo: animadas, no estilo dos games, com melodia gerada aqui (não é cópia de nenhum jogo). */
+export type ArcadeMood = "play" | "play-tense" | "play-epic"
+export type Mood = AmbientMood | ArcadeMood
 export type Stinger = "reveal" | "seal" | "whoosh" | "heartbeat" | "train" | "vote" | "light" | "rewind"
 
 interface MoodDef {
@@ -24,7 +27,7 @@ interface MoodDef {
   wind: number
 }
 
-const MOODS: Record<Mood, MoodDef> = {
+const MOODS: Record<AmbientMood, MoodDef> = {
   night: {
     bpm: 58,
     bars: 2,
@@ -97,6 +100,97 @@ const MOODS: Record<Mood, MoodDef> = {
     padBrightness: 1800,
     wind: 0.02,
   },
+}
+
+interface ArcadeDef {
+  bpm: number
+  /** Nota MIDI da tônica. */
+  root: number
+  /** Escala em semitons a partir da tônica. */
+  scale: number[]
+  /** Graus da escala (0 = tônica) de cada compasso, em ciclo. */
+  progression: number[]
+  /** Semente da melodia: cada trilha tem o seu tema, sempre o mesmo. */
+  seed: number
+  /** Batidas de 16 passos (x = toca). */
+  kick: string
+  snare: string
+  hat: string
+  lead: "square" | "triangle" | "sawtooth"
+}
+
+const MAJOR = [0, 2, 4, 5, 7, 9, 11]
+const MINOR = [0, 2, 3, 5, 7, 8, 10]
+
+const ARCADE: Record<ArcadeMood, ArcadeDef> = {
+  // Alegre: maior, saltitante.
+  play: {
+    bpm: 128, root: 62, scale: MAJOR, progression: [0, 4, 5, 3], seed: 11,
+    kick: "x.....x.x.......", snare: "....x.......x...", hat: "x.x.x.x.x.x.x.xx", lead: "square",
+  },
+  // Tensa: menor, um pouco mais lenta (a árvore).
+  "play-tense": {
+    bpm: 116, root: 57, scale: MINOR, progression: [0, 5, 3, 4], seed: 23,
+    kick: "x.......x.x.....", snare: "....x.......x..x", hat: "..x...x...x...x.", lead: "triangle",
+  },
+  // Épica: maior, batida reta (o mar, Jericó, a funda, o altar).
+  "play-epic": {
+    bpm: 136, root: 60, scale: MAJOR, progression: [0, 5, 3, 4, 0, 5, 1, 4], seed: 37,
+    kick: "x...x...x...x...", snare: "....x.......x.x.", hat: "xxxxxxxxxxxxxxxx", lead: "sawtooth",
+  },
+}
+
+/** Gerador pseudoaleatório com semente (a mesma trilha sai sempre igual). */
+function seeded(seed: number) {
+  let a = seed >>> 0
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0
+    let t = a
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+/**
+ * Melodia de 4 compassos em colcheias (8 por compasso), na forma A A' B A'':
+ * notas do acorde nos tempos fortes, passos da escala nos fracos.
+ * Devolve graus da escala relativos à tônica (null = pausa).
+ */
+export function arcadeMelody(def: Pick<ArcadeDef, "seed" | "progression" | "scale">): (number | null)[] {
+  const rand = seeded(def.seed)
+  const rhythms = ["x.xxx.x.", "x.x.xxx.", "xx.x.xx.", "x.xx.x.x", "x..xx.x."]
+  const bar = (chordDegree: number, prev: number) => {
+    const rhythm = rhythms[Math.floor(rand() * rhythms.length)]
+    const notes: (number | null)[] = []
+    let pos = prev
+    for (let i = 0; i < 8; i++) {
+      if (rhythm[i] !== "x") {
+        notes.push(null)
+        continue
+      }
+      const strong = i % 2 === 0
+      if (strong) {
+        // Tempo forte: a nota do acorde mais próxima.
+        const tones = [0, 2, 4].map((t) => chordDegree + t).flatMap((d) => [d, d + 7, d - 7])
+        pos = tones.reduce((best, d) => (Math.abs(d - pos) < Math.abs(best - pos) ? d : best), tones[0])
+      } else {
+        pos += rand() < 0.5 ? 1 : -1
+      }
+      pos = Math.max(0, Math.min(11, pos))
+      notes.push(pos)
+    }
+    return notes
+  }
+  const chords = def.progression
+  const a = bar(chords[0], 4)
+  const a2 = bar(chords[1 % chords.length], a.filter((n) => n !== null).at(-1) ?? 4)
+  const b = bar(chords[2 % chords.length], 7)
+  const end = bar(chords[3 % chords.length], 4)
+  // Repete o começo para a melodia ficar na cabeça; o fim volta à tônica.
+  end[6] = null
+  end[7] = 7
+  return [...a, ...a2, ...b, ...end]
 }
 
 interface MoodVoice {
@@ -185,7 +279,8 @@ class SoundEngine {
     const old = this.voice
     this.voice = null
     if (old) {
-      old.bus.gain.rampTo(0, 2.5)
+      // Entre trilha de jogo e ambiente, a troca é mais rápida (o andamento muda).
+      old.bus.gain.rampTo(0, old.mood in ARCADE || (mood !== null && mood in ARCADE) ? 0.8 : 2.5)
       setTimeout(() => {
         old.loops.forEach((l) => l.dispose())
         old.nodes.forEach((n) => n.dispose())
@@ -193,7 +288,11 @@ class SoundEngine {
       }, 3200)
     }
     if (!mood) return
-    const def = MOODS[mood]
+    if (mood in ARCADE) {
+      this.voice = this.arcadeVoice(mood as ArcadeMood)
+      return
+    }
+    const def = MOODS[mood as AmbientMood]
     T.getTransport().bpm.rampTo(def.bpm, 2)
 
     const bus = new T.Gain(0).connect(this.master!)
@@ -244,6 +343,72 @@ class SoundEngine {
 
     bus.gain.rampTo(1, 3)
     this.voice = { mood, bus, nodes: [send, padFilter, padLfo, pad, bass, arp, windGain, windFilter, wind], loops: [chordLoop, arpLoop] }
+  }
+
+  /** Trilha de jogo: bateria, baixo saltitante, melodia em 8 bits e arpejo. */
+  private arcadeVoice(mood: ArcadeMood): MoodVoice {
+    const T = this.tone!
+    const def = ARCADE[mood]
+    T.getTransport().bpm.rampTo(def.bpm, 0.6)
+    const note = (midi: number) => T.Frequency(midi, "midi").toNote()
+    const degree = (d: number, octave = 0) => {
+      const n = def.scale.length
+      const o = Math.floor(d / n)
+      return def.root + def.scale[((d % n) + n) % n] + 12 * (o + octave)
+    }
+
+    const bus = new T.Gain(0).connect(this.master!)
+    const send = new T.Gain(0.25).connect(this.reverb!)
+    bus.connect(send)
+
+    const kick = new T.MembraneSynth({ pitchDecay: 0.03, octaves: 6, envelope: { attack: 0.001, decay: 0.28, sustain: 0 } }).connect(bus)
+    kick.volume.value = -9
+    const snareFilter = new T.Filter(1800, "bandpass").connect(bus)
+    const snare = new T.NoiseSynth({ noise: { type: "white" }, envelope: { attack: 0.001, decay: 0.14, sustain: 0 } }).connect(snareFilter)
+    snare.volume.value = -13
+    const hatFilter = new T.Filter(7000, "highpass").connect(bus)
+    const hat = new T.NoiseSynth({ noise: { type: "white" }, envelope: { attack: 0.001, decay: 0.035, sustain: 0 } }).connect(hatFilter)
+    hat.volume.value = -27
+    const bass = new T.MonoSynth({
+      oscillator: { type: "square" },
+      envelope: { attack: 0.005, decay: 0.15, sustain: 0.4, release: 0.08 },
+      filterEnvelope: { attack: 0.002, decay: 0.12, sustain: 0.3, baseFrequency: 220, octaves: 2.5 },
+    }).connect(bus)
+    bass.volume.value = -17
+    const leadFilter = new T.Filter(def.lead === "sawtooth" ? 2600 : 4200, "lowpass").connect(bus)
+    const lead = new T.Synth({ oscillator: { type: def.lead }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.35, release: 0.12 } }).connect(leadFilter)
+    lead.volume.value = def.lead === "sawtooth" ? -21 : -18
+    lead.connect(this.delay!)
+    const arp = new T.Synth({ oscillator: { type: "triangle" }, envelope: { attack: 0.002, decay: 0.08, sustain: 0, release: 0.05 } }).connect(bus)
+    arp.volume.value = -27
+
+    const melody = arcadeMelody(def)
+    // A melodia entra depois de dois compassos só de ritmo.
+    let step = 0
+    const loop = new T.Loop((time) => {
+      const s16 = step % 16
+      const bar = Math.floor(step / 16)
+      const chord = def.progression[bar % def.progression.length]
+      if (def.kick[s16] === "x") kick.triggerAttackRelease("C1", "8n", time)
+      if (def.snare[s16] === "x") snare.triggerAttackRelease("16n", time, 0.8)
+      if (def.hat[s16] === "x") hat.triggerAttackRelease("32n", time, s16 % 4 === 0 ? 0.6 : 0.35)
+      if (s16 % 2 === 0) {
+        // Baixo em colcheias: tônica, oitava e quinta do acorde.
+        const pattern = [0, 0, 7, 0, 4, 0, 7, 4]
+        const d = chord + pattern[(s16 / 2) % 8]
+        bass.triggerAttackRelease(note(degree(d, -2)), "16n", time, 0.8)
+        if (bar >= 2) {
+          const m = melody[(((bar - 2) % 4) * 8 + s16 / 2) % melody.length]
+          if (m !== null) lead.triggerAttackRelease(note(degree(m, 1)), "16n", time, 0.6)
+        }
+      }
+      // Arpejo das notas do acorde em semicolcheias.
+      arp.triggerAttackRelease(note(degree(chord + [0, 2, 4, 7][s16 % 4], 1)), "32n", time, 0.25)
+      step++
+    }, "16n").start(0)
+
+    bus.gain.rampTo(1, 1.2)
+    return { mood, bus, nodes: [send, kick, snareFilter, snare, hatFilter, hat, bass, leadFilter, lead, arp], loops: [loop] }
   }
 
   stinger(kind: Stinger) {
@@ -359,6 +524,63 @@ export const MOOD_FOR_CUE: Record<string, Mood> = {
   embers: "warm",
   train: "garden",
   cliff: "tension",
+}
+
+/** Clima musical de cada etapa da história (abertura, itens e momentos da fala). */
+export const MOOD_FOR_ETAPA: Record<number, AmbientMood> = {
+  1: "wonder",
+  2: "sorrow",
+  3: "hope",
+  4: "tension",
+  5: "triumph",
+  6: "warm",
+  7: "triumph",
+  8: "hope",
+  9: "tension",
+  10: "sorrow",
+  11: "hope",
+}
+
+/** Trilha de cada minijogo e dos momentos da Etapa 1. */
+export const MOOD_FOR_GAME: Record<string, Mood> = {
+  criacao: "play",
+  jardim: "garden",
+  arvore: "play-tense",
+  queda: "sorrow",
+  vestes: "hope",
+  fora: "tension",
+  arca: "play",
+  estrelas: "play",
+  cesto: "play",
+  mar: "play-epic",
+  mana: "play",
+  jerico: "play-epic",
+  funda: "play-epic",
+  altar: "play-epic",
+  ninive: "play",
+  coracao: "play",
+}
+
+/** O que a música precisa saber de uma cena (serve para o telão e para o jogo solo). */
+export interface MoodSceneLike {
+  fxCue?: string
+  overview?: { role: string; etapa?: number }
+  game?: { kind: string }
+}
+
+/**
+ * Clima musical da cena: jogo tem trilha de game; versículo, pista e pausas
+ * têm o seu clima; o resto segue o clima da etapa. Fora das etapas (abertura,
+ * conclusão, lobby), a música de início.
+ */
+export function moodForScene(scene: MoodSceneLike | null | undefined): Mood {
+  if (!scene) return "night"
+  if (scene.game) return MOOD_FOR_GAME[scene.game.kind] ?? "play"
+  const role = scene.overview?.role
+  if (role === "versiculo") return "hope"
+  if (role === "pista" || role === "reflexao" || role === "conclusao") return "warm"
+  if (scene.overview?.etapa) return MOOD_FOR_ETAPA[scene.overview.etapa] ?? "night"
+  return scene.fxCue ? (MOOD_FOR_CUE[scene.fxCue] ?? "night") : "night"
 }
 
 /** Clima musical de cada semana na jornada do jogo. */

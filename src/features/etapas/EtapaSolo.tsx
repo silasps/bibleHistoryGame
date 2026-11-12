@@ -14,7 +14,9 @@ import { getRoomGame } from "@/content/etapas/jogos"
 import { formatSpan, getItem } from "@/content/overview"
 import { getSlot, isFilled } from "@/content/reflections"
 import type { Scene } from "@/content/schema"
+import { MOOD_FOR_ETAPA, moodForScene } from "@/fx/sound"
 import { useFx } from "@/fx/useFx"
+import { useMood } from "@/fx/useSound"
 import { useInventory } from "@/stores/inventory"
 import { useSolo } from "@/stores/solo-store"
 import { journeyHref } from "../journey/JourneyItem"
@@ -55,6 +57,7 @@ export function EtapaSolo({ n }: { n: number }) {
   const game = scene?.game ? getRoomGame(scene.game.id) : undefined
   const next = presentableEtapas.find((e) => e.n === n + 1)
   const relic = getRoomGame(etapa.games.find((g) => getRoomGame(g.id))?.id ?? "")?.relic
+  useMood(finished ? MOOD_FOR_ETAPA[n] : moodForScene(scene))
 
   // Ver um item aqui conta como visita na jornada (abre a pista da semana).
   useEffect(() => {

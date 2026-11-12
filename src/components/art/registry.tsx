@@ -593,4 +593,8 @@ export const ART: Record<string, () => ReactNode> = {
   ),
 }
 
+// Itens que ainda usam o desenho de outro (até chegar a ilustração própria).
+ART.lamentacoes = ART["queda-jerusalem"]
+ART.obadias = ART["profeta-rolo"]
+
 export const ART_IDS = Object.keys(ART)

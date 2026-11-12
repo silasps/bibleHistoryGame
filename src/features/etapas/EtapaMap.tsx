@@ -45,7 +45,7 @@ export function EtapaMap() {
                   )}
                 </span>
               </div>
-              <p className="mt-3 font-display text-2xl leading-tight text-parchment">{e.title}</p>
+              <p className="mt-3 hyphens-auto font-display text-xl leading-tight text-parchment [overflow-wrap:anywhere] sm:text-2xl">{e.title}</p>
               <p className="mt-1 text-xs text-mist">{pending ? "em breve" : won ? `Relíquia: ${relics.at(-1)?.label}` : "Jogar"}</p>
             </>
           )

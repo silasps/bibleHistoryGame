@@ -24,7 +24,7 @@ export const WEEKS: TimelineWeekInput[] = [
     color: "laranja", sources: ["w5-resumo.txt", "w5-linha-do-tempo.pdf", "w5-contexto.txt"] },
   { week: 6, actId: "ato-06", title: "Últimos Profetas", status: "com_material", span: { from: -640, to: -331 }, memoryVerse: [ref("Ezek", 36, 26)],
     memoryVerseText: ["Eu lhes darei um coração novo e porei dentro de vocês um espírito novo. Tirarei de vocês o coração de pedra e lhes darei um coração de carne."],
-    color: "azul", sources: ["w6-resumo.txt", "w6-linha-do-tempo.pdf", "w6-contexto.txt"] },
+    color: "azul", sources: ["w6-resumo.txt", "w6-linha-do-tempo.pdf", "w6-contexto.txt"] }, // resumo final em 6/11/2026
   { week: 7, actId: "ato-07", title: "Pós-exílio e Intertestamentário", status: "aguardando_material", span: { from: -538, to: -5 }, memoryVerse: [ref("Ezra", 1, 3)], color: "oliva" },
   { week: 8, actId: "ato-08", title: "Jesus", status: "aguardando_material", span: { from: -4, to: 30 }, memoryVerse: [ref("Matt", 28, 5, 6)], color: "dourado" },
   { week: 9, actId: "ato-09", title: "Igreja", status: "aguardando_material", span: { from: 30, to: 68 }, memoryVerse: [ref("Acts", 1, 8)], color: "coral" },
@@ -113,5 +113,7 @@ export const ITEMS: TimelineItemInput[] = [
   { id: "ezequiel", week: 6, kind: "personagem", label: "Ezequiel como profeta", sub: "no exílio", from: -597, to: -571, color: "laranja", art: "ezequiel", characterId: "ezequiel", refs: [ref("Ezek", 1, 1, 3), ref("Ezek", 36, 26)] },
   { id: "persia", week: 6, kind: "potencia", label: "Pérsia", from: -539, to: -331, color: "oliva", art: "persia", refs: [ref("Ezra", 1, 1, 4)] },
   { id: "sofonias", week: 6, kind: "tema", label: "Sofonias", sub: "juízo e remanescente", anchor: "josias", color: "violeta", art: "sofonias", characterId: "sofonias", refs: [ref("Zeph", 1, 4), ref("Zeph", 3, 18, 20)] },
+  { id: "lamentacoes", week: 6, kind: "tema", label: "Lamentações", sub: "o choro do exílio", anchor: "queda-jerusalem", color: "magenta", art: "lamentacoes", refs: [chapters("Lam", 1, 5)] },
+  { id: "obadias", week: 6, kind: "tema", label: "Obadias", sub: "juízo de Edom", anchor: "queda-jerusalem", color: "oliva", art: "obadias", refs: [ref("Obad", 1, 1, 21)] },
   { id: "habacuque", week: 6, kind: "tema", label: "Habacuque", sub: "o justo pela fé", anchor: "jeremias", color: "dourado", art: "habacuque", characterId: "habacuque", refs: [ref("Hab", 1, 2, 6), ref("Hab", 2, 4), ref("Hab", 3, 17, 19)] },
 ]

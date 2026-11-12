@@ -12,7 +12,9 @@ import { FALAS } from "@/content/etapas/falas"
 import { CREATION, RELICS } from "@/content/etapas/etapa-1"
 import { excerpts, stageLineForItem } from "@/content/overview"
 import { isFilled, reflectionSlots } from "@/content/reflections"
+import type { Mood } from "@/fx/sound"
 import { useFx } from "@/fx/useFx"
+import { useMood } from "@/fx/useSound"
 import { useInventory } from "@/stores/inventory"
 import { PhoneVerse } from "../../presentation/OverviewPhoneCard"
 import { AfterFallPhone, RelicBar } from "./AfterFall"
@@ -23,6 +25,20 @@ import { TreeAim } from "./TreeAim"
 const STEPS = ["inicio", "criacao", "jardim", "arvore", "queda", "vestes", "fora", "semente", "pausa", "fim"] as const
 type Step = (typeof STEPS)[number]
 const SCOPE = "solo"
+
+/** Música de cada passo: trilha de game nos jogos, clima da história no resto. */
+const MOOD_FOR_STEP: Record<Step, Mood> = {
+  inicio: "wonder",
+  criacao: "play",
+  jardim: "garden",
+  arvore: "play-tense",
+  queda: "sorrow",
+  vestes: "hope",
+  fora: "tension",
+  semente: "hope",
+  pausa: "warm",
+  fim: "triumph",
+}
 
 /** Espaços do autor da semana 1 que ele já escreveu (vazios são pulados). */
 const pauses = reflectionSlots.filter((s) => s.scope !== "apresentacao" && s.position.kind === "semana" && s.position.week === 1 && isFilled(s))
@@ -38,6 +54,7 @@ export function EtapaUmSolo() {
   const [ready, setReady] = useState(false)
   const [inventory, dispatch, reset] = useInventory(SCOPE)
   const intro = excerpts.find((e) => e.id === etapa.intros[0])?.stageLine
+  useMood(MOOD_FOR_STEP[step])
 
   const go = useCallback((next: Step) => {
     setReady(false)

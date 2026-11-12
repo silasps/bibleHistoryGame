@@ -48,7 +48,7 @@ Hoje as semanas 1–6 têm material. As semanas 7–11 aparecem como “em breve
    ```
    Os testes conferem referências, ids, orçamento de texto do palco, tempo total estimado da apresentação (30–45 min) e se o PRD ficou só no servidor. Depois, abra `/editor/linha-do-tempo` e `/presenter/prep` para revisar.
 
-Se a apresentação passar de 45 minutos estimados com a semana nova, o teste avisa: reduza itens ou trechos de profundidade, ou ajuste as estimativas em `src/content/overview/sequence.ts`.
+Se a apresentação passar de 45 minutos estimados (sem os minijogos opcionais), o teste mostra um aviso e a Área de preparação marca o tempo em vermelho: reduza itens ou trechos de profundidade, ou ajuste as estimativas em `src/content/overview/sequence.ts`.
 
 ## Etapas: como a história aparece na tela
 

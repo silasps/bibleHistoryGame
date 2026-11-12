@@ -123,15 +123,35 @@ function ScratchDay({ reveal, index, total, onCleared }: { reveal: Reveal; index
   )
 }
 
+/** Tudo revelado: a Criação inteira em ordem, dia por dia, com rolagem dentro do jogo. */
 function CreationDone() {
+  const fx = useFx()
   return (
-    <div className="grid h-full w-full grid-cols-2 gap-2 overflow-y-auto bg-night p-3">
-      {CREATION.map((r) => (
-        <div key={r.id} className="relative aspect-[3/4] overflow-hidden rounded-xl">
-          <Backdrop name={r.art} portrait palette={r.palette} />
-          <p className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 p-2 text-center text-sm text-white">{r.label}</p>
-        </div>
-      ))}
+    <div className="absolute inset-0 overflow-y-auto bg-night px-4 pb-4 pt-5">
+      <div className="mb-4 text-center">
+        <p className="font-display text-3xl text-gold-bright">{ETAPA1_LABELS.creationDone}</p>
+        <p className="text-sm text-mist">{formatRef(ETAPA1_LABELS.creationDoneRef, "long")}</p>
+      </div>
+      <ol className="mx-auto max-w-xl space-y-2.5">
+        {CREATION.map((r, i) => (
+          <motion.li
+            key={r.id}
+            initial={fx.motion ? { opacity: 0, y: 10 } : false}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.08 }}
+            className="flex items-center gap-3 rounded-2xl border border-border bg-ink/80 p-2"
+          >
+            <div className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-xl sm:w-36">
+              <Backdrop name={r.art} portrait={false} palette={r.palette} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-gold">Dia {r.day}</p>
+              <p className="font-display text-xl leading-tight text-parchment">{r.label}</p>
+              <p className="text-xs text-mist">{formatRef(r.ref, "long")}</p>
+            </div>
+          </motion.li>
+        ))}
+      </ol>
     </div>
   )
 }

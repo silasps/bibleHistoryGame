@@ -146,7 +146,7 @@ const ETAPAS = z.array(Etapa).parse([
   },
   {
     n: 11, id: "exilio-e-esperanca", title: "Exílio e esperança", color: "coral", status: "com_material",
-    itemIds: ["josias", "sofonias", "jeremias", "habacuque", "daniel", "ezequiel", "queda-jerusalem", "inicio-exilio", "ciro", "persia"],
+    itemIds: ["josias", "sofonias", "jeremias", "habacuque", "daniel", "ezequiel", "queda-jerusalem", "lamentacoes", "obadias", "inicio-exilio", "ciro", "persia"],
     intros: ["r06-intro", "r04-esperanca"],
     prd: [{ week: 6, afterItemId: "ezequiel" }],
   },

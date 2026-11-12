@@ -7,7 +7,7 @@ import type { ProjectorView } from "@/domain/projection"
 import { GoldThread } from "@/fx/GoldThread"
 import { SealBreak } from "@/fx/SealBreak"
 import { SplitReveal } from "@/fx/SplitReveal"
-import { MOOD_FOR_CUE } from "@/fx/sound"
+import { moodForScene } from "@/fx/sound"
 import { useMood, useStinger } from "@/fx/useSound"
 import { useFx } from "@/fx/useFx"
 import { cn } from "@/lib/utils"
@@ -33,7 +33,7 @@ export function ProjectorStage({ view, joinUrl, className, preview = false }: Pr
   const scene = view?.scene ?? null
   const stinger = useStinger()
   const fx = useFx()
-  useMood(preview ? null : view?.status === "running" && scene?.fxCue ? (MOOD_FOR_CUE[scene.fxCue] ?? "night") : "night")
+  useMood(preview ? null : moodForScene(view?.status === "running" ? scene : null))
 
   // Estado visual derivado dos comandos do apresentador.
   const visual = useMemo(() => {
@@ -78,7 +78,7 @@ export function ProjectorStage({ view, joinUrl, className, preview = false }: Pr
       )}
 
       {view?.status === "running" && scene?.overview && ["abertura", "item", "jogo", "beat", "versiculo", "reflexao", "conclusao"].includes(scene.overview.role) && (
-        <OverviewStage overview={scene.overview} game={scene.game} />
+        <OverviewStage overview={scene.overview} game={scene.game} hideVerse={preview} />
       )}
 
       {view?.status === "running" && scene && !(scene.overview && ["abertura", "item", "jogo", "beat", "versiculo", "reflexao", "conclusao"].includes(scene.overview.role)) && (

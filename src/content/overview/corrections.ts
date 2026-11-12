@@ -14,4 +14,5 @@ export const CORRECTIONS: Correction[] = [
   { id: "c9", week: 6, file: "resumo", original: "Hb 1:2; Hb 2:4c; Hb 3:17-19", corrected: "Hc 1:2; Hc 2:4; Hc 3:17–19", note: "“Hb” é Hebreus; Habacuque é “Hc”" },
   { id: "c10", week: 3, file: "resumo", original: "2Sm 2:2a", corrected: "2Sm 2:1", note: "“Davi consultou o Senhor”" },
   { id: "c11", week: 2, file: "resumo", original: "Êx 6-11", corrected: "Êx 7–11", note: "As pragas" },
+  { id: "c12", week: 6, file: "resumo", original: "Ez 8:3-4", corrected: "Ez 10:18–19", note: "A glória sai do templo (em 8:3–4 ela ainda está no templo; a saída da cidade é 11:23)" },
 ]

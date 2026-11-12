@@ -152,4 +152,13 @@ export const contexto: ContextNoteInput[] = [
     refs: [ref("Hab", 1, 6)],
     itemIds: ["habacuque", "babilonia"],
   },
+  {
+    id: "x06-ezequiel-sacerdote",
+    week: 6,
+    title: "Ezequiel, preparado para ser sacerdote",
+    text: "Ezequiel nasceu com a missão de se tornar sacerdote. Teve toda uma jornada de treinamento, aprendendo as leis de Deus e o trabalho do templo; aos 25 anos ele já deveria estar preparado para o ofício, e foi exatamente nessa idade que foi levado ao exílio. Aos 30 anos ele iniciaria de fato o ofício de sacerdote, e é exatamente nesse momento que a palavra do Senhor vem a ele e Deus o chama para ser profeta à casa de Israel. Isso ajuda a entender sua postura e seus questionamentos: quando ele diz que nunca se contaminou desde a mocidade, provavelmente se refere à sua preparação para o sacerdócio; e, quando Deus o leva em visão para dentro do templo, provavelmente era um lugar muito familiar para ele.",
+    refs: [ref("Ezek", 1, 1), ref("Ezek", 3, 1), ref("Ezek", 4, 14), ref("Ezek", 8, 3)],
+    itemIds: ["ezequiel"],
+    pendingFact: "f20",
+  },
 ]

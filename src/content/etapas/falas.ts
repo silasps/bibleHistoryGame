@@ -25,12 +25,12 @@ export const FALAS = {
     refs: [ref("Gen", 3, 21)],
     cn: "Bondade",
   },
+  // Correção do autor (11/11/2026): a linha segue o que o texto diz (Gn 3:22–23).
   fora: {
-    text: "Deus é santo, e quando o homem come do fruto, Deus não pode mais ficar junto com ele, porque ele pecou. A maior recompensa da vida dele, que era a vida eterna, ele perde.",
-    stageLine: "Deus é santo, e o homem pecou: a maior recompensa da vida dele, a vida eterna, ficou para trás.",
-    kind: "interpretacao",
-    refs: [ref("Gen", 3, 22, 24)],
-    cn: "Santo",
+    text: "O homem se tornou conhecedor do bem e do mal e, por isso, foi expulso do jardim.",
+    stageLine: "O homem se tornou conhecedor do bem e do mal e, por isso, foi expulso do jardim.",
+    kind: "narracao",
+    refs: [ref("Gen", 3, 22, 23)],
   },
 
   // Etapa 2 · O mundo se afasta

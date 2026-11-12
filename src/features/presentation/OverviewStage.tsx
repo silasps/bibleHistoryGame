@@ -21,7 +21,8 @@ import { PlanThread } from "./PlanThread"
  * Telão da Visão Geral: a linha do tempo é o palco. Em cada item, a
  * ilustração sai do cartão e ganha destaque com uma linha do resumo do autor.
  */
-export function OverviewStage({ overview, game }: { overview: OverviewView; game?: GameView }) {
+/** `hideVerse`: na prévia do painel, o versículo do PRD fica escondido (só a referência). */
+export function OverviewStage({ overview, game, hideVerse = false }: { overview: OverviewView; game?: GameView; hideVerse?: boolean }) {
   const fx = useFx()
   const revealed = useMemo(() => new Set(overview.revealedItemIds), [overview.revealedItemIds])
   const week = overview.week ? getWeek(overview.week) : undefined
@@ -145,7 +146,7 @@ export function OverviewStage({ overview, game }: { overview: OverviewView; game
 
       {overview.role === "beat" && overview.beatId && <BeatStage beatId={overview.beatId} line={line} />}
 
-      {overview.role === "versiculo" && week && <StageVerse week={week} refIndex={overview.refIndex ?? 0} etapa={etapa} knot={overview.knot} />}
+      {overview.role === "versiculo" && week && <StageVerse week={week} refIndex={overview.refIndex ?? 0} etapa={etapa} knot={overview.knot} hidden={hideVerse} />}
 
       {(overview.role === "reflexao" || overview.role === "conclusao") && (
         <div className="absolute inset-0 grid place-items-center px-[10cqw] text-center">
@@ -161,9 +162,9 @@ export function OverviewStage({ overview, game }: { overview: OverviewView; game
 }
 
 /** Versículo para memorizar (NAA conferida): texto grande, referência e o fio do plano. Nunca a palavra PRD. */
-function StageVerse({ week, refIndex, etapa, knot }: { week: TimelineWeek; refIndex: number; etapa?: Etapa; knot?: number }) {
+function StageVerse({ week, refIndex, etapa, knot, hidden }: { week: TimelineWeek; refIndex: number; etapa?: Etapa; knot?: number; hidden: boolean }) {
   const fx = useFx()
-  const text = week.memoryVerseText?.[refIndex]
+  const text = hidden ? undefined : week.memoryVerseText?.[refIndex]
   const length = text?.length ?? 0
   const size = length > 260 ? "text-[2.4cqw]" : length > 160 ? "text-[3cqw]" : "text-[3.6cqw]"
   return (
@@ -173,6 +174,7 @@ function StageVerse({ week, refIndex, etapa, knot }: { week: TimelineWeek; refIn
       </p>
       <motion.figure initial={fx.motion ? { opacity: 0, y: 16 } : false} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}>
         {text && <blockquote className={`font-display leading-snug text-parchment ${size}`}>“{text}”</blockquote>}
+        {hidden && <p className="text-[1.8cqw] text-mist">Texto oculto no painel · use “Lembrar o versículo”</p>}
         <figcaption className="mt-[1.4cqh] text-[2.2cqw] text-gold-bright">
           {formatRef(week.memoryVerse[refIndex], "long")} <span className="text-mist">(NAA)</span>
         </figcaption>

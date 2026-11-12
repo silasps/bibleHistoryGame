@@ -51,7 +51,11 @@ test("demonstração local: a linha do tempo conduz e a pista da semana só abre
   await expect(phone.getByText("PRD · Plano Redentor de Deus")).toBeVisible()
   await expect(stage).not.toContainText(AUTHOR_PRD)
   await expect(stage).not.toContainText(FORBIDDEN)
-  // No painel, o lembrete revela uma palavra por clique e depois tudo.
+  // No painel, a prévia do telão mostra só a referência: o texto fica escondido.
+  const preview = host.locator("[data-surface=projector]")
+  await expect(preview).toContainText("Gênesis 3:15")
+  await expect(preview).not.toContainText("Porei inimizade")
+  // O lembrete revela uma palavra por clique e depois tudo.
   const reminder = host.getByText(/Lembrete do versículo/).locator("..")
   await host.getByRole("button", { name: /Lembrar o versículo/ }).click()
   await expect(reminder.locator("span.text-parchment")).toHaveCount(1)
