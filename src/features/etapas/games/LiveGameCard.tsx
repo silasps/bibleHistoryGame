@@ -36,7 +36,7 @@ export function LiveGameCard({ game }: { game: GameView }) {
     <motion.aside
       initial={fx.motion ? { opacity: 0, y: 30 } : false}
       animate={{ opacity: 1, y: 0 }}
-      className="absolute bottom-[3cqh] right-[3cqw] z-10 w-[27cqw] rounded-[1.4cqw] border border-gold/50 bg-night/85 p-[1.2cqw] backdrop-blur"
+      className="absolute bottom-[7cqh] right-[3cqw] z-10 w-[27cqw] rounded-[1.4cqw] border border-gold/50 bg-night/85 p-[1.2cqw] backdrop-blur"
       aria-label="Jogo ao vivo"
     >
       <div className="flex items-baseline justify-between gap-[1cqw]">

@@ -596,5 +596,22 @@ export const ART: Record<string, () => ReactNode> = {
 // Itens que ainda usam o desenho de outro (até chegar a ilustração própria).
 ART.lamentacoes = ART["queda-jerusalem"]
 ART.obadias = ART["profeta-rolo"]
+// Semana 7 (Rodada 4): desenhos provisórios até chegarem as imagens do autor.
+ART.retorno = ART.exilio
+ART["templo-reconstruido"] = ART.templo
+ART.esdras = ART["profeta-rolo"]
+ART.neemias = ART["cerco-jerusalem"]
+ART["fim-at"] = ART["profeta-rolo"]
+ART.cronicas = ART["profeta-rolo"]
+ART.ageu = ART["profeta-rolo"]
+ART.zacarias = ART["profeta-rolo"]
+ART.malaquias = ART["profeta-rolo"]
+ART.ester = ART.coroa
+ART.grecia = ART.persia
+ART.roma = ART.persia
+ART.antioco = ART.coroa
+ART.herodes = ART.coroa
+ART.macabeus = ART.conquista
+ART["estrela-belem"] = ART["alianca-abraamica"]
 
 export const ART_IDS = Object.keys(ART)

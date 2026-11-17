@@ -27,7 +27,7 @@ const semana = (week: number): ReflectionSlotInput[] => [
 
 const SLOTS: ReflectionSlotInput[] = [
   { id: "abertura", label: "Abertura · o propósito da apresentação", scope: "apresentacao", position: { kind: "abertura" } },
-  ...[1, 2, 3, 4, 5, 6].flatMap(semana),
+  ...[1, 2, 3, 4, 5, 6, 7].flatMap(semana),
   { id: "conclusao", label: "Conclusão", scope: "apresentacao", position: { kind: "conclusao" } },
   // Jogo · Gênesis 1–3 (fim de cada bloco)
   { id: "gn-criacao-jardim", label: "Gênesis · fim de “Criação e jardim”", scope: "jogo", position: { kind: "bloco", episodeId: "genesis-1-3", afterMovementId: "criacao-jardim" } },

@@ -9,6 +9,7 @@ import { resumo03 } from "./resumos/semana-03"
 import { resumo04 } from "./resumos/semana-04"
 import { resumo05 } from "./resumos/semana-05"
 import { resumo06 } from "./resumos/semana-06"
+import { resumo07 } from "./resumos/semana-07"
 import { ContextNote, ResumoExcerpt, TimelineItem, TimelineWeek, type ContextNote as CN } from "./schema"
 import { ITEMS, WEEKS } from "./timeline"
 
@@ -19,7 +20,7 @@ export const weeks: TimelineWeek[] = z.array(TimelineWeek).parse(WEEKS)
 export const items: TimelineItem[] = z.array(TimelineItem).parse(ITEMS)
 export const excerpts: ResumoExcerpt[] = z
   .array(ResumoExcerpt)
-  .parse([...resumo01, ...resumo02, ...resumo03, ...resumo04, ...resumo05, ...resumo06])
+  .parse([...resumo01, ...resumo02, ...resumo03, ...resumo04, ...resumo05, ...resumo06, ...resumo07])
 export const contextNotes: CN[] = z.array(ContextNote).parse(contexto)
 
 const itemById = new Map(items.map((i) => [i.id, i]))

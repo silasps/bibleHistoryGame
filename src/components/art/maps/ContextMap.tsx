@@ -106,7 +106,7 @@ function Route({ f, pts, color, delay = 0, width = 5, dashed = false }: { f: Fra
   )
 }
 
-function Region({ f, pts, color, label, at, size, delay = 0 }: { f: Frame; pts: LonLat[]; color: string; label?: string; at?: LonLat; size: number; delay?: number }) {
+function Region({ f, pts, color, label, at, size = 20, delay = 0 }: { f: Frame; pts: LonLat[]; color: string; label?: string; at?: LonLat; size?: number; delay?: number }) {
   const fx = useFx()
   return (
     <>
@@ -116,10 +116,12 @@ function Region({ f, pts, color, label, at, size, delay = 0 }: { f: Frame; pts: 
   )
 }
 
-function NearEastBase({ f }: { f: Frame }) {
+/** Terra, depois o que estiver "em terra" (regiões), depois a água por cima: o mar nunca fica pintado. */
+function NearEastBase({ f, children }: { f: Frame; children?: React.ReactNode }) {
   return (
     <>
       <rect width={f.w} height={f.h} fill={LAND} />
+      {children}
       {[MED, BLACK, RED, GULF, CASPIAN].map((p, i) => (
         <path key={i} d={path(f, p)} fill={WATER} stroke={COAST} strokeWidth={1.5} />
       ))}
@@ -152,7 +154,7 @@ function Exodo({ s }: { s: number }) {
 /** Exílios: Assíria leva Israel; Babilônia leva Judá; os retornos (semana 7). */
 function Exilios({ s, foco }: { s: number; foco?: string }) {
   const f = WIDE
-  const keys = (foco === "retornos" ? ["babilonia", "retornos"] : foco === "assiria" ? ["assiria"] : ["assiria", "babilonia"]) as (keyof typeof ARROWS)[]
+  const keys = (foco === "retornos" ? ["retornos"] : foco === "assiria" ? ["assiria"] : ["assiria", "babilonia"]) as (keyof typeof ARROWS)[]
   return (
     <>
       <NearEastBase f={f} />
@@ -183,19 +185,33 @@ function Imperios({ s, foco = "persa" }: { s: number; foco?: string }) {
   const f = WIDE
   return (
     <>
-      <NearEastBase f={f} />
-      {foco === "persa" && <Region f={f} pts={R_PERSA} color="#cfc657" label="Império Persa" at={[47, 34.5]} size={s * 1.2} delay={0.3} />}
+      <NearEastBase f={f}>
+        {foco === "persa" && <Region f={f} pts={R_PERSA} color="#cfc657" />}
+        {foco === "alexandre" && (
+          <>
+            <Region f={f} pts={R_GRECIA} color="#5cc3f0" delay={0.2} />
+            <Region f={f} pts={R_PERSA} color="#5cc3f0" delay={1} />
+          </>
+        )}
+        {foco === "divisao" && (
+          <>
+            <Region f={f} pts={R_PTOLOMEUS} color="#ffa64d" delay={0.3} />
+            <Region f={f} pts={R_SELEUCIDAS} color="#bb86ff" delay={0.9} />
+          </>
+        )}
+      </NearEastBase>
+      {foco === "persa" && <Label f={f} at={[47, 34.5]} text="Império Persa" size={s * 1.2} color="#cfc657" delay={0.6} />}
       {foco === "alexandre" && (
         <>
-          <Region f={f} pts={R_GRECIA} color="#5cc3f0" label="Macedônia" at={[22.8, 41]} size={s} delay={0.2} />
-          <Region f={f} pts={R_PERSA} color="#5cc3f0" label="Conquistas de Alexandre" at={[47, 34.5]} size={s * 1.1} delay={1} />
-          <Route f={f} pts={[PLACES.macedonia, [28, 39.6], [34, 37.5], [36, 35], PLACES.jerusalem, PLACES.alexandria, [36, 34], [44.4, 33], [52, 30]]} color="#5cc3f0" delay={0.6} width={4} dashed />
+          <Label f={f} at={[22.6, 41.2]} text="Macedônia" size={s} color="#5cc3f0" anchor="start" delay={0.5} />
+          <Label f={f} at={[48, 35.4]} text="Conquistas de Alexandre" size={s * 1.1} color="#5cc3f0" delay={1.3} />
+          <Route f={f} pts={[PLACES.macedonia, [28, 39.6], [34, 37.5], [36, 35], PLACES.jerusalem, PLACES.alexandria, [36, 34], [44.4, 33], [52, 30]]} color="#9fdcf7" delay={0.6} width={4} dashed />
         </>
       )}
       {foco === "divisao" && (
         <>
-          <Region f={f} pts={R_PTOLOMEUS} color="#ffa64d" label="Ptolomeus · Egito" at={[29.5, 26.5]} size={s * 1.05} delay={0.3} />
-          <Region f={f} pts={R_SELEUCIDAS} color="#bb86ff" label="Selêucidas · Síria" at={[47, 35.2]} size={s * 1.05} delay={0.9} />
+          <Label f={f} at={[29.5, 26.5]} text="Ptolomeus · Egito" size={s * 1.05} color="#ffa64d" delay={0.6} />
+          <Label f={f} at={[48, 35.4]} text="Selêucidas · Síria" size={s * 1.05} color="#bb86ff" delay={1.2} />
           <Label f={f} at={PLACES.alexandria} text="Alexandria" size={s * 0.8} anchor="end" dy={-s * 0.6} delay={0.5} />
         </>
       )}
@@ -230,9 +246,9 @@ function Reinos({ s }: { s: number }) {
   return (
     <>
       <rect width={f.w} height={f.h} fill={LAND} />
-      <path d={path(f, [...coast, [34.15, 31.25]])} fill={WATER} stroke={COAST} strokeWidth={1.5} />
       <Region f={f} pts={israel} color="#5c95ff" label="Israel (Norte)" at={[35.55, 32.55]} size={s * 1.25} delay={0.3} />
       <Region f={f} pts={juda} color="#ff8576" label="Judá (Sul)" at={[34.95, 31.35]} size={s * 1.25} delay={1.1} />
+      <path d={path(f, [...coast, [34.15, 31.25]])} fill={WATER} stroke={COAST} strokeWidth={1.5} />
       <path d={path(f, dead)} fill={WATER} stroke={COAST} />
       <path d={path(f, galilee)} fill={WATER} stroke={COAST} />
       <path d={path(f, [[35.57, 32.7], [35.55, 32.3], [35.53, 31.77]], false)} fill="none" stroke={RIVER} strokeWidth={3} />
@@ -242,7 +258,7 @@ function Reinos({ s }: { s: number }) {
           <Label f={f} at={at} text={name} size={s * 0.9} anchor={anchor} dy={s * 0.32} delay={1.6 + i * 0.15} />
         </g>
       ))}
-      <Label f={f} at={[34.35, 32.6]} text="Mar Mediterrâneo" size={s * 0.7} color="#7fa8c8" />
+      <Label f={f} at={[34.19, 31.62]} text="Mar Mediterrâneo" size={s * 0.7} color="#7fa8c8" anchor="start" />
     </>
   )
 }

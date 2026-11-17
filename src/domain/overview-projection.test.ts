@@ -22,13 +22,22 @@ describe("Visão Geral no telão", () => {
     const seq = getSequence("visao-geral")!
     expect(seq.presentable).toBe(true)
     const weeks = new Set(scenes.map((s) => s.overview?.week).filter(Boolean))
-    expect([...weeks].sort()).toEqual([1, 2, 3, 4, 5, 6])
+    expect([...weeks].sort()).toEqual([1, 2, 3, 4, 5, 6, 7])
     // Cenas opcionais (minijogos das etapas 2–11) o apresentador pula quando faltar tempo.
     const minutes = scenes.filter((s) => !s.optional).reduce((sum, s) => sum + s.estimatedSeconds, 0) / 60
     expect(minutes).toBeGreaterThanOrEqual(30)
     // Acima de 45 min é aviso, não erro: os cortes são decisão do autor (a Área de preparação mostra em vermelho).
     if (minutes > 45) console.warn(`Visão Geral: ${minutes.toFixed(1)} min estimados sem os jogos opcionais (limite do Manual: 45).`)
     expect(scenes.filter((s) => s.optional).every((s) => s.game)).toBe(true)
+  })
+
+  it("no telão, Jesus só é dito por extenso no fecho (a plenitude dos tempos), e Mt 1:5 nunca aparece", () => {
+    for (const { state, scenes: sc } of everyState("visao-geral", true)) {
+      const view = toProjectorView(state, { scenes: sc }, getEvidence)
+      const text = JSON.stringify(view)
+      if (/Jesus/.test(visibleText(view))) expect(view.scene?.id).toBe("momento-plenitude")
+      expect(text).not.toMatch(/Mateus 1:5|genealogia de Jesus/)
+    }
   })
 
   it("respeita o orçamento de texto em todos os estados", () => {

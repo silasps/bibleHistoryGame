@@ -10,6 +10,7 @@ import { PRESENTATION_MAX_MINUTES, RUBRIC, RUBRIC_DATES, RUBRIC_SOURCE, SHARE_MI
 import { formatDuration } from "@/domain/timing"
 import { authorTaskLinks } from "@/lib/author-sources"
 import { cn } from "@/lib/utils"
+import { LiveGamesPicker } from "./LiveGamesPicker"
 import { ManualChecks } from "./ManualChecks"
 
 type Status = "ok" | "falta" | "lembrete"
@@ -78,7 +79,7 @@ export function RubricChecklist() {
     {
       ...RUBRIC.time,
       status: minutes <= referenceSoFar ? "ok" : "falta",
-      note: `Estimativa atual: ${minutes} min só com as semanas 1–${lastWeek}, mais ${optionalMinutes} min de minijogos opcionais. Pela referência do Manual, até a semana ${lastWeek} são ${referenceSoFar} min, e a apresentação inteira (11 semanas) tem no máximo ${PRESENTATION_MAX_MINUTES} min.`,
+      note: `Estimativa atual: ${minutes} min só com as semanas 1–${lastWeek}, sem contar os jogos (cada jogo ao vivo soma uns 75 s; marque abaixo)${optionalMinutes ? `, mais ${optionalMinutes} min de cenas opcionais` : ""}. Pela referência do Manual, até a semana ${lastWeek} são ${referenceSoFar} min, e a apresentação inteira (11 semanas) tem no máximo ${PRESENTATION_MAX_MINUTES} min.`,
     },
     { ...RUBRIC.guests, status: "lembrete", note: "Convide com antecedência." },
   ]
@@ -182,6 +183,7 @@ export function RubricChecklist() {
         </p>
       </div>
 
+      <LiveGamesPicker baseSeconds={scenes.filter((s) => !s.optional).reduce((n, s) => n + s.estimatedSeconds, 0)} maxMinutes={PRESENTATION_MAX_MINUTES} />
       <ManualChecks items={[{ id: "convidado-1", label: "1º convidado de fora da escola" }, { id: "convidado-2", label: "2º convidado de fora da escola" }, { id: "ensaio-at", label: RUBRIC_DATES.rehearsal }]} />
       <p className="text-sm text-sand">{RUBRIC_DATES.final}.</p>
     </section>

@@ -91,7 +91,7 @@ export function OverviewStage({ overview, game, hideVerse = false }: { overview:
                 </motion.div>
               )}
               <div className="space-y-[2cqh]">
-                <SplitReveal key={item.id} text={item.label} as="h2" by="words" className={`font-display leading-[1.02] ${mapa ? "text-[4.6cqw]" : "text-[6cqw]"}`} />
+                <SplitReveal key={item.id} text={item.label} as="h2" by="words" className={`font-display leading-[1.02] [text-wrap:balance] ${mapa ? "text-[4.2cqw]" : "text-[6cqw]"}`} />
                 {also.length > 0 && <p className="font-display text-[2.6cqw] leading-tight text-parchment/80">e {also.map((i) => i.label).join(" · ")}</p>}
                 <p className="text-[2.6cqw] font-semibold tabular-nums" style={{ color: ITEM_COLORS[item.color] }}>
                   {[item.sub, formatSpan(item)].filter(Boolean).join(" · ")}

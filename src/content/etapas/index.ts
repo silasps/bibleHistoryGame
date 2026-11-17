@@ -109,6 +109,8 @@ const ETAPAS = z.array(Etapa).parse([
       { id: "promessa-demora", afterItemId: "alianca-abraamica", label: "A promessa que demora", fala: "promessa-demora", art: "alianca-abraamica" },
       { id: "doze-filhos", afterItemId: "jaco", label: "Os 12 filhos e José", fala: "doze-filhos", art: "jaco" },
       { id: "jose-governador", afterItemId: "jaco", label: "José, governador do Egito", fala: "jose-governador", art: "migracao-egito" },
+      // Briefing (16/11/2026): Jó entre Abraão e Moisés (escolha didática). Aguarda o texto do autor.
+      { id: "jo", afterItemId: "jaco", label: "Jó", momento: "jo", art: "profeta-rolo" },
     ],
   },
   {
@@ -130,6 +132,7 @@ const ETAPAS = z.array(Etapa).parse([
     itemIds: ["peregrinacao", "arao", "alianca-sinai", "tabernaculo", "levitico-santidade", "espioes", "alianca-deuteronomica", "uncao-josue", "morte-moises"],
     intros: ["r02-intro", "r02-recapitulacao"],
     prd: [{ week: 2, afterItemId: "levitico-santidade" }],
+    beats: [{ id: "bezerro", afterItemId: "alianca-sinai", label: "O bezerro de ouro", momento: "bezerro", art: "alianca-sinai" }],
   },
   {
     n: 7, id: "a-terra", title: "A terra", color: "oliva", status: "com_material",
@@ -164,10 +167,24 @@ const ETAPAS = z.array(Etapa).parse([
     itemIds: ["josias", "sofonias", "jeremias", "habacuque", "daniel", "ezequiel", "queda-jerusalem", "lamentacoes", "obadias", "inicio-exilio", "ciro", "persia"],
     intros: ["r06-intro", "r04-esperanca"],
     prd: [{ week: 6, afterItemId: "ezequiel" }],
+    beats: [{ id: "daniel-cova", afterItemId: "ciro", label: "Daniel na cova dos leões", momento: "daniel-cova", art: "daniel" }],
   },
-  // Semanas 7–11: uma etapa por semana até chegar o material (títulos do Manual).
-  ...[7, 8, 9, 10, 11].map((week, i) => ({
-    n: 12 + i,
+  // Semana 7 (Rodada 4): o pós-exílio e o período entre os Testamentos.
+  {
+    n: 12, id: "a-volta", title: "A volta para casa", color: "verde", status: "com_material",
+    itemIds: ["primeiro-retorno", "cronicas", "reconstrucao-templo", "ageu", "zacarias", "ester", "segundo-retorno", "terceiro-retorno", "fim-at", "malaquias"],
+    intros: ["r07-intro"],
+    prd: [{ week: 7, afterItemId: "primeiro-retorno" }],
+  },
+  {
+    n: 13, id: "entre-os-testamentos", title: "Entre os Testamentos", color: "ceu", status: "com_material",
+    itemIds: ["alexandre", "imperio-grego", "antioco-iv", "macabeus", "pompeu", "imperio-romano", "herodes"],
+    // Fecho do Antigo Testamento: "a plenitude dos tempos" (Gl 4:4), onde Jesus é dito por extenso.
+    beats: [{ id: "plenitude", afterItemId: "herodes", label: "A plenitude dos tempos", momento: "plenitude", art: "estrela-belem" }],
+  },
+  // Semanas 8–11: uma etapa por semana até chegar o material (títulos do Manual).
+  ...[8, 9, 10, 11].map((week, i) => ({
+    n: 14 + i,
     id: `semana-${week}`,
     title: getWeek(week)!.title,
     color: getWeek(week)!.color,

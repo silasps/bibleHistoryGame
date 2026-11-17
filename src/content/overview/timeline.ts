@@ -25,7 +25,10 @@ export const WEEKS: TimelineWeekInput[] = [
   { week: 6, actId: "ato-06", title: "Últimos Profetas", status: "com_material", span: { from: -640, to: -331 }, memoryVerse: [ref("Ezek", 36, 26)],
     memoryVerseText: ["Eu lhes darei um coração novo e porei dentro de vocês um espírito novo. Tirarei de vocês o coração de pedra e lhes darei um coração de carne."],
     color: "azul", sources: ["w6-resumo.txt", "w6-linha-do-tempo.pdf", "w6-contexto.txt"] }, // resumo final em 6/11/2026
-  { week: 7, actId: "ato-07", title: "Pós-exílio e Intertestamentário", status: "aguardando_material", span: { from: -538, to: -5 }, memoryVerse: [ref("Ezra", 1, 3)], color: "oliva" },
+  // Semana 7: o versículo vem do resumo do autor (Ed 1:3, em vermelho). "você" virou "vocês" (erro de digitação): conferir na NAA.
+  { week: 7, actId: "ato-07", title: "Pós-exílio e Intertestamentário", status: "com_material", span: { from: -538, to: -5 }, memoryVerse: [ref("Ezra", 1, 3)],
+    memoryVerseText: ["Aquele dentre vocês que for do seu povo, que o seu Deus esteja com ele e que suba para Jerusalém, que fica em Judá, e edifique a Casa do Senhor, Deus de Israel; ele é o Deus que está em Jerusalém."],
+    color: "oliva", sources: ["w7-resumo.txt", "w7-linha-do-tempo.pdf", "w7-contexto.txt", "classes/w7-classes.txt"] },
   { week: 8, actId: "ato-08", title: "Jesus", status: "aguardando_material", span: { from: -4, to: 30 }, memoryVerse: [ref("Matt", 28, 5, 6)], color: "dourado" },
   { week: 9, actId: "ato-09", title: "Igreja", status: "aguardando_material", span: { from: 30, to: 68 }, memoryVerse: [ref("Acts", 1, 8)], color: "coral" },
   { week: 10, actId: "ato-10", title: "Paulo", status: "aguardando_material", span: { from: 46, to: 68 }, memoryVerse: [ref("Rom", 5, 10)], color: "magenta" },
@@ -116,4 +119,25 @@ export const ITEMS: TimelineItemInput[] = [
   { id: "lamentacoes", week: 6, kind: "tema", label: "Lamentações", sub: "o choro do exílio", anchor: "queda-jerusalem", color: "magenta", art: "lamentacoes", refs: [chapters("Lam", 1, 5)] },
   { id: "obadias", week: 6, kind: "tema", label: "Obadias", sub: "juízo de Edom", anchor: "queda-jerusalem", color: "oliva", art: "obadias", refs: [ref("Obad", 1, 1, 21)] },
   { id: "habacuque", week: 6, kind: "tema", label: "Habacuque", sub: "o justo pela fé", anchor: "jeremias", color: "dourado", art: "habacuque", characterId: "habacuque", refs: [ref("Hab", 1, 2, 6), ref("Hab", 2, 4), ref("Hab", 3, 17, 19)] },
+
+  // ── Semana 7 · Pós-exílio e Intertestamentário ─────────────────────────
+  // Datas da linha do tempo do autor (Task 1 da semana 7). Alexandre, Antíoco IV e
+  // Herodes: datas da aula do Prof. Diego (13/11, Período Interbíblico).
+  { id: "primeiro-retorno", week: 7, kind: "evento", label: "Primeiro Retorno", sub: "Zorobabel", from: -538, color: "verde", art: "retorno", refs: [ref("Ezra", 1, 1, 4), ref("Ezra", 2, 1, 2)] },
+  { id: "reconstrucao-templo", week: 7, kind: "evento", label: "Reconstrução do Templo", from: -536, to: -516, color: "dourado", art: "templo-reconstruido", refs: [ref("Ezra", 3, 8, 13), ref("Ezra", 6, 14, 15)] },
+  { id: "segundo-retorno", week: 7, kind: "evento", label: "Segundo Retorno", sub: "Esdras", from: -458, color: "turquesa", art: "esdras", refs: [ref("Ezra", 7, 6, 10)] },
+  { id: "terceiro-retorno", week: 7, kind: "evento", label: "Terceiro Retorno", sub: "Neemias", from: -444, color: "laranja", art: "neemias", refs: [ref("Neh", 2, 1, 8), ref("Neh", 6, 15)] },
+  { id: "fim-at", week: 7, kind: "evento", label: "Fim do AT", from: -425, color: "violeta", art: "fim-at", refs: [ref("Mal", 4, 4, 6)] },
+  { id: "alexandre", week: 7, kind: "personagem", label: "Alexandre, o Grande", from: -336, to: -323, color: "ceu", art: "grecia", refs: [ref("Dan", 8, 5, 8), ref("Dan", 8, 21, 22)] },
+  { id: "imperio-grego", week: 7, kind: "potencia", label: "Império Grego", from: -331, to: -164, color: "ceu", art: "grecia", refs: [ref("Dan", 8, 21, 22)] },
+  { id: "antioco-iv", week: 7, kind: "personagem", label: "Antíoco IV", from: -175, to: -164, color: "magenta", art: "antioco", refs: [ref("Dan", 11, 31, 32)] },
+  { id: "macabeus", week: 7, kind: "evento", label: "Revolta dos Macabeus", from: -164, to: -63, color: "carmim", art: "macabeus", refs: [ref("Dan", 11, 32)] },
+  { id: "pompeu", week: 7, kind: "evento", label: "Pompeu conquista Jerusalém", from: -63, color: "coral", art: "roma", refs: [ref("Luke", 2, 1)] },
+  { id: "imperio-romano", week: 7, kind: "potencia", label: "Império Romano", from: -63, color: "carmim", art: "roma", refs: [ref("Luke", 2, 1)] },
+  { id: "herodes", week: 7, kind: "personagem", label: "Herodes, o Grande", from: -37, to: -4, color: "oliva", art: "herodes", refs: [ref("Matt", 2, 1)] },
+  { id: "cronicas", week: 7, kind: "tema", label: "Crônicas", sub: "a identidade do povo", anchor: "primeiro-retorno", color: "violeta", art: "cronicas", refs: [ref("1Chr", 17, 11, 14)] },
+  { id: "ageu", week: 7, kind: "tema", label: "Ageu", sub: "a casa de Deus primeiro", anchor: "reconstrucao-templo", color: "laranja", art: "ageu", refs: [ref("Hag", 1, 4, 5), ref("Hag", 2, 9)] },
+  { id: "zacarias", week: 7, kind: "tema", label: "Zacarias", sub: "o Rei que virá", anchor: "reconstrucao-templo", color: "turquesa", art: "zacarias", refs: [ref("Zech", 1, 3), ref("Zech", 9, 9)] },
+  { id: "ester", week: 7, kind: "tema", label: "Ester", sub: "a providência de Deus", anchor: "segundo-retorno", color: "magenta", art: "ester", refs: [ref("Esth", 4, 14, 16), ref("Esth", 9, 21, 22)] },
+  { id: "malaquias", week: 7, kind: "tema", label: "Malaquias", sub: "o mensageiro", anchor: "fim-at", color: "azul", art: "malaquias", refs: [ref("Mal", 3, 1), ref("Mal", 4, 2)] },
 ]

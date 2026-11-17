@@ -17,10 +17,10 @@ describe("visão geral (material do autor)", () => {
     expect(validateOverview()).toEqual([])
   })
 
-  it("tem as 11 semanas, com material nas semanas 1 a 6", () => {
+  it("tem as 11 semanas, com material nas semanas 1 a 7", () => {
     expect(weeks.map((w) => w.week)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
-    expect(weeks.filter((w) => w.status === "com_material").map((w) => w.week)).toEqual([1, 2, 3, 4, 5, 6])
-    expect(items.some((i) => i.week >= 7)).toBe(false)
+    expect(weeks.filter((w) => w.status === "com_material").map((w) => w.week)).toEqual([1, 2, 3, 4, 5, 6, 7])
+    expect(items.some((i) => i.week >= 8)).toBe(false)
   })
 
   it("segue a ordem da história no mesmo ano: Criação, Adão e Eva, Queda", () => {

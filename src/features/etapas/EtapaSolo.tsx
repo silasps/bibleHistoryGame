@@ -13,6 +13,8 @@ import { sequenceScenes } from "@/content"
 import { getEtapa, presentableEtapas } from "@/content/etapas"
 import { getRoomGame } from "@/content/etapas/jogos"
 import { formatSpan, getItem } from "@/content/overview"
+import { aprofundarDe } from "@/content/overview/aprofundar"
+import { formatRefs } from "@/content/refs"
 import { getSlot, isFilled } from "@/content/reflections"
 import type { Scene } from "@/content/schema"
 import { MOOD_FOR_ETAPA, moodForScene } from "@/fx/sound"
@@ -213,6 +215,16 @@ function Step({ scene, onGameDone }: { scene: Scene; onGameDone: (relicId: strin
         <Link href={journeyHref(item.week, item.id)} target="_blank" className="inline-flex items-center gap-2 rounded-full border border-gold/40 px-4 py-2 text-sm text-gold">
           <BookOpen className="size-4" aria-hidden /> Abrir o dossiê
         </Link>
+        {(aprofundarDe(item.id)?.apoio ?? []).length > 0 && (
+          <details className="rounded-2xl border border-border p-3 text-left">
+            <summary className="cursor-pointer font-semibold text-gold-bright">Para aprofundar</summary>
+            {aprofundarDe(item.id)!.apoio!.map((l) => (
+              <p key={l.text} className="mt-2 text-parchment/90">
+                {l.text} <span className="text-sm text-sand">· {formatRefs(l.refs, "long")}</span>
+              </p>
+            ))}
+          </details>
+        )}
       </article>
       {gameBox}
       </div>

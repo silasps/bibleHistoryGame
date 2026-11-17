@@ -76,6 +76,8 @@ function assignLines() {
 }
 
 const LINES = assignLines()
+/** Trechos que já são a frase principal de algum slide: não se repetem no "Aprofundar" de outro. */
+const MAIN_LINES = new Set([...LINES.picked.values()].map((e) => e.id))
 
 /** Frase de palco do slide de um item (a mesma regra da apresentação, também usada no solo). */
 export function slideLineFor(itemId: string): string | undefined {
@@ -175,7 +177,9 @@ function etapaScenes(etapa: Etapa): SceneInput[] {
       const group = [item.id, ...also]
       const mainLine = slideLineFor(item.id)
       const mainId = LINES.picked.get(item.id)?.id
-      const others = group.flatMap((id) => excerptsForItem(id)).filter((e, i, all) => e.id !== mainId && all.findIndex((x) => x.id === e.id) === i)
+      const others = group
+        .flatMap((id) => excerptsForItem(id))
+        .filter((e, i, all) => e.id !== mainId && !MAIN_LINES.has(e.id) && all.findIndex((x) => x.id === e.id) === i)
       const game = etapa.games.find((g) => group.includes(g.itemId) && g.on === "item")
       const mapa = mapaDoItem(item.id)
       scenes.push({

@@ -12,6 +12,8 @@ import { getSlot, isFilled } from "@/content/reflections"
 import { getReflectionNotes } from "@/content/private/reflections"
 import { getBeat, getEtapaById } from "@/content/etapas"
 import { APOIO } from "@/content/etapas/apoio"
+import { MOMENTOS } from "@/content/etapas/momentos"
+import { aprofundarDe } from "@/content/overview/aprofundar"
 import { FALAS } from "@/content/etapas/falas"
 import { RubricChecklist } from "@/features/prep/RubricChecklist"
 import { authorTaskLinks } from "@/lib/author-sources"
@@ -94,6 +96,37 @@ export default async function PrepPage({ searchParams }: Props) {
                   ))}
                 </ul>
               )}
+              {(() => {
+                // Rascunhos da Rodada 4 (aprofundar e momentos novos), com a fonte. Aguardam a revisão do autor.
+                const ids = scene.overview?.itemId ? [scene.overview.itemId, ...(scene.overview.alsoItemIds ?? [])] : []
+                const beat = scene.overview?.beatId ? getBeat(scene.overview.beatId) : undefined
+                const momento = beat?.momento ? MOMENTOS[beat.momento] : undefined
+                const lines = [
+                  ...ids.flatMap((id) => {
+                    const a = aprofundarDe(id)
+                    return [...(a?.principal ? [{ tag: "Linha principal", l: a.principal }] : []), ...(a?.passos ?? []).map((l) => ({ tag: "Aprofundar", l })), ...(a?.apoio ?? []).map((l) => ({ tag: "Apoio · não vai ao telão nem ao painel", l }))]
+                  }),
+                  ...(momento?.principal ? [{ tag: "Momento · linha principal", l: momento.principal }] : []),
+                  ...(momento?.passos ?? []).map((l) => ({ tag: "Momento · aprofundar", l })),
+                ]
+                if (beat?.momento && !momento?.principal) return <p className="mt-3 rounded-lg border border-dashed border-gold/40 p-3 text-sm text-sand">Aguardando o seu texto: por enquanto este momento mostra só a imagem.</p>
+                if (!lines.length) return null
+                return (
+                  <ul className="mt-3 space-y-2 text-sm">
+                    {lines.map(({ tag, l }, i) => (
+                      <li key={i} className="rounded-lg border border-gold/25 bg-night/50 p-3 text-parchment/90">
+                        <span className="mr-2 text-[0.65rem] uppercase tracking-widest text-gold">Rascunho · {tag}</span>
+                        {l.text}
+                        <span className="mt-1 block text-xs text-mist">
+                          {l.refs.length > 0 && <>{formatRefs(l.refs, "long")} · </>}
+                          {l.kind === "interpretacao" ? "interpretação · " : l.kind === "contexto" ? "contexto histórico · " : ""}
+                          {l.fonte}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )
+              })()}
               {(() => {
                 // A fala do autor deste momento (texto completo, para ensaiar).
                 const id = scene.overview?.beatId ? getBeat(scene.overview.beatId)?.fala : getEtapaById("o-comeco")?.games.find((g) => `jogo-${g.id}` === scene.id)?.fala
