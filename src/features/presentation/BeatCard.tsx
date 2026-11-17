@@ -4,7 +4,7 @@ import { motion } from "motion/react"
 import { artFile } from "@/components/art/art-files"
 import { ITEM_COLORS, ItemArt } from "@/components/art/ItemArt"
 import { getBeat, getEtapa } from "@/content/etapas"
-import { FALAS } from "@/content/etapas/falas"
+import { beatContent } from "@/content/etapas/beat-content"
 import { formatRefs } from "@/content/refs"
 import { useFx } from "@/fx/useFx"
 import { cn } from "@/lib/utils"
@@ -36,11 +36,11 @@ export function BeatStage({ beatId, line }: { beatId: string; line?: string }) {
   const fx = useFx()
   const beat = getBeat(beatId)
   if (!beat) return null
-  const fala = FALAS[beat.fala]
+  const fala = beatContent(beat)
   const color = ITEM_COLORS[getEtapa(beat.etapa)!.color]
   const art = artFile("items", beat.id) ? beat.id : beat.art
-  const cn = "cn" in fala ? fala.cn : undefined
-  const mark = "emphasis" in fala ? fala.emphasis : undefined
+  const cn = fala.cn
+  const mark = fala.emphasis
 
   if (beat.pause) {
     return (
@@ -52,7 +52,7 @@ export function BeatStage({ beatId, line }: { beatId: string; line?: string }) {
           <motion.p key={line} initial={fx.motion ? { opacity: 0, y: 12 } : false} animate={{ opacity: 1, y: 0 }} className="font-display text-[3.8cqw] leading-tight text-gold-bright">
             {line}
           </motion.p>
-          <p className="text-[1.6cqw] text-sand">{formatRefs(fala.refs, "long")}</p>
+          <p className="text-[1.6cqw] text-sand">{fala.refs.length > 0 && formatRefs(fala.refs, "long")}</p>
         </div>
       </div>
     )
@@ -72,7 +72,7 @@ export function BeatStage({ beatId, line }: { beatId: string; line?: string }) {
       <div className="space-y-[2cqh]">
         <h2 className="font-display text-[4.6cqw] leading-[1.05]">{beat.label}</h2>
         <p className="text-[2cqw] font-semibold" style={{ color }}>
-          {formatRefs(fala.refs, "long")}
+          {fala.refs.length > 0 && formatRefs(fala.refs, "long")}
         </p>
         {line && (
           <motion.p key={line} initial={fx.motion ? { opacity: 0, y: 12 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="max-w-[48cqw] font-display text-[2.8cqw] leading-snug text-parchment/95">
@@ -90,11 +90,11 @@ export function BeatPhone({ beatId, line }: { beatId: string; line?: string }) {
   const fx = useFx()
   const beat = getBeat(beatId)
   if (!beat) return null
-  const fala = FALAS[beat.fala]
+  const fala = beatContent(beat)
   const color = ITEM_COLORS[getEtapa(beat.etapa)!.color]
   const art = artFile("items", beat.id) ? beat.id : beat.art
-  const cn = "cn" in fala ? fala.cn : undefined
-  const mark = "emphasis" in fala ? fala.emphasis : undefined
+  const cn = fala.cn
+  const mark = fala.emphasis
   return (
     <motion.article key={beat.id} initial={fx.motion ? { opacity: 0, y: 16 } : false} animate={{ opacity: 1, y: 0 }} className="glass space-y-3 overflow-hidden rounded-3xl p-5 text-center">
       {beat.pause ? (
@@ -107,7 +107,7 @@ export function BeatPhone({ beatId, line }: { beatId: string; line?: string }) {
       <h2 className="font-display text-3xl" style={{ color: beat.pause ? undefined : color }}>
         {beat.label}
       </h2>
-      <p className="text-sm text-mist">{formatRefs(fala.refs, "long")} (NAA)</p>
+      {fala.refs.length > 0 && <p className="text-sm text-mist">{formatRefs(fala.refs, "long")} (NAA)</p>}
       {line && (
         <p className="font-display text-xl leading-snug text-parchment">
           <Emphasized line={line} mark={mark} />

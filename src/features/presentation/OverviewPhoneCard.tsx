@@ -12,6 +12,7 @@ import { formatRef } from "@/content/refs"
 import type { OverviewView } from "@/domain/projection"
 import { useFx } from "@/fx/useFx"
 import { EtapaStrip } from "../timeline/BibleTimeline"
+import { ContextMap } from "@/components/art/maps/ContextMap"
 import { BeatPhone } from "./BeatCard"
 import { PlanThread } from "./PlanThread"
 
@@ -35,10 +36,19 @@ export function OverviewPhoneCard({ overview }: { overview: OverviewView }) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           className="glass overflow-hidden rounded-3xl p-5 text-center"
         >
-          <ItemArt art={item.art} color={item.color} title={item.label} className="mx-auto aspect-square w-3/5" />
+          {overview.mapa ? (
+            <div className={`mx-auto w-full ${overview.mapa.id === "reinos" ? "aspect-[600/650] max-w-[80%]" : "aspect-[1000/640]"}`}>
+              <ContextMap spec={overview.mapa as Parameters<typeof ContextMap>[0]["spec"]} title={`Mapa · ${item.label}`} compact />
+            </div>
+          ) : (
+            <ItemArt art={item.art} color={item.color} title={item.label} className="mx-auto aspect-square w-3/5" />
+          )}
           <h2 className="mt-3 font-display text-3xl" style={{ color: ITEM_COLORS[item.color] }}>
             {item.label}
           </h2>
+          {(overview.alsoItemIds ?? []).length > 0 && (
+            <p className="font-display text-lg text-parchment/80">e {(overview.alsoItemIds ?? []).map((id) => getItem(id)?.label).join(" · ")}</p>
+          )}
           <p className="text-sm text-mist">{[item.sub, formatSpan(item)].filter(Boolean).join(" · ")}</p>
           {overview.stageLine && <p className="mt-3 font-display text-xl leading-snug text-parchment">{overview.stageLine}</p>}
           {overview.depth.map((d) => (

@@ -46,7 +46,7 @@ describe("etapas da história", () => {
       const games = ROOM_GAMES.filter((g) => g.etapa === e.n)
       expect(games, `etapa ${e.n}`).toHaveLength(1)
       const g = games[0]
-      expect(e.itemIds, g.id).toContain(g.afterItemId)
+      expect(e.itemIds, g.id).toContain(g.itemId)
       for (const r of [g.ref, g.finale.ref, g.relic.ref]) expect(refOk(r), g.id).toBe(true)
     }
     expect(new Set(ALL_RELICS.map((r) => r.id)).size).toBe(ALL_RELICS.length)

@@ -74,20 +74,62 @@ describe("pódio dos minijogos", () => {
     expect(phone.scene?.game?.top).toBeUndefined()
   })
 
-  it("ao passar o slide, o fim do jogo traz o pódio no telão e a colocação no celular", () => {
+  it("Próximo num jogo com pontos mostra o pódio no próprio slide; o segundo Próximo segue", () => {
     let s = roomAt("item-criacao")
     s = playAt(s, "p1", 3, false, 2000)
     s = playAt(s, "p2", 8, true, 3000)
     expect(toProjectorView(s, { scenes }, getEvidence).results).toBeUndefined()
     s = reduceHost(s, { type: "next" }, { now: 9000, narrative: { scenes } }).state
+    expect(s.index).toBe(at("item-criacao"))
     const results = toProjectorView(s, { scenes }, getEvidence).results
     expect(results).toMatchObject({ at: 9000, max: 8, players: 2, top: [{ place: 1, name: "Jogador 2" }, { place: 2, name: "Jogador 1" }] })
     expect(toAudienceView(s, { scenes }, getEvidence, "p1", {}).results?.me).toEqual({ place: 2, value: 3 })
     expect(JSON.stringify(toAudienceView(s, { scenes }, getEvidence, "p1", {}).results)).not.toContain('"p2"')
+    s = reduceHost(s, { type: "next" }, { now: 20000, narrative: { scenes } }).state
+    expect(s.index).toBe(at("item-criacao") + 1)
+    expect(toProjectorView(s, { scenes }, getEvidence).results).toBeUndefined()
   })
 
   it("sair de um jogo sem ninguém pontuar não mostra pódio", () => {
     const s = reduceHost(roomAt("item-criacao"), { type: "next" }, ctx).state
     expect(toProjectorView(s, { scenes }, getEvidence).results).toBeUndefined()
+  })
+})
+
+describe("jogo ao vivo no slide do tópico (etapas 2–11)", () => {
+  const playArca = (s: SessionState, pid: string, value: number, now: number) =>
+    reduceAudience(s, { type: "play", participantId: pid, gameId: "arca", value, done: false }, { now, narrative: { scenes } })
+
+  it("o slide de Noé tem o jogo da arca, que só roda depois do Jogar agora", () => {
+    let s = roomAt("item-noe")
+    expect(toProjectorView(s, { scenes }, getEvidence).scene?.game).toMatchObject({ id: "arca", startable: true, phase: "parado" })
+    expect(playArca(s, "p1", 100, 1000).result).toBe("rejected")
+    s = reduceHost(s, { type: "game_start" }, { now: 2000, narrative: { scenes } }).state
+    expect(toAudienceView(s, { scenes }, getEvidence, "p1", {}).scene?.game).toMatchObject({ phase: "on", startedAt: 2000 })
+    const r = playArca(s, "p1", 5000, 3000)
+    expect(r.result).toBe("accepted")
+    expect(r.state.plays?.arca.p1.value).toBe(1000)
+  })
+
+  it("sem ninguém jogar, Próximo segue direto; com pontos, vai ao pódio e aceita a pontuação final por alguns instantes", () => {
+    const quiet = reduceHost(reduceHost(roomAt("item-noe"), { type: "game_start" }, ctx).state, { type: "next" }, ctx).state
+    expect(quiet.index).toBe(at("item-noe") + 1)
+
+    let s = reduceHost(roomAt("item-noe"), { type: "game_start" }, { now: 1000, narrative: { scenes } }).state
+    s = playArca(s, "p1", 300, 2000).state
+    s = reduceHost(s, { type: "next" }, { now: 10_000, narrative: { scenes } }).state
+    expect(s.gameLive).toMatchObject({ id: "arca", phase: "podio" })
+    const late = playArca(s, "p2", 400, 11_000)
+    expect(late.result).toBe("accepted")
+    s = late.state
+    expect(playArca(s, "p2", 500, 20_000).result).toBe("rejected")
+    expect(toProjectorView(s, { scenes }, getEvidence).results?.top.map((e) => e.value)).toEqual([400, 300])
+  })
+
+  it("Jogar agora não vale em slide sem jogo; voltar ou avançar limpa o jogo", () => {
+    expect(reduceHost(roomAt("item-babel"), { type: "game_start" }, ctx).error).toBeTruthy()
+    let s = reduceHost(roomAt("item-noe"), { type: "game_start" }, ctx).state
+    s = reduceHost(s, { type: "prev" }, ctx).state
+    expect(s.gameLive).toBeNull()
   })
 })

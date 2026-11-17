@@ -9,7 +9,9 @@ describe("música por cena", () => {
 
   it("os minijogos tocam trilha de game; os momentos da Queda, não", () => {
     for (const s of scenes.filter((s) => s.game)) {
-      const mood = moodForScene(s)
+      // Jogos das etapas 2–11: a trilha de game toca quando o apresentador liga o jogo.
+      const mood = moodForScene(s, true)
+      if (s.game!.startable) expect(ARCADE, `${s.id} parado`).not.toContain(moodForScene(s, false))
       if (["jardim", "queda", "vestes", "fora"].includes(s.game!.kind)) expect(ARCADE, s.id).not.toContain(mood)
       else expect(ARCADE, s.id).toContain(mood)
     }

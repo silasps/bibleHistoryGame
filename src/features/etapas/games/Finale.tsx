@@ -12,7 +12,7 @@ import { RelicIcon } from "../etapa-1/art"
 type Ref = Parameters<typeof formatRef>[0]
 
 /** Fim do minijogo: o desfecho do relato e a relíquia da etapa. */
-export function Finale({ label, refs, relic }: { label: string; refs: Ref; relic: EtapaRelic }) {
+export function Finale({ label, refs, relic, note, score }: { label: string; refs: Ref; relic: EtapaRelic; note?: { label: string; ref: Ref }; score?: number }) {
   const fx = useFx()
   const stinger = useStinger()
   useEffect(() => {
@@ -30,6 +30,12 @@ export function Finale({ label, refs, relic }: { label: string; refs: Ref; relic
       <div className="space-y-4">
         <p className="font-display text-3xl leading-tight text-parchment [text-shadow:0_2px_14px_rgba(0,0,0,0.9)]">{label}</p>
         <p className="text-sm text-sand">{formatRef(refs, "long")}</p>
+        {note && (
+          <p className="font-display text-xl text-gold-bright [text-shadow:0_2px_14px_rgba(0,0,0,0.9)]">
+            {note.label} <span className="text-xs text-sand">· {formatRef(note.ref, "long")}</span>
+          </p>
+        )}
+        {score !== undefined && <p className="text-base font-semibold tabular-nums text-parchment">Você fez {score.toLocaleString("pt-BR")} pontos</p>}
         <motion.p
           initial={fx.motion ? { opacity: 0, scale: 0.85 } : false}
           animate={{ opacity: 1, scale: 1 }}
@@ -41,9 +47,4 @@ export function Finale({ label, refs, relic }: { label: string; refs: Ref; relic
       </div>
     </motion.div>
   )
-}
-
-/** Faixa de instrução no alto do jogo. */
-export function GameHint({ children }: { children: React.ReactNode }) {
-  return <p className="pointer-events-none absolute inset-x-0 top-2 px-4 text-center text-xs text-sand [text-shadow:0_1px_6px_rgba(0,0,0,0.9)]">{children}</p>
 }

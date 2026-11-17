@@ -12,33 +12,103 @@ async function untilGame(page: Page) {
   throw new Error("o minijogo não apareceu")
 }
 
-test("Etapa 2 no solo: levar os pares à arca entrega o arco-íris", async ({ page }) => {
+/** Na tela "Como jogar", começa o jogo. */
+async function play(page: Page) {
+  await page.getByRole("button", { name: /^Começar/ }).click()
+}
+
+test("Etapa 2 no solo: o jogo da arca fica no slide de Noé, antes do Dilúvio, e entrega o arco-íris", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto("/solo")
   await page.getByRole("link", { name: /O mundo se afasta/ }).click()
   await page.waitForURL(/\/solo\/etapa\/2$/)
   await untilGame(page)
-  for (let i = 0; i < 7; i++) await page.getByRole("button", { name: "Juntar" }).first().click()
+  await expect(page.getByRole("heading", { name: "Noé", exact: true })).toBeVisible()
+  await expect(page.getByText(/75 segundos/)).toBeVisible()
+  await play(page)
+  for (let i = 0; i < 7; i++) await page.getByRole("button", { name: "Par de animais" }).first().click()
   await expect(page.getByText("O Senhor fecha a porta da arca")).toBeVisible()
+  await expect(page.getByText(/Você fez \d/)).toBeVisible()
   await expect(page.getByText(/Relíquia: O arco-íris/)).toBeVisible()
   await page.getByRole("button", { name: /Continuar/ }).click()
-  // Depois do jogo vêm os momentos da fala do autor.
-  await expect(page.getByRole("heading", { name: "A bondade de Deus no juízo" })).toBeVisible()
+  // Depois do jogo, o Dilúvio.
+  await expect(page.getByRole("heading", { name: "Dilúvio" })).toBeVisible()
 })
 
-test("Etapa 8 no solo: a funda sempre acerta e a etapa termina com a relíquia", async ({ page }) => {
+test("todos os minijogos das etapas 3 a 11 chegam ao desfecho, com pontos e relíquia", async ({ page }) => {
+  test.setTimeout(300_000)
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto("/solo/etapa/8")
-  await untilGame(page)
-  await page.getByRole("button", { name: "Lançar" }).click()
-  await expect(page.getByText("Davi vence com uma funda e uma pedra")).toBeVisible()
-  const next = page.getByRole("button", { name: /Continuar/ })
-  for (let i = 0; i < 40 && (await next.isVisible()); i++) await next.click()
-  await expect(page.getByText(/Etapa 8 concluída/)).toBeVisible()
-  await expect(page.getByText(/Relíquia: A funda e a pedra/)).toBeVisible()
+  await page.clock.install()
+  const tap = async (name: string | RegExp, times: number) => {
+    for (let i = 0; i < times; i++) await page.getByRole("button", { name }).first().click()
+  }
+  const plays: Record<number, [string, () => Promise<void>]> = {
+    // Estrelas: conta até o tempo acabar.
+    3: ["Uma descendência que não se pode contar", async () => {
+      await tap("Contar estrela", 6)
+      await page.clock.runFor(76_000)
+    }],
+    4: ["A filha do faraó encontra o menino", async () => {
+      await tap("Vedar uma fresta", 5)
+      await page.clock.runFor(1_000)
+      await tap("Colocar o menino", 1)
+      await page.clock.runFor(1_500)
+      await tap("Levar o cesto", 1)
+      await page.clock.runFor(2_000)
+    }],
+    5: ["O mar volta e cobre o exército; o Senhor livra Israel", async () => {
+      await tap("Estender o cajado", 1)
+      await tap("Atravessar um grupo", 6)
+      await page.clock.runFor(3_000)
+    }],
+    6: ["No sétimo dia, descanso", async () => {
+      for (const n of [5, 5, 5, 5, 5, 10]) {
+        await tap("Juntar o maná", n)
+        await page.clock.runFor(1_800)
+      }
+    }],
+    7: ["As muralhas caem", async () => {
+      await page.clock.runFor(1_500)
+      await tap("Dar uma volta", 7)
+      await tap("📯 Tocar as trombetas e gritar", 1)
+      await page.clock.runFor(2_000)
+    }],
+    8: ["Davi vence com uma funda e uma pedra", async () => {
+      await tap("Lançar", 1)
+      await page.clock.runFor(76_000)
+    }],
+    9: ["O fogo do Senhor cai e consome tudo", async () => {
+      await tap("Colocar pedra", 12)
+      await tap("Colocar a lenha", 1)
+      await tap("Colocar o novilho", 1)
+      await tap("Derramar uma talha de água", 12)
+      await tap(/Segure para orar/, 1)
+      await page.clock.runFor(5_000)
+    }],
+    10: ["Nínive se arrepende, e Deus tem compaixão", async () => {
+      for (let i = 0; i < 5; i++) {
+        await tap("Próximo lugar", 1)
+        await page.clock.runFor(2_000)
+      }
+      await page.clock.runFor(4_000)
+    }],
+    11: ["Deus dá um coração novo", async () => {
+      await tap("Tocar no coração de pedra", 36)
+      await page.clock.runFor(3_000)
+    }],
+  }
+  for (const [n, [finale, run]] of Object.entries(plays)) {
+    await page.goto(`/solo/etapa/${n}`)
+    await untilGame(page)
+    await play(page)
+    await run()
+    await expect(page.getByText(finale).first(), `etapa ${n}`).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText(/Você fez \d/), `etapa ${n}`).toBeVisible()
+    await expect(page.getByText(/Relíquia:/).first(), `etapa ${n}`).toBeVisible()
+  }
 })
 
-test("na apresentação, o jogo da etapa 2 é opcional, roda no celular e soma no telão", async ({ context }) => {
+test("ao vivo: Jogar agora no slide do tópico, o celular joga, Próximo mostra o pódio e o segundo Próximo segue", async ({ context }) => {
   const host = await context.newPage()
   await host.goto("/presenter")
   await host.getByRole("button", { name: "Abrir demonstração" }).click()
@@ -50,57 +120,24 @@ test("na apresentação, o jogo da etapa 2 é opcional, roda no celular e soma n
   const phone = await context.newPage()
   await phone.setViewportSize({ width: 390, height: 844 })
   await phone.goto(`/join/${code}?modo=demo`)
+  await phone.getByPlaceholder(/Como quer ser chamado/).fill("Ana")
   await phone.getByRole("button", { name: "Entrar" }).click()
 
   await host.getByRole("button", { name: /Começar a apresentação/ }).click()
-  const scene = host.getByRole("navigation", { name: "Roteiro da sequência" }).getByRole("button", { name: /Para dentro da arca/ })
-  await expect(scene).toContainText("opcional")
-  await scene.click()
-  await expect(projector.locator("[data-surface=projector]")).toContainText("Para dentro da arca")
-  await phone.getByRole("button", { name: "Juntar" }).first().click()
-  await expect(projector.getByText(/1 pessoa jogando/)).toBeVisible({ timeout: 10_000 })
-})
-
-test("todos os minijogos das etapas 3 a 11 chegam ao desfecho e entregam a relíquia", async ({ page }) => {
-  test.setTimeout(240_000)
-  await page.setViewportSize({ width: 390, height: 844 })
-  const tap = async (name: string, times: number) => {
-    for (let i = 0; i < times; i++) await page.getByRole("button", { name }).first().click()
-  }
-  const plays: Record<number, [string, () => Promise<void>]> = {
-    3: ["Uma descendência que não se pode contar", () => tap("Juntar", 30)],
-    4: ["A filha do faraó encontra o menino", async () => page.waitForTimeout(19_000)],
-    5: ["O povo atravessa em terra seca", async () => {
-      const hold = page.getByRole("button", { name: /Segure aqui/ })
-      await hold.hover()
-      await page.mouse.down()
-      await page.waitForTimeout(6_800)
-      await page.mouse.up()
-    }],
-    6: ["No sétimo dia, descanso", async () => {
-      for (const n of [5, 5, 5, 5, 5, 10]) {
-        await tap("Juntar", n)
-        await page.waitForTimeout(1_800)
-      }
-    }],
-    7: ["As muralhas caem", async () => {
-      await tap("Dar uma volta", 13)
-      await page.getByRole("button", { name: "Tocar as trombetas e gritar" }).click()
-    }],
-    9: ["O fogo do Senhor cai e consome tudo", async () => {
-      for (let round = 0; round < 3; round++) {
-        await tap("Juntar", 4)
-        await page.waitForTimeout(900)
-      }
-    }],
-    10: ["Nínive se arrepende, e Deus tem compaixão", () => tap("Revelar", 1)],
-    11: ["Deus dá um coração novo", () => tap("Revelar", 1)],
-  }
-  for (const [n, [finale, play]] of Object.entries(plays)) {
-    await page.goto(`/solo/etapa/${n}`)
-    await untilGame(page)
-    await play()
-    await expect(page.getByText(finale), `etapa ${n}`).toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText(/Relíquia:/).first(), `etapa ${n}`).toBeVisible()
-  }
+  await host.getByRole("navigation", { name: "Roteiro da sequência" }).getByRole("button", { name: /^\d+ Noé 🎮/ }).click()
+  // Antes do "Jogar agora", o celular mostra o tópico.
+  await expect(phone.getByText(/Este tópico tem um jogo/)).toBeVisible()
+  await host.getByRole("button", { name: "Jogar agora" }).click()
+  await play(phone)
+  await phone.getByRole("button", { name: "Par de animais" }).first().click()
+  await expect(projector.getByLabel("Jogo ao vivo")).toContainText("1 jogando", { timeout: 10_000 })
+  await expect(projector.getByLabel("Jogo ao vivo")).toContainText("Ana")
+  await host.getByRole("button", { name: /Mostrar pódio/ }).click()
+  await expect(projector.getByText("Fim do jogo")).toBeVisible({ timeout: 10_000 })
+  await expect(phone.getByText(/Você ficou em 1º/)).toBeVisible({ timeout: 10_000 })
+  // O pódio fica no próprio slide: o painel ainda está em Noé.
+  await expect(host.getByRole("heading", { level: 1, name: "Noé", exact: true })).toBeVisible()
+  await host.getByRole("button", { name: /Próxima/ }).click()
+  await expect(projector.getByText("Fim do jogo")).toBeHidden()
+  await expect(projector.locator("[data-surface=projector]")).toContainText("Dilúvio")
 })

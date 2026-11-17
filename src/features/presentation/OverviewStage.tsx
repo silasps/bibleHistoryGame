@@ -3,6 +3,7 @@
 import { AnimatePresence, LayoutGroup, motion } from "motion/react"
 import { useMemo } from "react"
 import { ITEM_COLORS, ItemArt } from "@/components/art/ItemArt"
+import { ContextMap } from "@/components/art/maps/ContextMap"
 import { getCharacter } from "@/content/characters"
 import { getEtapa, prdMoments, type Etapa } from "@/content/etapas"
 import { formatSpan, getItem, getWeek } from "@/content/overview"
@@ -29,9 +30,12 @@ export function OverviewStage({ overview, game, hideVerse = false }: { overview:
   const etapa = overview.etapa ? getEtapa(overview.etapa) : undefined
   const item = overview.itemId ? getItem(overview.itemId) : undefined
   const line = overview.depth.at(-1) ?? overview.stageLine
+  const also = (overview.alsoItemIds ?? []).map((id) => getItem(id)).filter((i) => i !== undefined)
+  const mapa = overview.mapa
   const skin = item?.characterId && overview.spotlightSkinId ? getCharacter(item.characterId)?.skin.find((s) => s.id === overview.spotlightSkinId) : undefined
 
-  if (game) {
+  // Jogos da Etapa 1: o jogo é a própria cena. Os das etapas 2–11 rodam por cima do tópico (cartão no canto).
+  if (game && !game.startable) {
     return (
       <div className="absolute inset-0 overflow-hidden bg-night">
         <GameStage game={game} line={overview.stageLine} />
@@ -66,22 +70,29 @@ export function OverviewStage({ overview, game, hideVerse = false }: { overview:
           {item && (
             <motion.div
               key={item.id}
-              className="absolute inset-x-[6cqw] top-[12cqh] grid h-[64cqh] grid-cols-[46cqh_1fr] items-center gap-[4cqw]"
+              className={`absolute inset-x-[6cqw] top-[12cqh] grid h-[64cqh] items-center gap-[4cqw] ${mapa ? "grid-cols-[1.35fr_1fr]" : "grid-cols-[46cqh_1fr]"}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: fx.motion ? 0.5 : 0 }}
             >
-              <motion.div
-                layoutId={`art-${item.id}`}
-                className="aspect-square w-full"
-                style={{ filter: `drop-shadow(0 0 3cqh ${ITEM_COLORS[item.color]}66)` }}
-                transition={{ duration: fx.motion ? 0.8 : 0, ease: [0.3, 0.7, 0.2, 1] }}
-              >
-                <ItemArt art={item.art} color={item.color} title={item.label} className="h-full w-full" />
-              </motion.div>
+              {mapa ? (
+                <div className={`mx-auto max-h-[64cqh] w-full ${mapa.id === "reinos" ? "aspect-[600/650] max-w-[59cqh]" : "aspect-[1000/640]"}`}>
+                  <ContextMap spec={mapa as Parameters<typeof ContextMap>[0]["spec"]} title={`Mapa · ${item.label}`} />
+                </div>
+              ) : (
+                <motion.div
+                  layoutId={`art-${item.id}`}
+                  className="aspect-square w-full"
+                  style={{ filter: `drop-shadow(0 0 3cqh ${ITEM_COLORS[item.color]}66)` }}
+                  transition={{ duration: fx.motion ? 0.8 : 0, ease: [0.3, 0.7, 0.2, 1] }}
+                >
+                  <ItemArt art={item.art} color={item.color} title={item.label} className="h-full w-full" />
+                </motion.div>
+              )}
               <div className="space-y-[2cqh]">
-                <SplitReveal key={item.id} text={item.label} as="h2" by="words" className="font-display text-[6cqw] leading-[1.02]" />
+                <SplitReveal key={item.id} text={item.label} as="h2" by="words" className={`font-display leading-[1.02] ${mapa ? "text-[4.6cqw]" : "text-[6cqw]"}`} />
+                {also.length > 0 && <p className="font-display text-[2.6cqw] leading-tight text-parchment/80">e {also.map((i) => i.label).join(" · ")}</p>}
                 <p className="text-[2.6cqw] font-semibold tabular-nums" style={{ color: ITEM_COLORS[item.color] }}>
                   {[item.sub, formatSpan(item)].filter(Boolean).join(" · ")}
                 </p>
@@ -93,7 +104,7 @@ export function OverviewStage({ overview, game, hideVerse = false }: { overview:
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.5, delay: overview.depth.length ? 0 : 0.6 }}
-                      className="max-w-[46cqw] font-display text-[2.9cqw] leading-snug text-parchment/95"
+                      className={`font-display leading-snug text-parchment/95 ${mapa ? "max-w-[36cqw] text-[2.4cqw]" : "max-w-[46cqw] text-[2.9cqw]"}`}
                     >
                       {line}
                     </motion.p>

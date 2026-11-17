@@ -6,8 +6,6 @@ import { CREATION, FORBIDDEN_FRUIT, GARDEN_TARGETS } from "@/content/etapas/etap
 import { formatRef } from "@/content/refs"
 import type { GameView } from "@/domain/projection"
 import { useFx } from "@/fx/useFx"
-import { getRoomGame } from "@/content/etapas/jogos"
-import { RoomGameStage } from "../games/RoomGameStage"
 import { AfterFallStage } from "./AfterFall"
 import { Backdrop, Fruit, Serpent } from "./art"
 import { GardenWalk } from "./GardenWalk"
@@ -30,10 +28,9 @@ export function GameStage({ game, line }: { game: GameView; line?: string }) {
     case "vestes":
     case "fora":
       return <AfterFallStage kind={game.kind} line={line} />
-    default: {
-      const room = getRoomGame(game.id)
-      return room ? <RoomGameStage game={room} view={game} /> : null
-    }
+    // Os jogos das etapas 2–11 rodam por cima do slide do tópico (LiveGameCard).
+    default:
+      return null
   }
 }
 

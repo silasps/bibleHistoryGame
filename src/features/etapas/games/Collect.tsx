@@ -4,138 +4,167 @@ import { AnimatePresence, motion } from "motion/react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { CollectGame } from "@/content/etapas/jogos"
 import { formatRef } from "@/content/refs"
+import { manaScore } from "@/domain/score"
 import { HAPTIC, vibrate } from "@/fx/haptics"
 import { useFx } from "@/fx/useFx"
 import { useStinger } from "@/fx/useSound"
 import { Backdrop } from "../etapa-1/art"
-import { Finale, GameHint } from "./Finale"
+import { Finale } from "./Finale"
+import { GAME_MS, GameHud, Pops, seeded, StepHint, useCountdown, usePops } from "./kit"
 
-interface Piece {
+interface Flake {
   key: number
   x: number
-  y: number
-  glyph: string
+  size: number
+  fall: number
+  sway: number
+  delay: number
 }
 
-const MAX_VISIBLE = 5
-
-function Glyph({ glyph, pair }: { glyph: string; pair: boolean }) {
-  if (glyph === "estrela") {
-    return (
-      <svg viewBox="0 0 24 24" className="size-10 drop-shadow-[0_0_10px_#f4d27a]" aria-hidden>
-        <path d="M12 2l2.6 6.9L22 9.3l-5.8 4.6L18.2 21 12 17l-6.2 4 2-7.1L2 9.3l7.4-.4z" fill="#fff1c4" />
-      </svg>
-    )
-  }
-  if (glyph === "mana") return <span className="block size-6 rounded-full bg-[#fffaf0] shadow-[0_0_12px_#ffffff]" aria-hidden />
-  return <span className="text-4xl leading-none drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]" aria-hidden>{pair ? `${glyph}${glyph}` : glyph}</span>
-}
+const VISIBLE = 6
+/** Distância mínima (em % da largura) entre peças que caem juntas: nada de fila. */
+const MIN_GAP = 16
 
 /**
- * Tocar para juntar: cada rodada tem uma meta. Arca (pares de animais),
- * estrelas, maná (por dia; tocar além da meta estraga) e as talhas do altar.
+ * Maná (Êx 16): a cada manhã, a medida do dia; no sexto, o dobro. O que se
+ * junta além da medida estraga (Êx 16:20). As porções caem espalhadas, em
+ * tempos e velocidades diferentes.
  */
-export function Collect({ game, onProgress }: { game: CollectGame; onProgress: (value: number, done: boolean) => void }) {
+export function Collect({ game, onProgress, stopped }: { game: CollectGame; onProgress: (value: number, done: boolean) => void; stopped: boolean }) {
   const fx = useFx()
   const stinger = useStinger()
+  const report = useRef(onProgress)
+  useEffect(() => {
+    report.current = onProgress
+  }, [onProgress])
+  const rand = useRef(seeded(16))
+  const nextKey = useRef(0)
+  const totalPortions = game.rounds.reduce((a, b) => a + b, 0)
   const [round, setRound] = useState(0)
   const [got, setGot] = useState(0)
-  const [pieces, setPieces] = useState<Piece[]>([])
-  const [spoiled, setSpoiled] = useState(0)
+  const [flakes, setFlakes] = useState<Flake[]>([])
   const [between, setBetween] = useState(false)
-  const [done, setDone] = useState(false)
-  const nextKey = useRef(0)
+  const [final, setFinal] = useState<number | null>(null)
+  const tally = useRef({ portions: 0, spoiled: 0 })
+  const [spoiled, setSpoiled] = useState(0)
+  const [portions, setPortions] = useState(0)
+  const { pops, add } = usePops()
   const target = game.rounds[round] ?? 0
-  const multi = game.rounds.length > 1
 
-  const spawn = useCallback((): Piece => {
-    const key = nextKey.current++
-    return {
-      key,
-      x: 10 + ((key * 37) % 80),
-      // Com movimento reduzido, nada cai: as peças aparecem paradas.
-      y: game.spawn === "cair" && fx.motion ? -8 : 18 + ((key * 53) % 60),
-      glyph: game.pieces[key % game.pieces.length],
-    }
-  }, [game.pieces, game.spawn, fx.motion])
-
-  // Mantém algumas peças na tela enquanto a meta da rodada não foi atingida.
+  const finish = useCallback(
+    (finished: boolean, leftMs: number) => {
+      setFinal((f) => {
+        if (f !== null) return f
+        const s = manaScore(tally.current.portions, tally.current.spoiled, finished, leftMs, GAME_MS, totalPortions)
+        report.current(s, true)
+        return s
+      })
+    },
+    [totalPortions],
+  )
+  const { left, leftRef } = useCountdown(GAME_MS, final === null && !stopped, () => finish(false, 0))
   useEffect(() => {
-    if (done || between) return
-    const missing = Math.min(MAX_VISIBLE, target - got) - pieces.length
-    if (missing <= 0) return
-    const t = setTimeout(() => setPieces((p) => [...p, ...Array.from({ length: missing }, spawn)]), game.spawn === "cair" ? 450 : 120)
-    return () => clearTimeout(t)
-  }, [pieces.length, got, target, done, between, spawn, game.spawn])
+    if (stopped) finish(false, 0)
+  }, [stopped, finish])
+  const score = final ?? manaScore(portions, spoiled, false, 0, GAME_MS, totalPortions)
 
-  const take = (key: number) => {
-    setPieces((p) => p.filter((x) => x.key !== key))
+  // Novas porções: x sorteado, longe das que já estão caindo; tamanho, queda e balanço variados.
+  const spawn = useCallback((taken: number[]): Flake => {
+    const r = rand.current
+    let x = 8 + r() * 84
+    for (let i = 0; i < 8 && taken.some((t) => Math.abs(t - x) < MIN_GAP); i++) x = 8 + r() * 84
+    return { key: nextKey.current++, x, size: 18 + r() * 14, fall: fx.motion ? 4.2 + r() * 2.6 : 0, sway: 2 + r() * 5, delay: r() * 0.9 }
+  }, [fx.motion])
+
+  useEffect(() => {
+    if (final !== null || stopped) return
+    const t = setInterval(() => {
+      setFlakes((fs) => {
+        if (fs.length >= VISIBLE) return fs
+        return [...fs, spawn(fs.map((f) => f.x))]
+      })
+    }, 380)
+    return () => clearInterval(t)
+  }, [final, stopped, spawn])
+
+  const take = (f: Flake, e: React.MouseEvent) => {
+    setFlakes((fs) => fs.filter((x) => x.key !== f.key))
+    const box = (e.currentTarget.parentElement as HTMLElement).getBoundingClientRect()
+    const y = ((e.clientY - box.top) / box.height) * 100
     if (between) {
-      // Depois da meta do dia, o que se junta a mais estraga (Êx 16:20).
-      if (game.overflow) setSpoiled((n) => n + 1)
+      // Depois da medida do dia, o que se junta a mais estraga (Êx 16:20).
+      tally.current.spoiled += 1
+      setSpoiled(tally.current.spoiled)
+      add(f.x, y, "−20", false)
       return
     }
     vibrate(HAPTIC.vote)
     stinger("vote")
+    add(f.x, y, "+20")
+    tally.current.portions += 1
+    setPortions(tally.current.portions)
     const nextGot = got + 1
     setGot(nextGot)
-    if (!multi) onProgress(nextGot, nextGot >= target)
+    report.current(manaScore(tally.current.portions, tally.current.spoiled, false, 0, GAME_MS, totalPortions), false)
     if (nextGot < target) return
-    const last = round === game.rounds.length - 1
-    if (multi) onProgress(round + 1, last)
-    if (last) {
-      setPieces([])
-      setDone(true)
+    if (round === game.rounds.length - 1) {
+      setFlakes([])
+      finish(true, leftRef.current)
       return
     }
     setBetween(true)
     setTimeout(() => {
       setBetween(false)
-      setPieces([])
       setGot(0)
       setRound((r) => r + 1)
-    }, game.overflow ? 1600 : 700)
+    }, 1600)
   }
 
   return (
-    <div className="relative h-full w-full overflow-hidden">
+    <div className="relative h-full w-full overflow-hidden select-none">
       <Backdrop name={game.art} portrait palette={game.palette} />
       <div className="absolute inset-0 bg-black/25" />
-      <GameHint>
-        {game.instruction} · {formatRef(game.ref, "short")}
-      </GameHint>
+      <GameHud left={left} total={GAME_MS} score={score} label={`${game.roundLabel ?? "Rodada"} ${round + 1} de ${game.rounds.length}`} />
+      <StepHint>
+        {game.instruction}{" · "}<span className="whitespace-nowrap">{formatRef(game.ref, "short")}</span>
+      </StepHint>
       <AnimatePresence>
-        {pieces.map((p) => (
+        {flakes.map((f) => (
           <motion.button
-            key={p.key}
+            key={f.key}
             type="button"
-            aria-label="Juntar"
-            onClick={() => take(p.key)}
-            className="absolute -translate-x-1/2 -translate-y-1/2 p-2"
-            style={{ left: `${p.x}%`, top: `${p.y}%` }}
-            initial={fx.motion ? { opacity: 0, scale: 0.4 } : false}
-            animate={game.spawn === "cair" && fx.motion ? { opacity: 1, scale: 1, top: "108%" } : { opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.4 }}
-            transition={game.spawn === "cair" ? { top: { duration: 5, ease: "linear" }, default: { duration: 0.25 } } : { duration: 0.25 }}
-            // Só sai da tela quem caiu de verdade (com movimento reduzido nada cai).
-            onAnimationComplete={() => game.spawn === "cair" && fx.motion && setPieces((ps) => ps.filter((x) => x.key !== p.key))}
+            aria-label="Juntar o maná"
+            onClick={(e) => take(f, e)}
+            className="absolute z-10 grid -translate-x-1/2 place-items-center"
+            style={{ left: `${f.x}%`, width: Math.max(44, f.size + 20), height: Math.max(44, f.size + 20) }}
+            initial={fx.motion ? { top: "-6%", opacity: 0 } : { top: `${30 + (f.key % 5) * 10}%`, opacity: 1 }}
+            animate={fx.motion ? { top: "104%", opacity: 1, x: [0, f.sway * 3, -f.sway * 3, 0] } : { opacity: 1 }}
+            exit={{ opacity: 0, scale: 1.6 }}
+            transition={fx.motion ? { top: { duration: f.fall, ease: "linear", delay: f.delay }, x: { duration: 2.4, repeat: Infinity }, opacity: { duration: 0.3, delay: f.delay } } : { duration: 0 }}
+            onAnimationComplete={() => fx.motion && setFlakes((fs) => fs.filter((x) => x.key !== f.key))}
           >
-            <Glyph glyph={p.glyph} pair={game.id === "arca"} />
+            <span className="block rounded-full bg-[#fffaf0] shadow-[0_0_14px_#ffffff]" style={{ width: f.size, height: f.size * 0.82 }} aria-hidden />
           </motion.button>
         ))}
       </AnimatePresence>
-      <div className="absolute inset-x-0 bottom-3 flex items-center justify-between px-4 text-sm text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.9)]">
-        <span>{multi ? `${game.roundLabel ?? "Rodada"} ${round + 1} de ${game.rounds.length}` : ""}</span>
-        <span className="tabular-nums">
-          {got} / {target}
-        </span>
+      <Pops items={pops} />
+      {/* A medida do dia. */}
+      <div className="pointer-events-none absolute inset-x-5 bottom-3 z-10 space-y-1">
+        <div className="flex gap-1">
+          {Array.from({ length: target }, (_, i) => (
+            <motion.span key={`${round}-${i}`} className="h-3 flex-1 rounded-full" animate={{ backgroundColor: i < got ? "#fff6d8" : "rgba(255,255,255,0.18)", boxShadow: i < got ? "0 0 10px #fff6d8" : "0 0 0px #fff6d8" }} />
+          ))}
+        </div>
+        <p className="text-center text-xs font-semibold text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.9)]">
+          {between ? "Medida do dia completa: não junte mais!" : `Medida do dia: ${got} de ${target}`}
+        </p>
       </div>
       {spoiled > 0 && game.overflow && (
-        <p className="absolute inset-x-6 bottom-12 rounded-xl bg-black/70 px-3 py-2 text-center text-xs text-[#ffb98a]" role="status">
+        <p className="absolute inset-x-6 bottom-14 z-10 rounded-xl bg-black/70 px-3 py-2 text-center text-xs text-[#ffb98a]" role="status">
           {game.overflow.label} ({spoiled}) · {formatRef(game.overflow.ref, "short")}
         </p>
       )}
-      {done && <Finale label={game.finale.label} refs={game.finale.ref} relic={game.relic} />}
+      {final !== null && <Finale label={game.finale.label} refs={game.finale.ref} relic={game.relic} score={final} />}
     </div>
   )
 }

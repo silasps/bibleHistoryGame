@@ -32,6 +32,18 @@ export interface PlayResult {
   at?: number
 }
 
+export interface GameLive {
+  id: string
+  phase: "on" | "podio"
+  startedAt: number
+  podiumAt?: number
+}
+
+/** Pontuação máxima de um jogo (limite da tabela `plays`). */
+export const SCORE_MAX = 1000
+/** Depois do pódio, o celular ainda pode mandar a pontuação final por alguns instantes. */
+export const PODIUM_GRACE_MS = 3000
+
 export interface SessionState {
   version: number
   roomCode: string
@@ -55,8 +67,13 @@ export interface SessionState {
   cue: { kind: CueKind; at: number } | null
   /** Objeto da skin do personagem em destaque na cena atual. */
   spotlight?: string | null
-  /** Último minijogo encerrado (ao sair da cena): o telão e os celulares mostram o pódio por alguns segundos. */
+  /** Salas antigas: o pódio agora acontece no próprio slide (veja `gameLive`). */
   lastGame?: { gameId: string; sceneIndex: number; at: number } | null
+  /**
+   * Minijogo do slide atual: "on" enquanto a sala joga; "podio" depois que o
+   * apresentador aperta Próximo (o pódio fica até ele avançar de novo).
+   */
+  gameLive?: GameLive | null
   timing: {
     startedAt?: number
     sceneEnteredAt?: number
@@ -84,6 +101,7 @@ export type HostCommand =
   | { type: "step"; delta: 1 | -1 }
   | { type: "cue"; kind: CueKind }
   | { type: "spotlight"; skinId: string | null }
+  | { type: "game_start" }
   | { type: "set_rehearsal"; value: boolean }
   | { type: "end" }
 
@@ -155,12 +173,8 @@ function stopClock(state: SessionState, now: number): SessionState["timing"] {
   return { ...t, sceneEnteredAt: undefined, sceneMs: { ...t.sceneMs, [id]: (t.sceneMs[id] ?? 0) + (now - t.sceneEnteredAt) } }
 }
 
-function moveTo(state: SessionState, index: number, now: number, narrative: SessionNarrative): SessionState {
+function moveTo(state: SessionState, index: number, now: number): SessionState {
   if (index < 0 || index >= state.sceneIds.length || index === state.index) return state
-  // Saindo de um minijogo com resultados: guarda para o pódio de fim de jogo.
-  const game = narrative.scenes[state.index]?.game
-  const played = game && game.max > 0 && Object.values(state.plays?.[game.id] ?? {}).some((r) => r.value > 0)
-  const lastGame = played ? { gameId: game.id, sceneIndex: state.index, at: now } : (state.lastGame ?? null)
   const timing = stopClock(state, now)
   // Enquetes abertas na cena que sai são fechadas: nada de votos atrasados.
   const polls = Object.fromEntries(Object.entries(state.polls).map(([id, p]) => [id, closePoll(p)]))
@@ -172,7 +186,8 @@ function moveTo(state: SessionState, index: number, now: number, narrative: Sess
     step: 0,
     cue: null,
     spotlight: null,
-    lastGame,
+    lastGame: null,
+    gameLive: null,
     timing: { ...timing, sceneEnteredAt: state.paused ? undefined : now },
   }
 }
@@ -192,12 +207,27 @@ export function reduceHost(state: SessionState, cmd: HostCommand, ctx: Ctx): Hos
       return {
         state: bump({ ...state, status: "running", timing: { ...state.timing, startedAt: now, sceneEnteredAt: now } }),
       }
-    case "next":
-      return { state: bump(moveTo(state, state.index + 1, now, narrative)) }
+    case "next": {
+      // Jogo com pontos no slide: o primeiro Próximo mostra o pódio; o segundo segue.
+      const game = narrative.scenes[state.index]?.game
+      const live = state.gameLive?.id === game?.id ? state.gameLive : null
+      const scored = game && game.max > 0 && Object.values(state.plays?.[game.id] ?? {}).some((r) => r.value > 0)
+      const playing = game && (game.startable ? live?.phase === "on" : !live)
+      if (game && scored && playing) {
+        return { state: bump({ ...state, gameLive: { id: game.id, phase: "podio", startedAt: live?.startedAt ?? now, podiumAt: now } }) }
+      }
+      return { state: bump(moveTo(state, state.index + 1, now)) }
+    }
+    case "game_start": {
+      const game = narrative.scenes[state.index]?.game
+      if (!game?.startable) return { state, error: "Este slide não tem jogo" }
+      if (state.gameLive?.id === game.id) return { state }
+      return { state: bump({ ...state, gameLive: { id: game.id, phase: "on", startedAt: now } }) }
+    }
     case "prev":
-      return { state: bump(moveTo(state, state.index - 1, now, narrative)) }
+      return { state: bump(moveTo(state, state.index - 1, now)) }
     case "goto":
-      return { state: bump(moveTo(state, cmd.index, now, narrative)) }
+      return { state: bump(moveTo(state, cmd.index, now)) }
     case "pause":
       if (state.paused) return { state }
       return { state: bump({ ...state, paused: true, timing: { ...stopClock(state, now), pausedAt: now } }) }
@@ -308,6 +338,11 @@ export function reduceAudience(state: SessionState, cmd: AudienceCommand, ctx: C
       } else {
         // Só vale o jogo da cena atual; avançar a cena encerra a brincadeira.
         if (!game || game.id !== cmd.gameId || game.max === 0) return { state, result: "rejected" }
+        const live = state.gameLive?.id === game.id ? state.gameLive : null
+        // Jogo ao vivo: só depois do "Jogar agora". No pódio, ainda chega a pontuação final por alguns instantes.
+        const lateFinal = live?.phase === "podio" && now - (live.podiumAt ?? 0) <= PODIUM_GRACE_MS
+        if (game.startable && !(live?.phase === "on" || lateFinal)) return { state, result: "rejected" }
+        if (!game.startable && live?.phase === "podio" && !lateFinal) return { state, result: "rejected" }
         max = game.max
       }
       const prev = state.plays?.[cmd.gameId]?.[cmd.participantId]

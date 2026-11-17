@@ -33,6 +33,10 @@ export interface OverviewView {
   week?: number
   etapa?: number
   itemId?: string
+  /** Outros itens do mesmo slide. */
+  alsoItemIds?: string[]
+  /** Mapa de contexto no lugar da ilustração. */
+  mapa?: { id: "exodo" | "reinos" | "exilios" | "imperios"; foco?: string }
   slotId?: string
   stageLine?: string
   refIndex?: number
@@ -81,6 +85,12 @@ export interface GameView {
   mine?: PlayResult
   /** 1º, 2º e 3º lugares ao vivo (só no telão). */
   top?: PodiumEntry[]
+  /** Jogo das etapas 2–11: só roda depois do "Jogar agora". */
+  startable: boolean
+  /** "parado" (ainda não começou), "on" (a sala joga) ou "podio". */
+  phase: "parado" | "on" | "podio"
+  /** Início do jogo (relógio do painel e do telão). */
+  startedAt?: number
 }
 
 export interface ProjectorView {
@@ -189,12 +199,14 @@ function overviewView(state: SessionState, narrative: SessionNarrative): Overvie
   if (!o) return undefined
   const revealedItemIds = narrative.scenes
     .slice(0, state.index + 1)
-    .flatMap((s) => (s.overview?.role === "item" && s.overview.etapa === o.etapa && s.overview.itemId ? [s.overview.itemId] : []))
+    .flatMap((s) => (s.overview?.role === "item" && s.overview.etapa === o.etapa && s.overview.itemId ? [s.overview.itemId, ...(s.overview.alsoItemIds ?? [])] : []))
   return {
     role: o.role,
     week: o.week,
     etapa: o.etapa,
     itemId: o.itemId,
+    alsoItemIds: o.alsoItemIds,
+    mapa: o.mapa,
     slotId: o.slotId,
     stageLine: o.stageLine,
     refIndex: o.refIndex,
@@ -221,15 +233,17 @@ function top3(state: SessionState, ranked: ReturnType<typeof ranking>): PodiumEn
   })
 }
 
+/** Pódio do jogo do slide atual: aparece quando o apresentador aperta Próximo e fica até ele avançar. */
 function resultsView(state: SessionState, narrative: SessionNarrative, participantId?: string | null): GameResults | undefined {
-  const last = state.lastGame
-  const scene = last ? narrative.scenes[last.sceneIndex] : undefined
-  if (!last || !scene?.game || scene.game.id !== last.gameId) return undefined
-  const ranked = ranking(state, last.gameId)
+  const live = state.gameLive
+  const scene = narrative.scenes[state.index]
+  if (live?.phase !== "podio" || !scene?.game || scene.game.id !== live.id) return undefined
+  const ranked = ranking(state, live.id)
   const mine = participantId ? ranked.find((r) => r.pid === participantId) : undefined
+  const at = live.podiumAt ?? live.startedAt
   return {
-    key: `${last.gameId}-${last.at}`,
-    at: last.at,
+    key: `${live.id}-${at}`,
+    at,
     title: scene.title,
     max: scene.game.max,
     players: ranked.length,
@@ -241,6 +255,7 @@ function resultsView(state: SessionState, narrative: SessionNarrative, participa
 function gameView(state: SessionState, narrative: SessionNarrative, participantId?: string | null, withTop = false): GameView | undefined {
   const game = narrative.scenes[state.index]?.game
   if (!game) return undefined
+  const live = state.gameLive?.id === game.id ? state.gameLive : null
   const results = Object.entries(state.plays?.[game.id] ?? {}).filter(([pid]) => state.participants[pid])
   return {
     id: game.id,
@@ -251,6 +266,10 @@ function gameView(state: SessionState, narrative: SessionNarrative, participantI
     done: results.filter(([, r]) => r.done).length,
     mine: participantId ? state.plays?.[game.id]?.[participantId] : undefined,
     top: withTop && game.max > 0 ? top3(state, ranking(state, game.id)) : undefined,
+    startable: game.startable ?? false,
+    // Jogos da Etapa 1 (sem "Jogar agora") estão sempre rodando até o pódio.
+    phase: live ? live.phase : game.startable ? "parado" : "on",
+    startedAt: live?.startedAt,
   }
 }
 

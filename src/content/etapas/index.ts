@@ -5,6 +5,7 @@ import { ItemColor } from "../overview/schema"
 import { weekBudgetMinutes } from "../rubric"
 import { FALAS, type FalaId } from "./falas"
 import { gameMax, ROOM_GAMES } from "./jogos"
+import { MOMENTOS } from "./momentos"
 
 // A história contada por ETAPAS (não por semanas). As semanas continuam nos
 // arquivos do autor e na folha de notas; na tela só aparecem as etapas.
@@ -32,6 +33,8 @@ export const EtapaGame = z.object({
   optional: z.boolean().default(false),
   /** Fala do autor que acompanha o momento (src/content/etapas/falas.ts). */
   fala: z.enum(Object.keys(FALAS) as [FalaId, ...FalaId[]]).optional(),
+  /** Jogo das etapas 2–11: roda no slide do tópico só quando o apresentador aperta "Jogar agora". */
+  aoVivo: z.boolean().default(false),
   seconds: z.number().int().positive(),
 })
 export type EtapaGame = z.infer<typeof EtapaGame>
@@ -41,7 +44,9 @@ export const EtapaBeat = z.object({
   id: z.string().regex(/^[a-z0-9-]+$/),
   afterItemId: z.string(),
   label: z.string().min(1).max(48),
-  fala: z.enum(Object.keys(FALAS) as [FalaId, ...FalaId[]]),
+  /** Fala do autor (falas.ts) OU momento novo em rascunho (momentos.ts). */
+  fala: z.enum(Object.keys(FALAS) as [FalaId, ...FalaId[]]).optional(),
+  momento: z.string().optional(),
   /** Ilustração da biblioteca; uma imagem em public/art/items/<id do momento> substitui. */
   art: z.string(),
   /** Ponto de reflexão: pausa mais longa, com visual de pausa. */
@@ -56,6 +61,10 @@ export const Etapa = z.object({
   color: ItemColor,
   status: z.enum(["com_material", "aguardando_material"]),
   itemIds: z.array(z.string()).default([]),
+  /** true: a ordem dos slides é a de `itemIds` (e não a cronológica). */
+  ordemManual: z.boolean().default(false),
+  /** Itens que ficam na faixa da linha do tempo, mas sem slide próprio. */
+  semSlide: z.array(z.string()).default([]),
   /** Trechos de abertura do resumo (sem item) que abrem esta etapa. */
   intros: z.array(z.string()).default([]),
   prd: z.array(PrdAnchor).default([]),
@@ -65,6 +74,9 @@ export const Etapa = z.object({
   week: z.number().int().optional(),
 })
 export type Etapa = z.infer<typeof Etapa>
+
+/** Tempo de um minijogo ao vivo (60–90 s), quando o apresentador decide jogar. */
+export const GAME_LIVE_SECONDS = 75
 
 const ETAPAS = z.array(Etapa).parse([
   {
@@ -136,7 +148,10 @@ const ETAPAS = z.array(Etapa).parse([
   },
   {
     n: 9, id: "o-reino-dividido", title: "O reino dividido", color: "azul", status: "com_material",
-    itemIds: ["aram", "jeroboao", "roboao", "divisao-reino", "reis-julgamento", "elias", "profetas-do-reino", "acabe", "eliseu", "assiria"],
+    // Briefing (16/11/2026): a divisão abre a etapa; o altar do Carmelo vem depois de Acabe; Arã sai dos slides.
+    itemIds: ["divisao-reino", "jeroboao", "roboao", "reis-julgamento", "acabe", "elias", "profetas-do-reino", "eliseu", "assiria", "aram"],
+    ordemManual: true,
+    semSlide: ["aram"],
   },
   {
     n: 10, id: "os-profetas-avisam", title: "Os profetas avisam", color: "turquesa", status: "com_material",
@@ -161,13 +176,14 @@ const ETAPAS = z.array(Etapa).parse([
   })),
 ])
 
-// Minijogos das etapas 2–11 (src/content/etapas/jogos.ts): curtos e opcionais no telão.
+// Minijogos das etapas 2–11 (src/content/etapas/jogos.ts): rodam no slide do
+// tópico, enquanto o apresentador fala, só quando ele aperta "Jogar agora".
 export const etapas: Etapa[] = ETAPAS.map((e) => ({
   ...e,
   games: [
     ...e.games,
     ...ROOM_GAMES.filter((g) => g.etapa === e.n).map((g) =>
-      EtapaGame.parse({ id: g.id, kind: g.kind, max: gameMax(g), itemId: g.afterItemId, on: "depois", title: g.title, optional: true, seconds: 25 }),
+      EtapaGame.parse({ id: g.id, kind: g.kind, max: gameMax(g), itemId: g.itemId, on: "item", title: g.title, aoVivo: true, seconds: GAME_LIVE_SECONDS }),
     ),
   ],
 }))
@@ -181,10 +197,19 @@ export function getEtapaById(id: string): Etapa | undefined {
   return etapas.find((e) => e.id === id)
 }
 
-/** Itens da etapa em ordem cronológica (mesmo critério das semanas). */
+/** Itens da etapa em ordem cronológica (mesmo critério das semanas), ou na ordem manual da etapa. */
 export function itemsOfEtapa(n: number): TimelineItem[] {
-  return (getEtapa(n)?.itemIds ?? []).map((id) => getItem(id)!).sort(compareItems)
+  const etapa = getEtapa(n)
+  const list = (etapa?.itemIds ?? []).map((id) => getItem(id)!)
+  return etapa?.ordemManual ? list : list.sort(compareItems)
 }
+
+/** Itens que viram slide (sem os que ficam só na faixa da linha do tempo). */
+export function slideItemsOfEtapa(n: number): TimelineItem[] {
+  const skip = new Set(getEtapa(n)?.semSlide ?? [])
+  return itemsOfEtapa(n).filter((i) => !skip.has(i.id))
+}
+
 
 export function getBeat(id: string): (EtapaBeat & { etapa: number }) | undefined {
   for (const e of etapas) {
@@ -232,7 +257,12 @@ export function validateEtapas(): string[] {
       if (placed.has(id)) issues.push(`${id}: está nas etapas ${placed.get(id)} e ${e.n}`)
       placed.set(id, e.n)
     }
-    for (const b of e.beats) if (!e.itemIds.includes(b.afterItemId)) issues.push(`etapa ${e.n}: momento ${b.id} depois de ${b.afterItemId}, que não está na etapa`)
+    for (const b of e.beats) {
+      if (!e.itemIds.includes(b.afterItemId)) issues.push(`etapa ${e.n}: momento ${b.id} depois de ${b.afterItemId}, que não está na etapa`)
+      if (!b.fala === !b.momento) issues.push(`momento ${b.id}: precisa de uma fala OU de um momento`)
+      if (b.momento && !MOMENTOS[b.momento]) issues.push(`momento ${b.id}: texto ${b.momento} não existe em momentos.ts`)
+    }
+    for (const id of e.semSlide) if (!e.itemIds.includes(id)) issues.push(`etapa ${e.n}: ${id} sem slide, mas fora da etapa`)
     for (const g of e.games) if (!e.itemIds.includes(g.itemId)) issues.push(`etapa ${e.n}: jogo ${g.id} preso a ${g.itemId}, que não está na etapa`)
     for (const p of e.prd) {
       if (!e.itemIds.includes(p.afterItemId)) issues.push(`etapa ${e.n}: PRD depois de ${p.afterItemId}, que não está na etapa`)

@@ -578,7 +578,7 @@ export const MOOD_FOR_GAME: Record<string, Mood> = {
 export interface MoodSceneLike {
   fxCue?: string
   overview?: { role: string; etapa?: number }
-  game?: { kind: string }
+  game?: { kind: string; startable?: boolean }
 }
 
 /**
@@ -586,9 +586,10 @@ export interface MoodSceneLike {
  * têm o seu clima; o resto segue o clima da etapa. Fora das etapas (abertura,
  * conclusão, lobby), a música de início.
  */
-export function moodForScene(scene: MoodSceneLike | null | undefined): Mood {
+export function moodForScene(scene: MoodSceneLike | null | undefined, gameLive = false): Mood {
   if (!scene) return "night"
-  if (scene.game) return MOOD_FOR_GAME[scene.game.kind] ?? "play"
+  // Jogo das etapas 2–11: a música de jogo só toca enquanto o jogo está rodando.
+  if (scene.game && (!scene.game.startable || gameLive)) return MOOD_FOR_GAME[scene.game.kind] ?? "play"
   const role = scene.overview?.role
   if (role === "versiculo") return "hope"
   if (role === "pista" || role === "reflexao" || role === "conclusao") return "warm"

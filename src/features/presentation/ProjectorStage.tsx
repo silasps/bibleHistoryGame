@@ -12,7 +12,8 @@ import { cn } from "@/lib/utils"
 import { StageBackground } from "../solo/StageBackground"
 import { HajaLuzStage, LightsSky } from "./Moments"
 import { OverviewStage } from "./OverviewStage"
-import { LivePodium, ResultsStage, useFreshResults } from "./Podium"
+import { LiveGameCard } from "../etapas/games/LiveGameCard"
+import { Counting, LivePodium, ResultsStage, useFreshResults } from "./Podium"
 import { PollResults } from "./PollResults"
 import { QRJoin } from "./QRJoin"
 import { StageSeal } from "./StageSeal"
@@ -33,8 +34,8 @@ export function ProjectorStage({ view, joinUrl, className, preview = false }: Pr
   const scene = view?.scene ?? null
   const stinger = useStinger()
   const fx = useFx()
-  useMood(preview ? null : moodForScene(view?.status === "running" ? scene : null))
-  const [results] = useFreshResults(view?.results)
+  useMood(preview ? null : moodForScene(view?.status === "running" ? scene : null, scene?.game?.phase === "on"))
+  const [results, , counting] = useFreshResults(view?.results)
 
   // Estado visual derivado dos comandos do apresentador.
   const visual = useMemo(() => {
@@ -145,9 +146,11 @@ export function ProjectorStage({ view, joinUrl, className, preview = false }: Pr
         </div>
       )}
 
-      {view?.status === "running" && scene?.game?.top && scene.game.top.length > 0 && <LivePodium entries={scene.game.top} max={scene.game.max} />}
+      {view?.status === "running" && !scene?.game?.startable && scene?.game?.phase === "on" && scene.game.top && scene.game.top.length > 0 && <LivePodium entries={scene.game.top} max={scene.game.max} />}
+      {view?.status === "running" && scene?.game?.startable && scene.game.phase === "on" && <LiveGameCard game={scene.game} />}
 
       <AnimatePresence>
+        {counting && <Counting key="contando" size="stage" />}
         {results && <ResultsStage key={results.key} results={results} />}
         {view?.paused && view.status === "running" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-20 grid place-items-center bg-night/80 backdrop-blur-sm">

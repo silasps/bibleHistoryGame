@@ -1,14 +1,16 @@
 "use client"
 
 import { AnimatePresence, motion } from "motion/react"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import type { CaulkGame } from "@/content/etapas/jogos"
 import { formatRef } from "@/content/refs"
 import { HAPTIC, vibrate } from "@/fx/haptics"
 import { useFx } from "@/fx/useFx"
 import { useStinger } from "@/fx/useSound"
 import { Backdrop } from "../etapa-1/art"
-import { Finale, GameHint } from "./Finale"
+import { stagedScore } from "@/domain/score"
+import { Finale } from "./Finale"
+import { GAME_MS, GameHud, StepHint, useCountdown } from "./kit"
 
 // Coordenadas no viewBox 100×150 (celular em pé).
 const BINS = 8
@@ -22,17 +24,20 @@ const GAPS = [
 const BASKET = "M10 68 C 10 98, 24 112, 50 112 C 76 112, 90 98, 90 68 Z"
 const START = { x: 22, y: 122 }
 const RECEIVER = { x: 74, y: 70 }
+const BABY_START = { x: 22, y: 36 }
+const BASKET_MOUTH = { x: 50, y: 74 }
+const PARTS = 3
 
-type Phase = "vedar" | "rio" | "entregue"
+type Phase = "vedar" | "bebe" | "rio" | "entregue"
 type Pt = { x: number; y: number }
 
 const sealedCount = (covered: boolean[][]) => covered.filter((g) => g.filter(Boolean).length >= BINS - 1).length
 
 /**
- * Vedar (Êx 2:3): o dedo passa betume nas frestas do cesto. Depois o cesto
- * fica entre os juncos e a pessoa o leva até a filha do faraó (Êx 2:5–6).
+ * Cesto (Êx 2:3–6): vedar as frestas com betume, colocar o menino no cesto e
+ * levar o cesto até a filha do faraó. Cada parte vale pontos; terminar rápido dá bônus.
  */
-export function Caulk({ game, onProgress }: { game: CaulkGame; onProgress: (value: number, done: boolean) => void }) {
+export function Caulk({ game, onProgress, stopped }: { game: CaulkGame; onProgress: (value: number, done: boolean) => void; stopped: boolean }) {
   const fx = useFx()
   const stinger = useStinger()
   const svg = useRef<SVGSVGElement>(null)
@@ -44,19 +49,47 @@ export function Caulk({ game, onProgress }: { game: CaulkGame; onProgress: (valu
   const last = useRef<Pt | null>(null)
   const dragging = useRef(false)
   const [held, setHeld] = useState(false)
+  const [baby, setBaby] = useState<Pt>(BABY_START)
+  const [babyIn, setBabyIn] = useState(false)
+  const [final, setFinal] = useState<number | null>(null)
   const report = useRef(onProgress)
   useEffect(() => {
     report.current = onProgress
   }, [onProgress])
 
   const sealed = sealedCount(covered)
+  const parts = (p: Phase, sealedNow: number, inBasket: boolean) => (p === "vedar" ? sealedNow / GAPS.length : p === "entregue" ? 3 : 1 + (inBasket ? 1 : 0))
 
-  // Todas vedadas: o cesto desce ao rio, entre os juncos.
+  const finish = useCallback(
+    (score: number) => {
+      setFinal((f) => {
+        if (f !== null) return f
+        report.current(score, true)
+        return score
+      })
+      setFinale(true)
+    },
+    [],
+  )
+  const { left, leftRef } = useCountdown(GAME_MS, final === null && !stopped, () => finish(stagedScore(parts(phase, sealed, babyIn), PARTS, 0, GAME_MS)))
+  const score = final ?? stagedScore(parts(phase, sealed, babyIn), PARTS, left, GAME_MS)
+  useEffect(() => {
+    if (stopped && final === null) finish(stagedScore(parts(phase, sealed, babyIn), PARTS, 0, GAME_MS))
+  }, [stopped, final, finish, phase, sealed, babyIn])
+
+  // Todas vedadas: o menino entra no cesto.
   useEffect(() => {
     if (phase !== "vedar" || sealed < GAPS.length) return
-    const t = setTimeout(() => setPhase("rio"), 900)
+    const t = setTimeout(() => setPhase("bebe"), 900)
     return () => clearTimeout(t)
   }, [phase, sealed])
+
+  // Menino no cesto: o cesto desce ao rio, entre os juncos.
+  useEffect(() => {
+    if (phase !== "bebe" || !babyIn) return
+    const t = setTimeout(() => setPhase("rio"), fx.motion ? 1100 : 300)
+    return () => clearTimeout(t)
+  }, [phase, babyIn, fx.motion])
 
   useEffect(() => {
     if (phase !== "entregue") return
@@ -96,7 +129,7 @@ export function Caulk({ game, onProgress }: { game: CaulkGame; onProgress: (valu
     if (after > before) {
       vibrate(HAPTIC.vote)
       stinger("tap", after / GAPS.length)
-      report.current(Math.round((after / GAPS.length) * 70), false)
+      report.current(stagedScore(after / GAPS.length, PARTS, 0, GAME_MS), false)
     }
   }
 
@@ -108,6 +141,10 @@ export function Caulk({ game, onProgress }: { game: CaulkGame; onProgress: (valu
       last.current = p
       setBrush(p)
       paint(p, p)
+    } else if (phase === "bebe" && !babyIn && Math.hypot(p.x - baby.x, p.y - baby.y) < 18) {
+      dragging.current = true
+      setHeld(true)
+      setBaby(p)
     } else if (phase === "rio" && Math.hypot(p.x - basket.x, p.y - basket.y) < 16) {
       dragging.current = true
       setHeld(true)
@@ -123,6 +160,8 @@ export function Caulk({ game, onProgress }: { game: CaulkGame; onProgress: (valu
       paint(last.current, p)
       last.current = p
       setBrush(p)
+    } else if (phase === "bebe" && dragging.current) {
+      setBaby({ x: Math.max(8, Math.min(92, p.x)), y: Math.max(14, Math.min(130, p.y)) })
     } else if (phase === "rio" && dragging.current) {
       setBasket({ x: Math.max(6, Math.min(94, p.x)), y: Math.max(40, Math.min(144, p.y)) })
     }
@@ -131,6 +170,18 @@ export function Caulk({ game, onProgress }: { game: CaulkGame; onProgress: (valu
   const up = () => {
     last.current = null
     setBrush(null)
+    if (phase === "bebe" && dragging.current) {
+      dragging.current = false
+      setHeld(false)
+      if (Math.hypot(baby.x - BASKET_MOUTH.x, baby.y - BASKET_MOUTH.y) < 22) {
+        setBaby(BASKET_MOUTH)
+        setBabyIn(true)
+        vibrate(HAPTIC.vote)
+        stinger("reveal")
+        report.current(stagedScore(2, PARTS, 0, GAME_MS), false)
+      } else setBaby(BABY_START)
+      return
+    }
     if (phase !== "rio" || !dragging.current) return
     dragging.current = false
     setHeld(false)
@@ -139,11 +190,12 @@ export function Caulk({ game, onProgress }: { game: CaulkGame; onProgress: (valu
       setPhase("entregue")
       vibrate(HAPTIC.seal)
       stinger("reveal")
-      report.current(100, true)
+      finish(stagedScore(3, PARTS, leftRef.current, GAME_MS))
     }
   }
 
-  const inRiver = phase !== "vedar"
+  const inRiver = phase === "rio" || phase === "entregue"
+  const hint = phase === "vedar" ? game.instruction : phase === "bebe" ? game.babyHint : game.riverHint
 
   return (
     <div className="relative h-full w-full touch-none overflow-hidden select-none">
@@ -159,7 +211,7 @@ export function Caulk({ game, onProgress }: { game: CaulkGame; onProgress: (valu
         onPointerUp={up}
         onPointerCancel={up}
         role="img"
-        aria-label={inRiver ? game.riverHint : game.instruction}
+        aria-label={hint}
       >
         <defs>
           <clipPath id="cesto-corpo">
@@ -172,7 +224,18 @@ export function Caulk({ game, onProgress }: { game: CaulkGame; onProgress: (valu
         </defs>
 
         <AnimatePresence mode="wait">
-          {!inRiver ? (
+          {phase === "bebe" ? (
+            <motion.g key="bebe" initial={fx.motion ? { opacity: 0 } : false} animate={{ opacity: 1 }}>
+              <WovenBasket sealed />
+              {!babyIn && (
+                <motion.ellipse cx={BASKET_MOUTH.x} cy={BASKET_MOUTH.y} rx="20" ry="6" fill="none" stroke="#f4d27a" strokeWidth="0.8" strokeDasharray="2 2" animate={fx.motion ? { opacity: [0.9, 0.3, 0.9] } : undefined} transition={{ duration: 1.4, repeat: Infinity }} />
+              )}
+              <motion.g animate={{ x: baby.x - 50, y: baby.y - 74 }} transition={held ? { duration: 0 } : { type: "spring", stiffness: 160, damping: 18 }}>
+                <Baby />
+              </motion.g>
+              {babyIn && <path d="M 22 72 Q 50 80 78 72 L 78 76 Q 50 84 22 76 Z" fill="#6b4824" />}
+            </motion.g>
+          ) : !inRiver ? (
             <motion.g key="vedar" exit={fx.motion ? { opacity: 0, scale: 0.6 } : { opacity: 0 }} style={{ transformOrigin: "50px 90px" }}>
               <WovenBasket />
               {GAPS.map((g, i) => {
@@ -229,6 +292,10 @@ export function Caulk({ game, onProgress }: { game: CaulkGame; onProgress: (valu
               <motion.g animate={{ x: basket.x - 50, y: basket.y - 90 }} transition={held ? { duration: 0 } : { type: "spring", stiffness: 160, damping: 18 }}>
                 <g transform="translate(50 90) scale(0.2) translate(-50 -90)">
                   <WovenBasket sealed />
+                  <g transform="translate(0 -4)">
+                    <Baby />
+                  </g>
+                  <path d="M 22 72 Q 50 80 78 72 L 78 76 Q 50 84 22 76 Z" fill="#6b4824" />
                 </g>
               </motion.g>
             </motion.g>
@@ -236,16 +303,52 @@ export function Caulk({ game, onProgress }: { game: CaulkGame; onProgress: (valu
         </AnimatePresence>
       </svg>
 
-      <GameHint>
-        {inRiver ? game.riverHint : game.instruction} · {formatRef(inRiver ? game.finale.ref : game.ref, "short")}
-      </GameHint>
-      {!inRiver && (
+      <GameHud left={left} total={GAME_MS} score={score} label={phase === "vedar" ? "1 · vedar" : phase === "bebe" ? "2 · o menino" : "3 · a margem"} />
+      <StepHint>
+        {hint}{" · "}<span className="whitespace-nowrap">{formatRef(inRiver ? game.finale.ref : game.ref, "short")}</span>
+      </StepHint>
+      {phase === "vedar" && (
         <p className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-sm font-semibold tabular-nums text-gold-bright [text-shadow:0_1px_6px_rgba(0,0,0,0.9)]">
           Frestas vedadas {sealed}/{GAPS.length}
         </p>
       )}
-      {finale && <Finale label={game.finale.label} refs={game.finale.ref} relic={game.relic} />}
+      {/* Alternativas sem arrastar. */}
+      {!finale && phase !== "entregue" && (
+        <button
+          type="button"
+          onClick={() => {
+            if (phase === "vedar") {
+              const i = covered.findIndex((g) => g.filter(Boolean).length < BINS - 1)
+              if (i >= 0) paint({ x: GAPS[i].x1, y: GAPS[i].y }, { x: GAPS[i].x2, y: GAPS[i].y })
+            } else if (phase === "bebe" && !babyIn) {
+              setBaby(BASKET_MOUTH)
+              setBabyIn(true)
+              report.current(stagedScore(2, PARTS, 0, GAME_MS), false)
+            } else if (phase === "rio") {
+              setBasket({ x: RECEIVER.x - 1, y: RECEIVER.y - 12 })
+              setPhase("entregue")
+              finish(stagedScore(3, PARTS, leftRef.current, GAME_MS))
+            }
+          }}
+          className="absolute bottom-10 right-3 z-10 rounded-full border border-white/30 bg-black/55 px-3 py-1.5 text-xs text-white"
+        >
+          {phase === "vedar" ? "Vedar uma fresta" : phase === "bebe" ? "Colocar o menino" : "Levar o cesto"}
+        </button>
+      )}
+      {finale && <Finale label={game.finale.label} refs={game.finale.ref} relic={game.relic} score={final ?? score} />}
     </div>
+  )
+}
+
+/** O menino enrolado em panos, desenhado em volta do ponto (50, 74). */
+function Baby() {
+  return (
+    <g>
+      <ellipse cx="50" cy="76" rx="15" ry="7.5" fill="#efe6d2" stroke="#b9ab8c" strokeWidth="0.8" />
+      <path d="M 40 74 Q 50 79 60 74" fill="none" stroke="#c9b994" strokeWidth="0.8" />
+      <circle cx="36" cy="72.5" r="5.4" fill="#c08a5e" stroke="#8a5e3c" strokeWidth="0.6" />
+      <path d="M 31.5 70 Q 36 66 40.5 70" fill="#3a2414" />
+    </g>
   )
 }
 

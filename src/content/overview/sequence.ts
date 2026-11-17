@@ -1,9 +1,12 @@
-import { itemsOfEtapa, presentableEtapas, prdMoments, type Etapa } from "../etapas"
+import { presentableEtapas, prdMoments, slideItemsOfEtapa, type Etapa } from "../etapas"
+import { beatContent } from "../etapas/beat-content"
+import { FALAS } from "../etapas/falas"
 import { isFilled, reflectionSlots, type ReflectionSlot } from "../reflections"
 import { formatRef, formatRefs } from "../refs"
-import { FALAS } from "../etapas/falas"
 import type { EpisodeInput, EvidenceInput, SceneInput } from "../schema"
-import { excerpts, excerptsForItem, getWeek, stageLineForItem, weeks } from "."
+import { excerpts, excerptsForItem, getItem, getWeek, stageLineForItem, weeks, type ResumoExcerpt } from "."
+import { aprofundarDe } from "./aprofundar"
+import { mapaDoItem } from "./mapas"
 
 // Monta a apresentação "Visão Geral da Bíblia" a partir APENAS do material do
 // autor: linha do tempo (ordem e datas) + resumo (linhas e profundidade) +
@@ -20,6 +23,63 @@ function depthSteps(lines: { id: string; stageLine?: string; pendingFact?: strin
     .filter((e) => e.stageLine && !e.pendingFact)
     .slice(0, 4)
     .map((e) => ({ id: e.id, label: "Do resumo", text: e.stageLine! }))
+}
+
+/** Linhas de "Aprofundar" escritas a partir do material do autor (rascunhos em aprofundar.ts). */
+function extraSteps(itemId: string) {
+  return (aprofundarDe(itemId)?.passos ?? []).map((l, i) => ({ id: `${itemId}-ap-${i + 1}`, label: "Aprofundar", text: l.text }))
+}
+
+const usable = (id: string) => excerptsForItem(id).filter((e) => e.stageLine && !e.pendingFact)
+
+/**
+ * Uma frase diferente por slide, só com trechos do autor. Os itens com menos
+ * opções escolhem primeiro; cada um fica com o trecho que já tinha, se ninguém
+ * o usou, ou com o mais específico ainda livre. Quem fica sem trecho livre usa a
+ * linha principal do "Aprofundar" ou se junta ao vizinho que tem a mesma frase.
+ */
+function assignLines() {
+  const order = presentableEtapas.flatMap((e) => slideItemsOfEtapa(e.n).map((i) => i.id))
+  const picked = new Map<string, ResumoExcerpt>()
+  const used = new Set<string>()
+  const byNeed = [...order].sort((a, b) => usable(a).length - usable(b).length || order.indexOf(a) - order.indexOf(b))
+  const homeWeek = (id: string) => getItem(id)?.week
+  for (const id of byNeed) {
+    const cands = usable(id)
+    if (!cands.length || aprofundarDe(id)?.principal && !cands.some((c) => !used.has(c.id))) continue
+    const current = stageLineForItem(id)
+    const free = cands
+      .filter((c) => !used.has(c.id))
+      .sort((a, b) => a.itemIds.length - b.itemIds.length || Number(b.week === homeWeek(id)) - Number(a.week === homeWeek(id)))
+    const pick = current && !used.has(current.id) ? current : free[0]
+    if (!pick) continue
+    picked.set(id, pick)
+    used.add(pick.id)
+  }
+  // Sem trecho livre: junta com o vizinho da mesma etapa que tem uma frase em comum.
+  const mergeInto = new Map<string, string>()
+  for (const e of presentableEtapas) {
+    const ids = slideItemsOfEtapa(e.n).map((i) => i.id)
+    ids.forEach((id, i) => {
+      if (picked.has(id) || aprofundarDe(id)?.principal) return
+      const cands = new Set(usable(id).map((c) => c.id))
+      const prev = ids[i - 1]
+      const next = ids[i + 1]
+      if (prev && picked.get(prev) && cands.has(picked.get(prev)!.id) && !mergeInto.has(prev)) mergeInto.set(id, prev)
+      else if (next && picked.get(next) && cands.has(picked.get(next)!.id)) {
+        mergeInto.set(next, id)
+        picked.set(id, picked.get(next)!)
+      }
+    })
+  }
+  return { picked, mergeInto }
+}
+
+const LINES = assignLines()
+
+/** Frase de palco do slide de um item (a mesma regra da apresentação, também usada no solo). */
+export function slideLineFor(itemId: string): string | undefined {
+  return LINES.picked.get(itemId)?.stageLine ?? aprofundarDe(itemId)?.principal?.text ?? stageLineForItem(itemId)?.stageLine
 }
 
 function slotScene(slot: ReflectionSlot, week?: number, etapa?: number): SceneInput {
@@ -106,23 +166,33 @@ function etapaScenes(etapa: Etapa): SceneInput[] {
 
   const scenes: SceneInput[] = [opening]
   const cluesHere: number[] = []
-  for (const item of itemsOfEtapa(etapa.n)) {
-    const main = stageLineForItem(item.id)
-    const others = excerptsForItem(item.id).filter((e) => e.id !== main?.id)
-    const game = etapa.games.find((g) => g.itemId === item.id && g.on === "item")
-    scenes.push({
-      id: `item-${item.id}`,
-      type: "historical_context",
-      title: item.label,
-      perspective: "historical_observer",
-      visual: "timeline",
-      illumination: 0.55,
-      overview: { role: "item", week: item.week, etapa: etapa.n, itemId: item.id, stageLine: main?.stageLine },
-      steps: depthSteps(others),
-      game: game && { id: game.id, kind: game.kind, max: game.max },
-      presenterCue: "historia",
-      estimatedSeconds: game?.seconds ?? 15,
-    })
+  const slideItems = slideItemsOfEtapa(etapa.n)
+  for (const item of slideItems) {
+    // Item que virou parte do slide de um vizinho: os jogos, momentos e versículos dele seguem depois daquele slide.
+    const host = LINES.mergeInto.get(item.id)
+    const also = slideItems.filter((i) => LINES.mergeInto.get(i.id) === item.id).map((i) => i.id)
+    if (!host) {
+      const group = [item.id, ...also]
+      const mainLine = slideLineFor(item.id)
+      const mainId = LINES.picked.get(item.id)?.id
+      const others = group.flatMap((id) => excerptsForItem(id)).filter((e, i, all) => e.id !== mainId && all.findIndex((x) => x.id === e.id) === i)
+      const game = etapa.games.find((g) => group.includes(g.itemId) && g.on === "item")
+      const mapa = mapaDoItem(item.id)
+      scenes.push({
+        id: `item-${item.id}`,
+        type: "historical_context",
+        title: [item, ...also.map((id) => getItem(id)!)].map((i) => i.label).join(" · "),
+        perspective: "historical_observer",
+        visual: "timeline",
+        illumination: 0.55,
+        overview: { role: "item", week: item.week, etapa: etapa.n, itemId: item.id, alsoItemIds: also.length ? also : undefined, mapa, stageLine: mainLine },
+        steps: [...depthSteps(others), ...group.flatMap(extraSteps)],
+        game: game && { id: game.id, kind: game.kind, max: game.max, startable: game.aoVivo },
+        presenterCue: "historia",
+        // Jogo ao vivo: a estimativa só soma quando o apresentador marca "vou jogar ao vivo" (Área de preparação).
+        estimatedSeconds: game && !game.aoVivo ? game.seconds : 15,
+      })
+    }
     for (const g of etapa.games.filter((g) => g.itemId === item.id && g.on === "depois")) {
       scenes.push({
         id: `jogo-${g.id}`,
@@ -132,14 +202,22 @@ function etapaScenes(etapa: Etapa): SceneInput[] {
         visual: "timeline",
         illumination: 0.5,
         overview: { role: "jogo", week: item.week, etapa: etapa.n, stageLine: g.fala && FALAS[g.fala].stageLine },
-        game: { id: g.id, kind: g.kind, max: g.max },
+        game: { id: g.id, kind: g.kind, max: g.max, startable: false },
         optional: g.optional,
         presenterCue: "historia",
         estimatedSeconds: g.seconds,
       })
     }
+    // O versículo do plano vem logo depois do item (e antes dos momentos).
+    for (const p of prdMoments.filter((m) => m.etapa === etapa.n && m.afterItemId === item.id)) {
+      scenes.push(verseScene(p.week, p.refIndex, etapa.n, p.knot))
+      if (p.refIndex === getWeek(p.week)!.memoryVerse.length - 1) {
+        scenes.push(clueScene(p.week, etapa.n))
+        cluesHere.push(p.week)
+      }
+    }
     for (const b of etapa.beats.filter((b) => b.afterItemId === item.id)) {
-      const fala = FALAS[b.fala]
+      const c = beatContent(b)
       scenes.push({
         id: `momento-${b.id}`,
         type: b.pause ? "presenter_pause" : "historical_context",
@@ -147,18 +225,11 @@ function etapaScenes(etapa: Etapa): SceneInput[] {
         perspective: "historical_observer",
         visual: "timeline",
         illumination: b.pause ? 0.35 : 0.55,
-        overview: { role: "beat", week: item.week, etapa: etapa.n, beatId: b.id, stageLine: fala.stageLine },
-        steps: "steps" in fala ? fala.steps.map((text, i) => ({ id: `${b.id}-${i + 1}`, label: "Da sua fala", text })) : undefined,
+        overview: { role: "beat", week: item.week, etapa: etapa.n, beatId: b.id, stageLine: c.stageLine },
+        steps: c.steps.length ? c.steps.map((text, i) => ({ id: `${b.id}-${i + 1}`, label: c.origem === "fala" ? "Da sua fala" : "Aprofundar", text })) : undefined,
         presenterCue: b.pause ? "pausa" : "historia",
         estimatedSeconds: b.pause ? 45 : 15,
       })
-    }
-    for (const p of prdMoments.filter((m) => m.etapa === etapa.n && m.afterItemId === item.id)) {
-      scenes.push(verseScene(p.week, p.refIndex, etapa.n, p.knot))
-      if (p.refIndex === getWeek(p.week)!.memoryVerse.length - 1) {
-        scenes.push(clueScene(p.week, etapa.n))
-        cluesHere.push(p.week)
-      }
     }
   }
   // Espaços do autor (C&N e revelação pessoal) das semanas cuja pista abriu nesta etapa.

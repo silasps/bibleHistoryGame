@@ -7,30 +7,50 @@ import { useFx } from "@/fx/useFx"
 import { cn } from "@/lib/utils"
 
 const MEDAL = ["🥇", "🥈", "🥉"]
-const RESULTS_MS = 7000
+/** Pausa de "Contando os pontos…" antes do pódio (chegam as últimas pontuações). */
+export const COUNT_MS = 1800
 
-/** Pontuação como o jogo conta: porcentagem nos jogos de 0 a 100; senão, "8/8". */
-export const formatScore = (value: number, max: number) => (max === 100 ? `${value}%` : `${value}/${max}`)
+/** Pontos dos jogos (até 1000); os jogos antigos em contagem mostram "8/8". */
+export const formatScore = (value: number, max: number) => (max === 1000 ? `${value.toLocaleString("pt-BR")} pts` : max === 100 ? `${value}%` : `${value}/${max}`)
 
 /**
- * Mostra o pódio de fim de jogo uma vez por chave, por alguns segundos.
- * Ao recarregar a página bem depois, não reaparece.
+ * Pódio do jogo do slide: depois de "Contando os pontos…", fica na tela até o
+ * apresentador avançar. No celular, a pessoa pode fechar com um toque.
+ * Devolve [pódio, fechar, contando].
  */
-export function useFreshResults(results?: GameResults): [GameResults | undefined, () => void] {
-  const [visibleKey, setVisibleKey] = useState<string | null>(null)
+export function useFreshResults(results?: GameResults): [GameResults | undefined, () => void, boolean] {
   const key = results?.key
-  const at = results?.at
+  const [readyKey, setReadyKey] = useState<string | null>(null)
+  const [closedKey, setClosedKey] = useState<string | null>(null)
   useEffect(() => {
-    if (!key || at === undefined || Date.now() - at > 20_000) return
-    const show = setTimeout(() => setVisibleKey(key), 0)
-    const hide = setTimeout(() => setVisibleKey((k) => (k === key ? null : k)), RESULTS_MS)
-    return () => {
-      clearTimeout(show)
-      clearTimeout(hide)
-    }
-  }, [key, at])
-  const dismiss = useCallback(() => setVisibleKey(null), [])
-  return [results && results.top.length > 0 && visibleKey === results.key ? results : undefined, dismiss]
+    if (!key) return
+    const t = setTimeout(() => setReadyKey(key), COUNT_MS)
+    return () => clearTimeout(t)
+  }, [key])
+  const dismiss = useCallback(() => setClosedKey(key ?? null), [key])
+  if (!results || results.top.length === 0 || closedKey === key) return [undefined, dismiss, false]
+  return readyKey === key ? [results, dismiss, false] : [undefined, dismiss, true]
+}
+
+/** "Contando os pontos…": a transição entre o jogo e o pódio. */
+export function Counting({ size }: { size: "stage" | "phone" }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className={cn("z-30 flex flex-col items-center justify-center gap-4 bg-night/90 text-center backdrop-blur-sm", size === "stage" ? "absolute inset-0" : "fixed inset-0")}
+      role="status"
+    >
+      <motion.span
+        className={cn("block rounded-full border-gold border-t-transparent", size === "stage" ? "size-[5cqw] border-[0.5cqw]" : "size-12 border-4")}
+        animate={{ rotate: 360 }}
+        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+        aria-hidden
+      />
+      <p className={cn("font-display text-parchment", size === "stage" ? "text-[3cqw]" : "text-2xl")}>Contando os pontos…</p>
+    </motion.div>
+  )
 }
 
 /** Telão, durante o jogo: 1º, 2º e 3º lugares ao vivo. */
@@ -90,7 +110,7 @@ function Steps({ top, max, size }: { top: PodiumEntry[]; max: number; size: "sta
   )
 }
 
-/** Telão: "Fim do jogo" por alguns segundos, por cima do slide seguinte. */
+/** Telão: "Fim do jogo" no próprio slide, até o apresentador avançar. */
 export function ResultsStage({ results }: { results: GameResults }) {
   return (
     <motion.div

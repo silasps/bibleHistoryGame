@@ -19,7 +19,7 @@ import { PhoneGame } from "../etapas/etapa-1/PhoneGame"
 import { HajaLuzPhone } from "./Moments"
 import { OverviewPhoneCard } from "./OverviewPhoneCard"
 import { Achievements, PhoneDock, PhoneSheet, type DockPanel } from "./PhoneDock"
-import { ResultsPhone, useFreshResults } from "./Podium"
+import { Counting, ResultsPhone, useFreshResults } from "./Podium"
 import { PollResults } from "./PollResults"
 import { SealedClue } from "./SealedClue"
 
@@ -32,7 +32,7 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
   const inventoryScope = `sala-${code}`
   const [inventory, dispatchInventory] = useInventory(inventoryScope)
   const [panel, setPanel] = useState<DockPanel | null>(null)
-  const [results, closeResults] = useFreshResults(joined ? view?.results : undefined)
+  const [results, closeResults, counting] = useFreshResults(joined ? view?.results : undefined)
   // Selos quebrados neste aparelho (o servidor confirma depois; a pista abre na hora).
   const [brokenHere, setBrokenHere] = useState<string[]>([])
   const knot = view?.scene?.overview?.role === "versiculo" ? view.scene.overview.knot : undefined
@@ -134,10 +134,13 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
 
             {view.status === "running" && scene && (
               <section className={cn("flex flex-col gap-4", scene.game && "flex-1")} aria-live="polite">
-                {scene.game ? (
+                {scene.game && !(scene.game.startable && scene.game.phase === "parado") ? (
                   <PhoneGame game={scene.game} line={scene.overview?.stageLine} scope={inventoryScope} play={room.play} />
                 ) : (
                   scene.overview && <OverviewPhoneCard overview={scene.overview} />
+                )}
+                {scene.game?.startable && scene.game.phase === "parado" && (
+                  <p className="rounded-2xl border border-gold/40 bg-gold/10 px-4 py-3 text-center text-sm text-gold-bright">🎮 Este tópico tem um jogo. Ele começa quando o apresentador liberar.</p>
                 )}
                 {!scene.overview && scene.title && <h1 className="font-display text-3xl leading-tight text-parchment">{scene.title}</h1>}
                 {scene.prompt && (!scene.overview || scene.overview.role === "versiculo") && <p className="text-mist">{scene.prompt}</p>}
@@ -230,6 +233,7 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
             <Pause className="size-4 text-gold" aria-hidden /> Pausa
           </motion.div>
         )}
+        {counting && <Counting key="contando" size="phone" />}
         {results && <ResultsPhone key={results.key} results={results} onClose={closeResults} />}
         {view?.moment?.kind === "haja-luz" && <HajaLuzPhone key={view.moment.startedAt} startedAt={view.moment.startedAt} myOrder={view.moment.myOrder} total={view.moment.total} />}
       </AnimatePresence>

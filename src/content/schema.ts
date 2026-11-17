@@ -233,6 +233,12 @@ export const Scene = z
         /** Etapa da história (é o que aparece na tela; a semana fica interna). */
         etapa: z.number().int().optional(),
         itemId: z.string().optional(),
+        /** Outros itens do mesmo slide (slides seguidos com a mesma frase viram um só). */
+        alsoItemIds: z.array(z.string()).optional(),
+        /** Mapa de contexto no lugar da ilustração (src/content/overview/mapas.ts). */
+        mapa: z
+          .object({ id: z.enum(["exodo", "reinos", "exilios", "imperios"]), foco: z.string().optional() })
+          .optional(),
         slotId: z.string().optional(),
         /** Versículo: qual referência da semana (a semana 3 tem duas). */
         refIndex: z.number().int().min(0).optional(),
@@ -253,6 +259,8 @@ export const Scene = z
         id: z.string().regex(/^[a-z0-9-]+$/),
         kind: z.enum(GAME_KINDS),
         max: z.number().int().min(0).default(0),
+        /** Só roda quando o apresentador aperta "Jogar agora" (etapas 2–11). */
+        startable: z.boolean().default(false),
       })
       .optional(),
     /** Cena que o apresentador pode pular quando faltar tempo (ex.: minijogos das etapas 2–11). */

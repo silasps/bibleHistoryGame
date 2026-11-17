@@ -39,10 +39,18 @@ export function PhoneGame({ game, line, scope, play }: Props) {
     (value: number, done: boolean) => {
       pending.current = { value, done };
       if (done) flush();
-      else timer.current ??= window.setTimeout(flush, 1000);
+      else timer.current ??= window.setTimeout(flush, 600);
     },
     [flush],
   );
+  // Pódio: o que estava guardado vai na hora (é a pontuação final).
+  const podium = game.phase === "podio";
+  useEffect(() => {
+    if (podium) {
+      clearTimeout(timer.current);
+      flush();
+    }
+  }, [podium, flush]);
   useEffect(
     () => () => {
       clearTimeout(timer.current);
@@ -76,6 +84,7 @@ export function PhoneGame({ game, line, scope, play }: Props) {
           <RoomGamePlay
             key={room.id}
             game={room}
+            stopped={podium}
             onProgress={(value, done) => {
               report(value, done);
               if (done) dispatch({ type: "relic", id: room.relic.id });

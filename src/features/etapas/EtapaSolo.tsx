@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react"
 import { ExitLink } from "@/components/app/ExitLink"
 import { PreferencesMenu } from "@/components/app/PreferencesMenu"
 import { ITEM_COLORS, ItemArt } from "@/components/art/ItemArt"
+import { ContextMap } from "@/components/art/maps/ContextMap"
 import { Button } from "@/components/ui/button"
 import { sequenceScenes } from "@/content"
 import { getEtapa, presentableEtapas } from "@/content/etapas"
@@ -57,7 +58,7 @@ export function EtapaSolo({ n }: { n: number }) {
   const game = scene?.game ? getRoomGame(scene.game.id) : undefined
   const next = presentableEtapas.find((e) => e.n === n + 1)
   const relic = getRoomGame(etapa.games.find((g) => getRoomGame(g.id))?.id ?? "")?.relic
-  useMood(finished ? MOOD_FOR_ETAPA[n] : moodForScene(scene))
+  useMood(finished ? MOOD_FOR_ETAPA[n] : moodForScene(scene, true))
 
   // Ver um item aqui conta como visita na jornada (abre a pista da semana).
   useEffect(() => {
@@ -159,15 +160,14 @@ function Step({ scene, onGameDone }: { scene: Scene; onGameDone: (relicId: strin
   const etapa = getEtapa(o.etapa!)!
   const depth = (scene.steps ?? []).map((s) => s.text)
 
-  if (scene.game) {
-    const game = getRoomGame(scene.game.id)
-    if (!game) return null
-    return (
-      <div className="relative h-[68dvh] overflow-hidden rounded-3xl border border-border">
-        <RoomGamePlay game={game} onProgress={(_, done) => done && onGameDone(game.relic.id)} />
-      </div>
-    )
-  }
+  // O jogo do tópico (etapas 2–11): no solo, logo abaixo do cartão do item.
+  const room = scene.game ? getRoomGame(scene.game.id) : undefined
+  const gameBox = room && (
+    <div className="relative h-[68dvh] overflow-hidden rounded-3xl border border-border">
+      <RoomGamePlay game={room} onProgress={(_, done) => done && onGameDone(room.relic.id)} />
+    </div>
+  )
+  if (room && o.role !== "item") return gameBox
 
   if (o.role === "abertura") {
     return (
@@ -188,12 +188,21 @@ function Step({ scene, onGameDone }: { scene: Scene; onGameDone: (relicId: strin
 
   if (o.role === "item" && o.itemId) {
     const item = getItem(o.itemId)!
+    const also = (o.alsoItemIds ?? []).map((id) => getItem(id)?.label).filter(Boolean)
     return (
+      <div className="space-y-4">
       <article className="glass space-y-3 rounded-3xl p-5 text-center">
-        <ItemArt art={item.art} color={item.color} title={item.label} className="mx-auto aspect-square w-3/5" />
+        {o.mapa ? (
+          <div className={`mx-auto w-full ${o.mapa.id === "reinos" ? "aspect-[600/650] max-w-[80%]" : "aspect-[1000/640]"}`}>
+            <ContextMap spec={o.mapa as Parameters<typeof ContextMap>[0]["spec"]} title={`Mapa · ${item.label}`} compact />
+          </div>
+        ) : (
+          <ItemArt art={item.art} color={item.color} title={item.label} className="mx-auto aspect-square w-3/5" />
+        )}
         <h2 className="font-display text-3xl" style={{ color: ITEM_COLORS[item.color] }}>
           {item.label}
         </h2>
+        {also.length > 0 && <p className="font-display text-lg text-parchment/80">e {also.join(" · ")}</p>}
         <p className="text-sm text-mist">{[item.sub, formatSpan(item)].filter(Boolean).join(" · ")}</p>
         {o.stageLine && <p className="font-display text-xl leading-snug">{o.stageLine}</p>}
         {depth.map((d) => (
@@ -205,6 +214,8 @@ function Step({ scene, onGameDone }: { scene: Scene; onGameDone: (relicId: strin
           <BookOpen className="size-4" aria-hidden /> Abrir o dossiê
         </Link>
       </article>
+      {gameBox}
+      </div>
     )
   }
 

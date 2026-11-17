@@ -47,6 +47,8 @@ import type { HostCommand } from "@/domain/session"
 import { cn } from "@/lib/utils"
 import { SilentSound } from "@/fx/useSound"
 import { clickerAction } from "./clicker"
+import { DeepDive } from "./DeepDive"
+import { clock, useElapsed } from "../etapas/games/LiveGameCard"
 import { ProjectorStage } from "./ProjectorStage"
 import { RehearsalTimer } from "./RehearsalTimer"
 
@@ -86,6 +88,12 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
   const released = !!(scene?.releases && state?.released.includes(scene.releases))
   const preview = useMemo(() => (state ? toProjectorView(state, { scenes }, getEvidence) : null), [state, scenes])
   const seal = preview?.scene?.seal
+  const liveGame = preview?.scene?.game
+  const gameRunning = liveGame?.phase === "on" && liveGame.max > 0
+  // Próximo durante um jogo com pontos mostra o pódio (no próprio slide) antes de seguir.
+  const nextShowsPodium = !!gameRunning && liveGame!.players > 0
+  const gameElapsed = useElapsed(liveGame?.phase === "on" ? liveGame.startedAt : undefined)
+  const [deepOpen, setDeepOpen] = useState(false)
   const sealInfo = preview?.scene?.sealInfo
   const counts = poll ? tally(pollState?.votes ?? {}, poll) : null
   const participants = state ? Object.keys(state.participants).length : 0
@@ -146,10 +154,12 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
         else if (seal === "liberado") void send({ type: "cue", kind: "selo" })
       }
       else if (k === "d" && scene?.steps && state.step < scene.steps.length) void send({ type: "step", delta: 1 })
+      else if (k === "j" && scene?.game?.startable && preview?.scene?.game?.phase === "parado") void send({ type: "game_start" })
+      else if (k === "a") setDeepOpen((o) => !o)
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [state, poll, pollState, scene, seal, send, verse, revealVerse, toggleFullscreen])
+  }, [state, poll, pollState, scene, seal, send, verse, revealVerse, toggleFullscreen, preview])
 
   if (!state) {
     return <p className="p-8 text-mist" role="status">Carregando a sala…</p>
@@ -246,13 +256,34 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
                   <Button variant="outline" size="lg" className="h-14 w-14" onClick={() => send({ type: "prev" })} disabled={state.index === 0} aria-label="Cena anterior">
                     <ChevronLeft className="size-6" />
                   </Button>
-                  <Button size="lg" className="h-14 px-6 text-lg" onClick={() => send({ type: "next" })} disabled={!next}>
-                    Próxima <ChevronRight className="size-6" />
+                  <Button size="lg" className="h-14 px-6 text-lg" onClick={() => send({ type: "next" })} disabled={!next && !nextShowsPodium}>
+                    {nextShowsPodium ? (
+                      <>
+                        <Trophy className="size-5" /> Mostrar pódio
+                      </>
+                    ) : (
+                      <>
+                        Próxima <ChevronRight className="size-6" />
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {liveGame?.startable && liveGame.phase === "parado" && (
+                  <Button size="lg" className="h-12" onClick={() => send({ type: "game_start" })}>
+                    <Play /> Jogar agora
+                  </Button>
+                )}
+                {liveGame?.startable && liveGame.phase === "on" && (
+                  <p className="flex h-12 items-center justify-center gap-2 rounded-md border border-gold/50 bg-gold/10 px-3 text-sm text-gold-bright" role="status">
+                    <Trophy className="size-4" aria-hidden /> Jogo rodando · <span className={cn("tabular-nums", gameElapsed >= 75 && "text-[#ffb98a]")}>{clock(gameElapsed)}</span> · {liveGame.players} jogando
+                  </p>
+                )}
+                <Button variant={deepOpen ? "default" : "outline"} size="lg" className="h-12" onClick={() => setDeepOpen((o) => !o)}>
+                  <BookOpenText /> Aprofundar mais
+                </Button>
                 <Button variant={state.paused ? "default" : "outline"} size="lg" className="h-12" onClick={() => send({ type: state.paused ? "resume" : "pause" })}>
                   {state.paused ? <Play /> : <Pause />} {state.paused ? "Retomar" : "Pausar telão"}
                 </Button>
@@ -318,6 +349,8 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
                   </>
                 )}
               </div>
+
+              {deepOpen && <DeepDive scene={scene} onClose={() => setDeepOpen(false)} />}
 
               {verse && (
                 <div className="space-y-3 rounded-2xl border border-gold/30 bg-ink p-4">
@@ -444,6 +477,7 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
                       <span className="w-6 text-right font-mono text-xs tabular-nums text-mist">{i + 1}</span>
                       <span className="flex-1 truncate">{s.title}</span>
                       {s.optional && <span className="rounded-full border border-border px-1.5 text-[0.6rem] uppercase tracking-wider text-mist" title="Pode pular quando faltar tempo">opcional</span>}
+                      {s.game?.startable && <span className="text-xs" title="Tópico com jogo: aperte “Jogar agora” se quiser jogar">🎮</span>}
                       {SCue && <SCue className="size-3.5 shrink-0 text-gold/80" />}
                       <span className="w-12 text-right font-mono text-xs tabular-nums text-mist/70">
                         {spent ? `${Math.round(spent / 1000)}s` : `~${Math.round(s.estimatedSeconds / 60)}m`}
