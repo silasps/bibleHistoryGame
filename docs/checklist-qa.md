@@ -29,9 +29,13 @@ Antes de cada apresentação importante, rode os automáticos e percorra o manua
 ## Etapas 2 a 11 (`/solo` e `/solo/etapa/N`)
 
 - [ ] Mapa das etapas em `/solo`: cada etapa abre; a relíquia acende quando é conquistada
-- [ ] Cada etapa segue a ordem da apresentação; “Continuar” trava no minijogo até terminar
-- [ ] Os dez minijogos chegam ao desfecho do relato e entregam a relíquia (arca, estrelas, cesto, mar, maná, Jericó, funda, altar, Nínive, coração)
-- [ ] Ao vivo: os minijogos aparecem como “opcional” no roteiro; o telão mostra a cena, a instrução e “N pessoas jogando”
+- [ ] Cada etapa segue a ordem da apresentação; o jogo aparece abaixo do cartão do tópico e “Continuar” trava até terminar
+- [ ] Cada jogo abre na tela “Como jogar” (dedinho animado, instrução, 75 s e como pontuar) e só começa no “Começar”
+- [ ] Os dez minijogos têm tempo e pontos e chegam ao desfecho do relato com a relíquia (arca, estrelas, cesto, mar, maná, Jericó, funda, altar, Nínive, coração); todos têm botão alternativo ao gesto
+- [ ] Ao vivo: o tópico com jogo tem 🎮 no roteiro; “Jogar agora” (J) liga o jogo; o telão mantém o tópico e mostra o cartão com relógio e pódio ao vivo
+- [ ] Próximo durante o jogo: “Contando os pontos…” e o pódio no telão e no celular (fica até o próximo Próximo)
+- [ ] “Aprofundar mais” (A) abre a gaveta de estudo só no painel; nunca aparece no telão
+- [ ] Etapas 12 e 13 (semana 7): mapas dos retornos e dos impérios; Jesus por extenso só em “A plenitude dos tempos”
 
 ## Episódios “por dentro”
 

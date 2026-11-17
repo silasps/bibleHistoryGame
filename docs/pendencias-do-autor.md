@@ -6,7 +6,7 @@ Lista para lembrar, atualizada em 4 de novembro de 2026. O estado ao vivo de cad
 
 - [ ] **Introdução** (3 pontos): precisa mencionar a finalidade de mostrar o PRD. Espaço `abertura` em `src/content/reflections/index.ts`; as notas faladas vão em `src/content/private/reflections.ts`.
 - [ ] **Conclusão** (2 pontos): espaço `conclusao`.
-- [ ] **Caráter e Natureza de Deus**, semanas 1 a 6 (10 pontos, ao longo da apresentação): espaços `s1-carater-natureza` a `s6-carater-natureza`. Material que você já tem na Task 3:
+- [ ] **Caráter e Natureza de Deus**, semanas 1 a 7 (10 pontos, ao longo da apresentação): espaços `s1-carater-natureza` a `s7-carater-natureza`. Material que você já tem na Task 3:
   - Semana 1: Criativo; Dá vida (Gn 2:7)
   - Semana 2: Sério (Lv 10:3); Santo (Lv 19:2)
   - Semana 3: Fiel mesmo quando não somos (Jz 2:1–2); Inclui na sua herança todo o que nele crê (Js 2:9–14)
@@ -14,9 +14,13 @@ Lista para lembrar, atualizada em 4 de novembro de 2026. O estado ao vivo de cad
   - Semana 5: Compassivo (Jn 4:11); Soberano (Jn 2:10)
   - Semana 6: Justo (Sf 3:5); Eterno (Dn 4:34)
   - Já estão na tela, como selo, os que você citou na sua fala: santo (Queda), bom e amoroso (dilúvio), protetor e zeloso (José), cuidador da promessa (sarça) e a bondade nas vestes de pele.
-- [ ] **Revelação pessoal**, semanas 1 a 6: espaços `s1-revelacao-pessoal` a `s6-revelacao-pessoal`. O Manual pede “alguma revelação pessoal” e a transformação que você viveu.
+- [ ] **Revelação pessoal**, semanas 1 a 7: espaços `s1-revelacao-pessoal` a `s7-revelacao-pessoal`.
+- [ ] **Os “slides vazios” 84–87 do briefing** são estes espaços (C&N e revelação pessoal das semanas 3 e 4), que aparecem juntos no fim da Etapa 8. Sem o seu texto, mostram só a imagem (pausa para você falar). Nada foi inventado.
+- [ ] **Onde ter o selo de Caráter de Deus:** você disse que vai indicar os slides. Quando disser, eu ponho o selo (o mesmo das suas falas). O Manual pede “alguma revelação pessoal” e a transformação que você viveu.
 - [ ] **PRD da semana 6:** o resumo da semana 6 não tem o parágrafo “PRD -” (as outras semanas têm). Sem ele, a pista 6 abre só com o versículo (Ez 36:26). Os trechos sobre a nova aliança (Jr 31:31–33) e o coração novo (Ez 36:26) parecem ser o seu PRD; se for isso, escreva o parágrafo e eu coloco.
-- [ ] **Semanas 7 a 11**: resumo, linha do tempo e texto NAA do versículo, quando chegarem (veja `docs/material-autoral.md`). A semana 7 está em andamento no Drive.
+- [x] **Semana 7** entrou (16/11/2026): Etapas 12 e 13, com Ed 1:3. Sem parágrafo “PRD -”: a pista 7 fica só com o versículo.
+- [ ] **Semanas 8 a 11**: resumo, linha do tempo e texto NAA do versículo, quando chegarem.
+- [ ] **Jó:** mandar o seu material. O momento já está no fim da Etapa 3 (entre Abraão e Moisés), só com a imagem.
 - [ ] **2 convidados de fora da escola** (20 pontos).
 - [ ] **Ensaio** no fim do Antigo Testamento. **Apresentação final:** 10 e 11 de dezembro.
 
@@ -60,9 +64,11 @@ Hoje, só com as semanas 1 a 6, a estimativa é de **45,5 minutos** sem os minij
 ## Para conferir
 
 - [x] **Revisar todos os textos da tela** na página “Revisão dos textos” (https://claude.ai/artifact/QaKbAT6P7JBbLnm7uLd5kU): feito em 11/11/2026 (194 aprovados, 12 mudanças já aplicadas).
+- [ ] **Revisar a Rodada 4** na página “Revisão dos textos” (aba “Rodada 4”): todos os textos novos do briefing, com a base bíblica e a fonte do seu material (aula, resumo, linha do tempo). Estão no app como rascunho.
+- [ ] **Semana 7, conferir:** “40 anos” para o templo (sua linha do tempo diz 536–516), “dentre você/vocês” em Ed 1:3 e o ano dos Macabeus (aula: 167; linha do tempo: 164). Detalhes no relatório, seção 8.
 - [ ] **Escrever a correção de 9 textos** marcados “Mudar” sem nota (aba “Falta escrever” da mesma página): Noé (resumo), as pragas, a expiação, Números, a abertura e o “grande arquiteto” da Etapa 8, Jonas, a abertura da Etapa 11 e “Puxe e solte para mirar”.
 
-- [ ] **Minijogos das etapas 2 a 11** (`src/content/etapas/jogos.ts`): título, instrução, desfecho e relíquia de cada um. No telão eles são **opcionais** (marcados no roteiro): decida quais ficam na apresentação final.
+- [ ] **Minijogos das etapas 2 a 11** (`src/content/etapas/jogos.ts`): rodam no slide do tópico só quando você aperta “Jogar agora” (tecla J). Na Área de preparação, marque “vou jogar ao vivo” nos que quiser: cada um soma uns 75 s à estimativa.
 
 - [ ] **Linhas da tela tiradas da sua fala** (etapas 1 a 4): veja se dizem o que você quer.
   - **Onde estão:** em `src/content/etapas/falas.ts`. A Área de preparação mostra a sua fala completa ao lado de cada momento.

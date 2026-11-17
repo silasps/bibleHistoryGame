@@ -54,13 +54,17 @@ Se a apresentação passar de 45 minutos estimados (sem os minijogos opcionais),
 
 A apresentação corre por **etapas**, não por semanas (`src/content/etapas/index.ts`). As semanas continuam nos seus arquivos e na folha de notas da Área de preparação; no telão e no celular só aparecem as etapas.
 
-- **Itens da etapa:** `itemIds` reúne itens das linhas do tempo de semanas diferentes. A ordem é cronológica, a mesma das semanas.
+- **Itens da etapa:** `itemIds` reúne itens das linhas do tempo de semanas diferentes. A ordem é cronológica, a mesma das semanas; com `ordemManual: true` vale a ordem de `itemIds` (Etapa 9). `semSlide` deixa um item só na faixa da linha do tempo, sem slide (Arã).
+- **Frase de cada slide:** sai só dos seus trechos do resumo; cada slide recebe o trecho mais específico que ainda não foi usado, e slides seguidos com a mesma frase viram um só.
+- **Aprofundar:** `src/content/overview/aprofundar.ts` guarda linhas extras por item (rascunhos da Rodada 4), cada uma com a referência e a **fonte** no seu material. `principal` só entra quando o item não tem trecho seu; `apoio` vai para a Área de preparação e o solo, nunca para o telão nem para o painel.
+- **Mapas:** `src/content/overview/mapas.ts` diz qual slide mostra um mapa (êxodo, reinos, exílios/retornos, impérios).
 - **Versículo (PRD):** `prd` diz depois de qual item entra o versículo de cada semana. A pista daquela semana vem logo depois do último versículo dela.
 - **Abertura:** `intros` são os trechos de abertura do resumo (sem item) que abrem a etapa.
-- **Minijogos:** a Etapa 1 tem os seus em `games`; as etapas 2 a 11 têm um cada em `src/content/etapas/jogos.ts` (título, instrução, desfecho, relíquia e a mecânica: juntar, segurar, ritmo, vedar, funda ou raspar). No telão, esses entram como cenas **opcionais** de cerca de 25 segundos.
+- **Minijogos:** a Etapa 1 tem os seus em `games`; as etapas 2 a 11 têm um cada em `src/content/etapas/jogos.ts` (título, instrução, pontuação, desfecho, relíquia e a mecânica). Eles rodam **no slide do tópico** quando você aperta “Jogar agora” (J); cada um dura 75 s e vale até 1000 pontos. Próximo mostra o pódio no próprio slide; Próximo de novo segue.
+- **Momentos novos (rascunho):** um `beat` pode ter `momento` no lugar de `fala`; o texto fica em `src/content/etapas/momentos.ts` (bezerro de ouro, Daniel na cova, Jó, a plenitude dos tempos). Sem `principal`, o momento mostra só a imagem.
 - **Momentos da sua fala:** `beats` são gatilhos visuais depois de um item. O texto de cada um fica em `src/content/etapas/falas.ts`: a sua frase em `text`, a linha da tela em `stageLine` (até 140 caracteres, das suas palavras), linhas extras em `steps` (aparecem com **D**) e o Caráter de Deus em `cn` (vira um selo). Leituras suas que vão além do texto ficam com `kind: "interpretacao"`.
 
-Para uma semana nova (7–11), troque a etapa provisória `semana-N` por uma ou mais etapas com os itens dela.
+Para uma semana nova (8–11), troque a etapa provisória `semana-N` por uma ou mais etapas com os itens dela (a semana 7 virou as Etapas 12 e 13).
 
 ## Regras que valem sempre
 

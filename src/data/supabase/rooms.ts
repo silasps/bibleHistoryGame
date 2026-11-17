@@ -121,9 +121,12 @@ export async function applyHostCommand(
     if (!secretMatches(secret, row.host_secret_hash)) return { error: "Sem permissão de apresentador" }
     const loaded = { row, state: stageOnly(row.state) }
     const narrative = { scenes: sequenceScenes(row.sequence_id) }
-    const { state, error } = reduceHost(loaded.state, cmd, { now: Date.now(), narrative })
+    // "Próximo" num slide com jogo decide entre o pódio e o slide seguinte: precisa saber se alguém pontuou.
+    const game = cmd.type === "next" ? narrative.scenes[loaded.state.index]?.game : undefined
+    const input = game && game.max > 0 ? { ...loaded.state, plays: { [game.id]: await scoredPlays(code, game.id) } } : loaded.state
+    const { state, error } = reduceHost(input, cmd, { now: Date.now(), narrative })
     if (error) return { error }
-    if (state === loaded.state) return { state }
+    if (state === input) return { state: stageOnly(state) }
 
     const patch: Record<string, unknown> = { state: stageOnly(state), version: loaded.row.version + 1, updated_at: new Date().toISOString() }
     if (cmd.type === "end") patch.ended_at = new Date().toISOString()
@@ -141,6 +144,14 @@ export async function applyHostCommand(
     // Outro comando do host gravou antes: tenta de novo com o estado atual.
   }
   return { error: "Conflito ao salvar; tente de novo" }
+}
+
+/** Quem já pontuou num jogo (só o necessário para decidir se há pódio). */
+async function scoredPlays(code: string, gameId: string): Promise<Record<string, { value: number; done: boolean }>> {
+  const { data, error } = await admin().from("plays").select("participant_id, value, done").eq("room_code", code).eq("game_id", gameId).gt("value", 0).limit(50)
+  // Sem a tabela (sala antiga) ou com erro: segue sem pódio, como antes.
+  if (error || !data) return {}
+  return Object.fromEntries(data.map((r) => [r.participant_id as string, { value: r.value as number, done: r.done as boolean }]))
 }
 
 /** Retenção mínima: ao encerrar, apaga participantes (e votos/luzes em cascata). */
