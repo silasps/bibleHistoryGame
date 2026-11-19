@@ -81,3 +81,8 @@ Hoje, só com as semanas 1 a 6, a estimativa é de **45,5 minutos** sem os minij
 ## Opcional
 
 - [ ] **Código de apresentador na Vercel:** defina `PRESENTER_ACCESS_CODE` para só você criar salas ao vivo.
+
+## Bible Show (jogo em grupo, fora da nota)
+
+- [ ] **Revisar as 99 cartas** em `src/content/bible-show/cartas.ts` (palavra, categoria e referência NAA). Estão como rascunho: a maioria vem da sua linha do tempo e dos minijogos; as marcadas com fonte "Bíblia" (ex.: José do Egito, Escada de Jacó, Jumenta que fala) não estão no seu material. Diga o que tirar, trocar ou acrescentar.
+- [ ] **Aprovar os nomes das categorias** (Quem é?, O que é?, O que aconteceu?, Onde fica?, Bichos da Bíblia, Desafio, Rodada de todos) e as regras da tela "Como jogar".

@@ -42,6 +42,9 @@ export function HeroStage() {
         >
           {hydrated && hasProgress ? "Continuar a investigação" : "Começar a investigação"}
         </Link>
+        <Link href="/bible-show" className="inline-flex min-h-12 items-center rounded-full border border-gold/40 px-6 text-sm text-parchment transition hover:border-gold hover:bg-gold/10">
+          Bible Show
+        </Link>
         <Link href="/presenter" className="inline-flex min-h-12 items-center rounded-full border border-gold/40 px-6 text-sm text-parchment transition hover:border-gold hover:bg-gold/10">
           Apresentar ao vivo
         </Link>

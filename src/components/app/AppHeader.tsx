@@ -7,6 +7,7 @@ const NAV = [
   { href: "/archive", label: "Arquivo" },
   { href: "/catalog", label: "Catálogo" },
   { href: "/presenter", label: "Apresentar" },
+  { href: "/bible-show", label: "Bible Show" },
 ]
 
 export function AppHeader({ className, minimal = false }: { className?: string; minimal?: boolean }) {

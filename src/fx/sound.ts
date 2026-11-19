@@ -12,7 +12,7 @@ export type AmbientMood = "night" | "garden" | "tension" | "warm" | "wonder" | "
 /** Trilhas de jogo: animadas, no estilo dos games, com melodia gerada aqui (não é cópia de nenhum jogo). */
 export type ArcadeMood = "play" | "play-tense" | "play-epic"
 export type Mood = AmbientMood | ArcadeMood
-export type Stinger = "reveal" | "seal" | "whoosh" | "heartbeat" | "train" | "vote" | "light" | "rewind" | "tap"
+export type Stinger = "reveal" | "seal" | "whoosh" | "heartbeat" | "train" | "vote" | "light" | "rewind" | "tap" | "buzzer"
 
 interface MoodDef {
   bpm: number
@@ -507,6 +507,15 @@ class SoundEngine {
         knock.triggerAttackRelease(T.Frequency("G2").transpose(Math.round(level * 12)).toNote(), 0.1, now)
         click.triggerAttackRelease(0.04, now + 0.005)
         later([knock, click, clickFilter], 1200)
+        break
+      }
+      case "buzzer": {
+        // Fim do tempo: buzina grave e curta.
+        const hornFilter = new T.Filter(900, "lowpass").connect(out)
+        const horn = new T.PolySynth(T.Synth, { oscillator: { type: "square" }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.8, release: 0.2 } }).connect(hornFilter)
+        horn.volume.value = -14
+        horn.triggerAttackRelease(["A2", "E3"], 0.7, now)
+        later([horn, hornFilter], 2000)
         break
       }
       case "light": {
