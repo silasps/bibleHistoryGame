@@ -59,8 +59,9 @@ const SYNTHESES = z.array(ReleasedSynthesis).parse([
 ])
 
 /** Pistas da visão geral: versículo da semana (NAA) + parágrafo do PRD do autor. */
+// Semanas do Novo Testamento (linha do tempo da escola) já têm o versículo NAA, mesmo sem o resumo do autor.
 const WEEK_SYNTHESES: ReleasedSynthesis[] = weeks
-  .filter((w) => w.status === "com_material")
+  .filter((w) => w.status === "com_material" || !!w.memoryVerseText?.length)
   .map((w) => {
     const c = getWeekConnection(w.week)
     const verse = w.memoryVerseText

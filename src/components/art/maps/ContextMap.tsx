@@ -13,6 +13,7 @@ type LonLat = [number, number]
 
 const WIDE = { lon0: 20, lat0: 42, sx: 25, sy: 32, w: 1000, h: 640 }
 const NEAR = { lon0: 34.15, lat0: 33.45, sx: 250, sy: 250, w: 600, h: 650 }
+const LEVANT = { lon0: 33.6, lat0: 36.7, sx: 115, sy: 108, w: 600, h: 650 }
 type Frame = typeof WIDE
 
 const pt = (f: Frame, [lon, lat]: LonLat) => [(lon - f.lon0) * f.sx, (f.lat0 - lat) * f.sy] as const
@@ -263,16 +264,45 @@ function Reinos({ s }: { s: number }) {
   )
 }
 
+/** Harã-Síria: o reino de Arã, com Damasco, ao norte de Israel (1Rs 20; Is 7:8). */
+function Ara({ s }: { s: number }) {
+  const f = LEVANT
+  const ara: LonLat[] = [[35.75, 33.15], [36.4, 32.75], [37.6, 33.0], [38.7, 34.3], [38.7, 36.3], [36.7, 36.5], [36.15, 35.5], [35.95, 34.3]]
+  const israel: LonLat[] = [[35.05, 33.15], [35.75, 33.15], [35.95, 32.0], [34.7, 31.97], [34.95, 32.82]]
+  const juda: LonLat[] = [[34.7, 31.97], [35.55, 31.95], [35.45, 31.0], [34.3, 31.3]]
+  return (
+    <>
+      <rect width={f.w} height={f.h} fill={LAND} />
+      <Region f={f} pts={ara} color="#45d6bd" delay={0.2} />
+      <Region f={f} pts={israel} color="#5c95ff" delay={0.6} />
+      <Region f={f} pts={juda} color="#ff8576" delay={0.8} />
+      <path d={path(f, MED)} fill={WATER} stroke={COAST} strokeWidth={1.5} />
+      <path d={path(f, [[38.5, 39.8], [38.3, 37.9], [38.2, 36.8], [40, 35.4]], false)} fill="none" stroke={RIVER} strokeWidth={3} />
+      <Label f={f} at={[37.4, 34.9]} text="Arã (Síria)" size={s * 1.25} color="#45d6bd" delay={0.4} />
+      <Label f={f} at={[35.3, 32.6]} text="Israel" size={s} color="#9fbfff" delay={0.8} />
+      <Label f={f} at={[34.82, 31.28]} text="Judá" size={s} color="#ffb3a8" delay={1} />
+      <Dot f={f} at={[36.3, 33.51]} size={s * 0.3} color="#45d6bd" delay={0.5} />
+      <Label f={f} at={[36.3, 33.51]} text="Damasco" size={s * 0.95} anchor="start" dy={s * 0.35} delay={0.5} />
+      <Dot f={f} at={PLACES.samaria} size={s * 0.25} delay={1.1} />
+      <Label f={f} at={PLACES.samaria} text="Samaria" size={s * 0.8} anchor="end" dy={-s * 0.4} delay={1.1} />
+      <Dot f={f} at={PLACES.jerusalem} size={s * 0.25} delay={1.2} />
+      <Label f={f} at={[35.36, 31.78]} text="Jerusalém" size={s * 0.8} anchor="start" dy={s * 0.3} delay={1.2} />
+      <Label f={f} at={[34.0, 33.6]} text="Mar Mediterrâneo" size={s * 0.7} color="#7fa8c8" anchor="start" />
+    </>
+  )
+}
+
 /** Mapa de contexto do slide. `compact`: celular (letras maiores, proporcionalmente). */
 export function ContextMap({ spec, className, compact = false, title }: { spec: MapaSpec; className?: string; compact?: boolean; title: string }) {
-  const frame = spec.id === "reinos" ? NEAR : WIDE
-  const s = (spec.id === "reinos" ? 24 : 22) * (compact ? 1.5 : 1)
+  const frame = spec.id === "reinos" ? NEAR : spec.id === "ara" ? LEVANT : WIDE
+  const s = (spec.id === "reinos" || spec.id === "ara" ? 24 : 22) * (compact ? 1.5 : 1)
   return (
     <svg viewBox={`0 0 ${frame.w} ${frame.h}`} className={cn("h-full w-full overflow-hidden rounded-[3%]", className)} role="img" aria-label={title} preserveAspectRatio="xMidYMid meet">
       {spec.id === "exodo" && <Exodo s={s} />}
       {spec.id === "exilios" && <Exilios s={s} foco={spec.foco} />}
       {spec.id === "imperios" && <Imperios s={s} foco={spec.foco} />}
       {spec.id === "reinos" && <Reinos s={s} />}
+      {spec.id === "ara" && <Ara s={s} />}
       <rect width={frame.w} height={frame.h} fill="none" stroke={COAST} strokeWidth={2} rx={18} />
     </svg>
   )

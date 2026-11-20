@@ -18,6 +18,7 @@ import { FALAS } from "@/content/etapas/falas"
 import { RubricChecklist } from "@/features/prep/RubricChecklist"
 import { authorTaskLinks } from "@/lib/author-sources"
 import { presenterUnlocked } from "@/lib/presenter-access"
+import { readPresenterNotes } from "@/data/supabase/notes"
 
 export const metadata: Metadata = { title: "Área de preparação", robots: { index: false } }
 export const dynamic = "force-dynamic"
@@ -44,6 +45,9 @@ export default async function PrepPage({ searchParams }: Props) {
       </main>
     )
   }
+
+  // O que o autor escreveu em "Minhas notas" no painel (Supabase).
+  const cloudNotes = await readPresenterNotes(seq.id)
 
   return (
     <main className="mx-auto max-w-4xl space-y-8 px-4 py-10">
@@ -86,6 +90,12 @@ export default async function PrepPage({ searchParams }: Props) {
                 <p className="mt-2 text-sm text-mist">Sem notas para esta cena.</p>
               )}
               {notes?.transitionHint && <p className="mt-2 text-sm italic text-sand">Transição: {notes.transitionHint}</p>}
+              {cloudNotes?.[scene.id] && (
+                <div className="mt-3 rounded-lg border border-sky-300/30 bg-night/50 p-3 text-sm text-parchment/90">
+                  <p className="text-[0.65rem] uppercase tracking-widest text-sky-200">Minhas notas (escritas no painel)</p>
+                  <p className="mt-1 whitespace-pre-wrap">{cloudNotes[scene.id]}</p>
+                </div>
+              )}
               {scene.overview?.itemId && (
                 <ul className="mt-3 space-y-2 text-sm">
                   {excerptsForItem(scene.overview.itemId).map((e) => (

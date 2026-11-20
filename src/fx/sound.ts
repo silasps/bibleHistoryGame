@@ -563,6 +563,10 @@ export const MOOD_FOR_ETAPA: Record<number, AmbientMood> = {
   11: "hope",
   12: "warm",
   13: "wonder",
+  14: "hope",
+  15: "triumph",
+  16: "tension",
+  17: "wonder",
 }
 
 /** Trilha de cada minijogo e dos momentos da Etapa 1. */

@@ -8,7 +8,7 @@ import { ITEM_COLORS, ItemArt } from "@/components/art/ItemArt"
 import { getEtapa, prdMoments } from "@/content/etapas"
 import { RELICS } from "@/content/etapas/etapa-1"
 import { formatSpan, getItem, getWeek } from "@/content/overview"
-import { formatRef } from "@/content/refs"
+import { formatRef, formatRefs } from "@/content/refs"
 import type { OverviewView } from "@/domain/projection"
 import { useFx } from "@/fx/useFx"
 import { EtapaStrip } from "../timeline/BibleTimeline"
@@ -37,7 +37,7 @@ export function OverviewPhoneCard({ overview }: { overview: OverviewView }) {
           className="glass overflow-hidden rounded-3xl p-5 text-center"
         >
           {overview.mapa ? (
-            <div className={`mx-auto w-full ${overview.mapa.id === "reinos" ? "aspect-[600/650] max-w-[80%]" : "aspect-[1000/640]"}`}>
+            <div className={`mx-auto w-full ${overview.mapa.id === "reinos" || overview.mapa.id === "ara" ? "aspect-[600/650] max-w-[80%]" : "aspect-[1000/640]"}`}>
               <ContextMap spec={overview.mapa as Parameters<typeof ContextMap>[0]["spec"]} title={`Mapa · ${item.label}`} compact />
             </div>
           ) : (
@@ -50,6 +50,8 @@ export function OverviewPhoneCard({ overview }: { overview: OverviewView }) {
             <p className="font-display text-lg text-parchment/80">e {(overview.alsoItemIds ?? []).map((id) => getItem(id)?.label).join(" · ")}</p>
           )}
           <p className="text-sm text-mist">{[item.sub, formatSpan(item)].filter(Boolean).join(" · ")}</p>
+          {!overview.stageLine && item.refs.length > 0 && <p className="mt-2 text-base text-sand">{formatRefs(item.refs, "long")}</p>}
+          {!overview.stageLine && item.refs.length === 0 && item.historico && <p className="mt-2 text-sm text-mist">Fonte: {item.historico}</p>}
           {overview.stageLine && <p className="mt-3 font-display text-xl leading-snug text-parchment">{overview.stageLine}</p>}
           {overview.depth.map((d) => (
             <motion.p key={d} initial={fx.motion ? { opacity: 0 } : false} animate={{ opacity: 1 }} className="mt-2 text-base text-sand">

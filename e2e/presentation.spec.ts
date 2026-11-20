@@ -174,4 +174,30 @@ test.describe("ao vivo com Supabase", () => {
     await host.getByRole("alertdialog", { name: "Apagar a sala?" }).getByRole("button", { name: "Apagar sala" }).click()
     await host.waitForURL(/\/presenter$/)
   })
+
+  test("Minhas notas: o que o apresentador escreve fica salvo na nuvem e nunca vai ao telão", async ({ context }) => {
+    const host = await context.newPage()
+    await host.goto("/presenter")
+    await host.getByRole("button", { name: "Abrir demonstração" }).click()
+    await host.waitForURL(/\/presenter\/[A-Z0-9]{6}\?modo=demo/)
+    const code = host.url().match(/presenter\/([A-Z0-9]{6})/)![1]
+    const projector = await context.newPage()
+    await projector.goto(`/projector/${code}?modo=demo`)
+    await host.getByRole("button", { name: /Começar a apresentação/ }).click()
+    await gotoScene(host, /^\d+ Babel|Torre de Babel/)
+    const notes = host.getByRole("textbox", { name: /Minhas notas/ })
+    await expect(notes).toBeEnabled({ timeout: 10_000 })
+    const mark = `nota-teste-${Date.now()}`
+    await notes.fill(mark)
+    await expect(host.getByText("Salvo na nuvem")).toBeVisible({ timeout: 10_000 })
+    await expect(projector.locator("[data-surface=projector]")).not.toContainText(mark)
+
+    await host.reload()
+    await host.getByRole("button", { name: /Começar a apresentação/ }).click({ timeout: 3000 }).catch(() => {})
+    await gotoScene(host, /^\d+ Babel|Torre de Babel/)
+    await expect(host.getByRole("textbox", { name: /Minhas notas/ })).toHaveValue(mark, { timeout: 10_000 })
+    // Limpa a nota de teste.
+    await host.getByRole("textbox", { name: /Minhas notas/ }).fill("")
+    await expect(host.getByText("Salvo na nuvem")).toBeVisible({ timeout: 10_000 })
+  })
 })

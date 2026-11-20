@@ -25,14 +25,24 @@ export const WEEKS: TimelineWeekInput[] = [
   { week: 6, actId: "ato-06", title: "Últimos Profetas", status: "com_material", span: { from: -640, to: -331 }, memoryVerse: [ref("Ezek", 36, 26)],
     memoryVerseText: ["Eu lhes darei um coração novo e porei dentro de vocês um espírito novo. Tirarei de vocês o coração de pedra e lhes darei um coração de carne."],
     color: "azul", sources: ["w6-resumo.txt", "w6-linha-do-tempo.pdf", "w6-contexto.txt"] }, // resumo final em 6/11/2026
-  // Semana 7: o versículo vem do resumo do autor (Ed 1:3, em vermelho). "você" virou "vocês" (erro de digitação): conferir na NAA.
+  // Semana 7: o versículo vem do resumo do autor (Ed 1:3, em vermelho); "dentre vocês" conferido na NAA em 19/11/2026.
   { week: 7, actId: "ato-07", title: "Pós-exílio e Intertestamentário", status: "com_material", span: { from: -538, to: -5 }, memoryVerse: [ref("Ezra", 1, 3)],
     memoryVerseText: ["Aquele dentre vocês que for do seu povo, que o seu Deus esteja com ele e que suba para Jerusalém, que fica em Judá, e edifique a Casa do Senhor, Deus de Israel; ele é o Deus que está em Jerusalém."],
     color: "oliva", sources: ["w7-resumo.txt", "w7-linha-do-tempo.pdf", "w7-contexto.txt", "classes/w7-classes.txt"] },
-  { week: 8, actId: "ato-08", title: "Jesus", status: "aguardando_material", span: { from: -4, to: 30 }, memoryVerse: [ref("Matt", 28, 5, 6)], color: "dourado" },
-  { week: 9, actId: "ato-09", title: "Igreja", status: "aguardando_material", span: { from: 30, to: 68 }, memoryVerse: [ref("Acts", 1, 8)], color: "coral" },
-  { week: 10, actId: "ato-10", title: "Paulo", status: "aguardando_material", span: { from: 46, to: 68 }, memoryVerse: [ref("Rom", 5, 10)], color: "magenta" },
-  { week: 11, actId: "ato-11", title: "João", status: "aguardando_material", span: { from: 70, to: 100 }, memoryVerse: [ref("Rev", 22, 20)], color: "carmim" },
+  // Semanas 8–11: itens e datas da linha do tempo da ESCOLA (19/11/2026), enquanto o resumo do autor não chega.
+  // Os versículos do plano são os da escola (iguais aos do Manual), com o texto conferido na NAA (bibliaonline.com.br/naa).
+  { week: 8, actId: "ato-08", title: "Jesus", status: "aguardando_material", span: { from: -27, to: 30 }, memoryVerse: [ref("Matt", 28, 5, 6)],
+    memoryVerseText: ["Mas o anjo, dirigindo-se às mulheres, disse: — Não tenham medo! Sei que vocês procuram Jesus, que foi crucificado. Ele não está aqui; ressuscitou, como tinha dito. Venham ver onde ele jazia."],
+    color: "dourado", sources: ["linha-do-tempo-escola.jpg"] },
+  { week: 9, actId: "ato-09", title: "Igreja", status: "aguardando_material", span: { from: 30, to: 68 }, memoryVerse: [ref("Acts", 1, 8)],
+    memoryVerseText: ["Mas vocês receberão poder, ao descer sobre vocês o Espírito Santo, e serão minhas testemunhas tanto em Jerusalém como em toda a Judeia e Samaria e até os confins da terra."],
+    color: "coral", sources: ["linha-do-tempo-escola.jpg"] },
+  { week: 10, actId: "ato-10", title: "Paulo", status: "aguardando_material", span: { from: 50, to: 68 }, memoryVerse: [ref("Rom", 5, 10)],
+    memoryVerseText: ["Porque, se nós, quando inimigos, fomos reconciliados com Deus mediante a morte do seu Filho, muito mais, estando já reconciliados, seremos salvos pela sua vida!"],
+    color: "magenta", sources: ["linha-do-tempo-escola.jpg"] },
+  { week: 11, actId: "ato-11", title: "João", status: "aguardando_material", span: { from: 70, to: 100 }, memoryVerse: [ref("Rev", 22, 20)],
+    memoryVerseText: ["Aquele que dá testemunho destas coisas diz: — Certamente venho sem demora. Amém! Vem, Senhor Jesus!"],
+    color: "carmim", sources: ["linha-do-tempo-escola.jpg"] },
 ]
 
 export const ITEMS: TimelineItemInput[] = [
@@ -140,4 +150,39 @@ export const ITEMS: TimelineItemInput[] = [
   { id: "zacarias", week: 7, kind: "tema", label: "Zacarias", sub: "o Rei que virá", anchor: "reconstrucao-templo", color: "turquesa", art: "zacarias", refs: [ref("Zech", 1, 3), ref("Zech", 9, 9)] },
   { id: "ester", week: 7, kind: "tema", label: "Ester", sub: "a providência de Deus", anchor: "segundo-retorno", color: "magenta", art: "ester", refs: [ref("Esth", 4, 14, 16), ref("Esth", 9, 21, 22)] },
   { id: "malaquias", week: 7, kind: "tema", label: "Malaquias", sub: "o mensageiro", anchor: "fim-at", color: "azul", art: "malaquias", refs: [ref("Mal", 3, 1), ref("Mal", 4, 2)] },
+
+  // ── Semanas 8–11 · Novo Testamento (linha do tempo da escola, 19/11/2026) ──
+  // Semana 8 · Jesus
+  { id: "augusto", week: 8, kind: "personagem", label: "Imperador Augusto", sub: "Roma", from: -27, to: 14, color: "carmim", art: "augusto", refs: [ref("Luke", 2, 1)] },
+  { id: "nascimento-jesus", week: 8, kind: "evento", label: "Nascimento de Jesus", from: -4, color: "dourado", art: "nascimento-jesus", refs: [ref("Matt", 2, 1), ref("Luke", 2, 1, 7)] },
+  { id: "jesus", week: 8, kind: "personagem", label: "Jesus", from: -4, to: 30, color: "dourado", art: "jesus", refs: [ref("Luke", 2, 52), ref("John", 1, 14)] },
+  { id: "herodes-antipas", week: 8, kind: "personagem", label: "Herodes Antipas", sub: "Galileia", from: -4, to: 39, color: "oliva", art: "herodes", refs: [ref("Luke", 3, 1), ref("Luke", 23, 7, 12)] },
+  { id: "pilatos", week: 8, kind: "personagem", label: "Pôncio Pilatos", sub: "Judeia", from: 26, to: 36, color: "coral", art: "pilatos", refs: [ref("Luke", 3, 1), ref("Matt", 27, 2)] },
+  { id: "ministerio-jesus", week: 8, kind: "evento", label: "Ministério de Jesus", from: 27, to: 30, color: "verde", art: "ministerio-jesus", refs: [ref("Luke", 3, 23), ref("Mark", 1, 14, 15)] },
+  { id: "morte-ressurreicao", week: 8, kind: "evento", label: "Morte e Ressurreição de Jesus", from: 30, color: "dourado", art: "ressurreicao", refs: [chapters("Matt", 27, 28)] },
+  { id: "ascensao", week: 8, kind: "evento", label: "Ascensão de Jesus", from: 30, seq: 1, color: "ceu", art: "ascensao", refs: [ref("Acts", 1, 9, 11)] },
+  // Semana 9 · Igreja
+  { id: "pentecostes", week: 9, kind: "evento", label: "Dia de Pentecostes", from: 30, seq: -1, color: "carmim", art: "pentecostes", refs: [ref("Acts", 2, 1, 4)] },
+  { id: "ministerio-pedro", week: 9, kind: "personagem", label: "Ministério de Pedro", from: 30, to: 68, color: "azul", art: "pedro", refs: [chapters("Acts", 2, 12)] },
+  { id: "estevao", week: 9, kind: "evento", label: "Estêvão apedrejado", from: 33, color: "coral", art: "estevao", refs: [ref("Acts", 7, 54, 60)] },
+  { id: "conversao-paulo", week: 9, kind: "evento", label: "A conversão de Paulo", from: 34, seq: -1, color: "dourado", art: "conversao-paulo", refs: [ref("Acts", 9, 1, 19)] },
+  { id: "ministerio-paulo", week: 9, kind: "personagem", label: "Ministério de Paulo", from: 34, to: 68, color: "violeta", art: "paulo", refs: [chapters("Acts", 13, 28)] },
+  { id: "visao-pedro", week: 9, kind: "evento", label: "A visão de Pedro", from: 40, color: "turquesa", art: "visao-pedro", refs: [ref("Acts", 10, 9, 16)] },
+  { id: "primeira-viagem", week: 9, kind: "evento", label: "1ª viagem missionária de Paulo", from: 46, to: 48, color: "verde", art: "viagem", refs: [chapters("Acts", 13, 14)] },
+  { id: "concilio", week: 9, kind: "evento", label: "Concílio de Jerusalém", from: 49, color: "lilas", art: "concilio", refs: [ref("Acts", 15, 1, 29)] },
+  { id: "nero", week: 9, kind: "personagem", label: "Imperador Nero", sub: "Roma", from: 54, to: 68, color: "carmim", art: "augusto", refs: [ref("Acts", 25, 11, 12)] },
+  { id: "roma-queimada", week: 9, kind: "evento", label: "Roma queimada", from: 64, color: "laranja", art: "roma-queimada", historico: "Linha do tempo da escola" },
+  // Semana 10 · Paulo
+  { id: "segunda-viagem", week: 10, kind: "evento", label: "2ª viagem missionária de Paulo", from: 50, to: 52, seq: -1, color: "verde", art: "viagem", refs: [ref("Acts", 15, 36), ref("Acts", 18, 22)] },
+  { id: "timoteo", week: 10, kind: "personagem", label: "Timóteo", from: 50, to: 81, color: "ceu", art: "timoteo", refs: [ref("Acts", 16, 1, 3), ref("1Tim", 1, 2)] },
+  { id: "terceira-viagem", week: 10, kind: "evento", label: "3ª viagem missionária de Paulo", from: 53, to: 57, color: "verde", art: "viagem", refs: [ref("Acts", 18, 23), ref("Acts", 21, 16)] },
+  { id: "templo-artemis", week: 10, kind: "evento", label: "Paulo e o templo de Ártemis", sub: "Éfeso", from: 56, color: "magenta", art: "templo-artemis", refs: [ref("Acts", 19, 23, 41)] },
+  { id: "prisao-roma", week: 10, kind: "evento", label: "A prisão de Paulo em Roma", from: 60, to: 62, color: "azul", art: "prisao", refs: [ref("Acts", 28, 16, 31)] },
+  { id: "martirio-paulo-pedro", week: 10, kind: "evento", label: "Paulo e Pedro martirizados", from: 64, to: 68, color: "coral", art: "martirio", refs: [ref("2Tim", 4, 6, 8), ref("John", 21, 18, 19)] },
+  // Semana 11 · Apocalipse
+  { id: "queda-jerusalem-70", week: 11, kind: "evento", label: "Queda de Jerusalém", sub: "pelos romanos", from: 70, color: "lilas", art: "queda-jerusalem", refs: [ref("Luke", 21, 20, 24)] },
+  { id: "domiciano", week: 11, kind: "personagem", label: "Imperador Domiciano", sub: "Roma", from: 81, to: 96, color: "carmim", art: "augusto", historico: "Linha do tempo da escola" },
+  { id: "patmos", week: 11, kind: "evento", label: "João exilado em Patmos", from: 97, color: "turquesa", art: "patmos", refs: [ref("Rev", 1, 9)] },
+  { id: "morte-joao", week: 11, kind: "evento", label: "Morte de João", from: 100, color: "violeta", art: "joao", historico: "Linha do tempo da escola" },
+  { id: "fim-nt", week: 11, kind: "evento", label: "Fim do NT", from: 100, seq: 1, color: "dourado", art: "fim-nt", refs: [ref("Rev", 22, 20, 21)] },
 ]

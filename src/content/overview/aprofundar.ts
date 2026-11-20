@@ -126,6 +126,11 @@ export const APROFUNDAR: Record<string, Aprofundamento> = {
       l("Isso vinha do Senhor: cumpria-se a palavra que Ele tinha dado.", [ref("1Kgs", 12, 15)], "Aulas Reis (semana 4)"),
     ],
   },
+  // Harã-Síria (linha do tempo da escola): um slide curto, com o mapa e uma linha só.
+  aram: {
+    principal: l("Arã, a Síria, com capital em Damasco, é o vizinho do norte que guerreia com Israel.", [ref("1Kgs", 20, 1), ref("Isa", 7, 8)], "Linha do tempo da escola · sua linha do tempo (semana 4)"),
+    passos: [],
+  },
   assiria: {
     principal: l("A Assíria cresce como potência e passa a cobrar tributo de Israel.", [ref("2Kgs", 15, 19, 20)], LINHA(4)),
     passos: [],

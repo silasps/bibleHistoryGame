@@ -20,12 +20,13 @@ describe("etapas da história", () => {
 
   it("começam pela Criação e seguem a ordem dos itens", () => {
     expect(itemsOfEtapa(1).map((i) => i.id)).toEqual(["criacao", "adao-eva", "queda"])
-    expect(presentableEtapas.map((e) => e.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
+    expect(presentableEtapas.map((e) => e.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17])
   })
 
   it("o fio do plano começa em Gn 3:15 e passa por todos os versículos das semanas com material", () => {
     expect(prdMoments[0]).toMatchObject({ week: 1, refIndex: 0, etapa: 1, knot: 1 })
-    const verses = weeks.filter((w) => w.status === "com_material").reduce((n, w) => n + w.memoryVerse.length, 0)
+    // Semanas com material do autor + as do Novo Testamento (linha do tempo da escola).
+    const verses = weeks.filter((w) => w.status === "com_material" || w.week >= 8).reduce((n, w) => n + w.memoryVerse.length, 0)
     expect(prdMoments).toHaveLength(verses)
     expect(prdMoments.map((p) => p.knot)).toEqual(prdMoments.map((_, i) => i + 1))
   })
@@ -63,12 +64,30 @@ describe("roteiro do briefing (16/11/2026)", () => {
     expect(scenes.find((s) => s.id === "item-davi")?.game?.id).toBe("funda")
   })
 
-  it("Etapa 9: a divisão abre; Acabe vem antes de Elias e do altar; Arã não vira slide", () => {
+  it("Etapa 9: a divisão abre; Harã-Síria (slide curto, com mapa) vem antes de Acabe; Acabe antes de Elias e do altar", () => {
     const e9 = scenes.filter((s) => s.overview?.etapa === 9 && s.overview.role === "item").map((s) => s.overview!.itemId)
     expect(e9[0]).toBe("divisao-reino")
+    expect(e9.indexOf("aram")).toBe(e9.indexOf("acabe") - 1)
+    expect(scenes.find((s) => s.id === "item-aram")?.overview?.mapa?.id).toBe("ara")
     expect(e9.indexOf("acabe")).toBeLessThan(e9.indexOf("elias"))
     expect(scenes.find((s) => s.id === "item-elias")?.game?.id).toBe("altar")
-    expect(ids).not.toContain("item-aram")
+  })
+
+  it("todos os itens da linha do tempo da escola (semanas 1 a 12) têm slide", () => {
+    const school = ["criacao", "adao-eva", "queda", "diluvio", "noe", "babel", "abraao", "alianca-abraamica", "sacrificio-isaque", "isaque", "jaco", "migracao-egito", "tempo-egito", "exodo", "moises",
+      "peregrinacao", "alianca-sinai", "tabernaculo", "arao", "espioes", "alianca-deuteronomica", "uncao-josue", "morte-moises",
+      "conquista-canaa", "josue", "periodo-juizes", "debora", "gideao", "sansao", "rute-boaz",
+      "samuel", "saul", "davi-ungido", "davi", "alianca-davidica",
+      "aram", "salomao", "templo", "divisao-reino", "jeroboao", "roboao", "elias", "acabe", "eliseu", "assiria",
+      "queda-samaria", "cerco-jerusalem", "isaias", "ezequias", "manasses", "babilonia",
+      "josias", "jeremias", "queda-jerusalem", "inicio-exilio", "daniel", "ezequiel", "persia", "ciro",
+      "primeiro-retorno", "reconstrucao-templo", "segundo-retorno", "terceiro-retorno", "fim-at", "imperio-grego", "macabeus", "pompeu", "imperio-romano",
+      "augusto", "herodes", "nascimento-jesus", "jesus", "herodes-antipas", "pilatos", "ministerio-jesus", "morte-ressurreicao", "ascensao",
+      "nero", "pentecostes", "estevao", "conversao-paulo", "ministerio-pedro", "visao-pedro", "ministerio-paulo", "primeira-viagem", "concilio", "roma-queimada",
+      "segunda-viagem", "timoteo", "terceira-viagem", "prisao-roma", "martirio-paulo-pedro", "templo-artemis",
+      "queda-jerusalem-70", "domiciano", "patmos", "morte-joao", "fim-nt"]
+    const onSlide = new Set(scenes.flatMap((s) => (s.overview?.role === "item" && s.overview.itemId ? [s.overview.itemId, ...(s.overview.alsoItemIds ?? [])] : [])))
+    for (const id of school) expect(onSlide.has(id), id).toBe(true)
   })
 
   it("o versículo do plano vem logo depois do item, antes dos momentos (Js 1:7 antes de Raabe/espiões)", () => {

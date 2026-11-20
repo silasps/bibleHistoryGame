@@ -41,8 +41,11 @@ export const TimelineItem = z
     /** Ilustração (biblioteca de arte). */
     art: z.string().min(1),
     characterId: z.string().optional(),
-    refs: z.array(BibleRef).min(1),
+    refs: z.array(BibleRef).default([]),
+    /** Item histórico sem texto bíblico próprio (ex.: Nero, Roma queimada): de onde veio. */
+    historico: z.string().optional(),
   })
+  .refine((i) => i.refs.length > 0 || !!i.historico, "item sem referência bíblica precisa dizer a fonte em `historico`")
   .refine((i) => i.kind === "tema" || i.from !== undefined, "item datado precisa de `from`")
   .refine((i) => i.kind !== "tema" || !!i.anchor, "tema precisa de `anchor`")
   .refine((i) => i.to === undefined || i.from === undefined || i.to >= i.from, "`to` antes de `from`")

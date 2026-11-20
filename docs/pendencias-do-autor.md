@@ -19,7 +19,9 @@ Lista para lembrar, atualizada em 4 de novembro de 2026. O estado ao vivo de cad
 - [ ] **Onde ter o selo de Caráter de Deus:** você disse que vai indicar os slides. Quando disser, eu ponho o selo (o mesmo das suas falas). O Manual pede “alguma revelação pessoal” e a transformação que você viveu.
 - [ ] **PRD da semana 6:** o resumo da semana 6 não tem o parágrafo “PRD -” (as outras semanas têm). Sem ele, a pista 6 abre só com o versículo (Ez 36:26). Os trechos sobre a nova aliança (Jr 31:31–33) e o coração novo (Ez 36:26) parecem ser o seu PRD; se for isso, escreva o parágrafo e eu coloco.
 - [x] **Semana 7** entrou (16/11/2026): Etapas 12 e 13, com Ed 1:3. Sem parágrafo “PRD -”: a pista 7 fica só com o versículo.
-- [ ] **Semanas 8 a 11**: resumo, linha do tempo e texto NAA do versículo, quando chegarem.
+- [x] **Linha do tempo da escola** (19/11/2026): todos os itens das 12 semanas da escola têm slide. O Novo Testamento entrou como Etapas 14 a 17 (Jesus, A Igreja, Paulo, Apocalipse), com nome, data e referência, e os versículos do plano conferidos na NAA. Harã-Síria voltou como slide curto, com mapa.
+- [ ] **Semanas 8 a 11 (Novo Testamento):** falta o seu resumo. Até lá, os slides mostram só nome, data e referência bíblica (ou a fonte, quando não há passagem). Quando chegar, eu ponho as frases como nas outras semanas.
+- [ ] **Tempo:** com o Novo Testamento, a estimativa sem jogos passa de 70 min (o limite é 45). Os cortes são seus; a Área de preparação mostra os tempos por etapa.
 - [ ] **Jó:** mandar o seu material. O momento já está no fim da Etapa 3 (entre Abraão e Moisés), só com a imagem.
 - [ ] **2 convidados de fora da escola** (20 pontos).
 - [ ] **Ensaio** no fim do Antigo Testamento. **Apresentação final:** 10 e 11 de dezembro.
@@ -64,6 +66,7 @@ Hoje, só com as semanas 1 a 6, a estimativa é de **45,5 minutos** sem os minij
 ## Para conferir
 
 - [x] **Revisar todos os textos da tela** na página “Revisão dos textos” (https://claude.ai/artifact/QaKbAT6P7JBbLnm7uLd5kU): feito em 11/11/2026 (194 aprovados, 12 mudanças já aplicadas).
+- [ ] **Diferenças na linha do tempo da escola** (datas de Isaque e Jacó trocadas, “Reinado de Davi 1406 a 1399”, Babilônia 529, Jesus “até 39 DC”): o app seguiu o texto bíblico e a sua linha do tempo. Detalhes no relatório, seção 9.
 - [ ] **Revisar a Rodada 4** na página “Revisão dos textos” (aba “Rodada 4”): todos os textos novos do briefing, com a base bíblica e a fonte do seu material (aula, resumo, linha do tempo). Estão no app como rascunho.
 - [ ] **Semana 7, conferir:** “40 anos” para o templo (sua linha do tempo diz 536–516), “dentre você/vocês” em Ed 1:3 e o ano dos Macabeus (aula: 167; linha do tempo: 164). Detalhes no relatório, seção 8.
 - [ ] **Escrever a correção de 9 textos** marcados “Mudar” sem nota (aba “Falta escrever” da mesma página): Noé (resumo), as pragas, a expiação, Números, a abertura e o “grande arquiteto” da Etapa 8, Jonas, a abertura da Etapa 11 e “Puxe e solte para mirar”.
@@ -77,6 +80,12 @@ Hoje, só com as semanas 1 a 6, a estimativa é de **45,5 minutos** sem os minij
 - [ ] **Semana 6, Ezequiel:** “glória saindo do templo” estava como Ez 8:3–4; o app usa Ez 10:18–19 (em 8:3–4 a glória ainda está no templo). E a idade de Ezequiel (exilado aos 25, chamado aos 30) é uma leitura comum de “trigésimo ano” (Ez 1:1), mas o texto não diz a idade: a nota fica “em revisão” no dossiê.
 - [ ] **“400 anos” no Egito:** Gn 15:13 diz 400; Êx 12:40 diz 430. Decida como falar.
 - [ ] **Resumo da semana 2:** tem frases cortadas (“Números 16 vai mostrar claramente a seriedade do Senhor no que diz respeito”, “sensos pensando em batalhas que çkjsj”).
+
+## Minhas notas (no painel)
+
+- O quadro **“Minhas notas · só você vê”** fica no painel do apresentador, em cada cena. O que você digita é salvo no Supabase e aparece em qualquer computador (e na Área de preparação). Nunca vai ao telão nem ao celular.
+- [ ] **Proteja as notas:** defina `PRESENTER_ACCESS_CODE` na Vercel. Sem o código, quem abrir /presenter também consegue ler e escrever as notas.
+- [ ] **Troque a senha do banco no Supabase** (Settings → Database). Em 19/11 ela apareceu no log da sessão por causa de uma mensagem de erro do CLI. Depois, corrija a `.env.local`: `SUPABASE_PROJECT_REF` deve ter só o código do projeto (hoje tem a URL de conexão inteira, com a senha) e `SUPABASE_DB_PASSWORD` a senha nova.
 
 ## Opcional
 

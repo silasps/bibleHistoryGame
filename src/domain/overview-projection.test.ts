@@ -22,7 +22,7 @@ describe("Visão Geral no telão", () => {
     const seq = getSequence("visao-geral")!
     expect(seq.presentable).toBe(true)
     const weeks = new Set(scenes.map((s) => s.overview?.week).filter(Boolean))
-    expect([...weeks].sort()).toEqual([1, 2, 3, 4, 5, 6, 7])
+    expect([...weeks].sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
     // Cenas opcionais (minijogos das etapas 2–11) o apresentador pula quando faltar tempo.
     const minutes = scenes.filter((s) => !s.optional).reduce((sum, s) => sum + s.estimatedSeconds, 0) / 60
     expect(minutes).toBeGreaterThanOrEqual(30)
@@ -31,11 +31,12 @@ describe("Visão Geral no telão", () => {
     expect(scenes.filter((s) => s.optional).every((s) => s.game)).toBe(true)
   })
 
-  it("no telão, Jesus só é dito por extenso no fecho (a plenitude dos tempos), e Mt 1:5 nunca aparece", () => {
+  it("no telão, Jesus só é dito por extenso a partir do fecho do AT (a plenitude dos tempos), e Mt 1:5 nunca aparece", () => {
+    const fecho = scenes.findIndex((s) => s.id === "momento-plenitude")
     for (const { state, scenes: sc } of everyState("visao-geral", true)) {
       const view = toProjectorView(state, { scenes: sc }, getEvidence)
       const text = JSON.stringify(view)
-      if (/Jesus/.test(visibleText(view))) expect(view.scene?.id).toBe("momento-plenitude")
+      if (/Jesus/.test(visibleText(view))) expect(state.index, view.scene?.id).toBeGreaterThanOrEqual(fecho)
       expect(text).not.toMatch(/Mateus 1:5|genealogia de Jesus/)
     }
   })

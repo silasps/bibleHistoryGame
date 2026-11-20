@@ -20,7 +20,8 @@ describe("visão geral (material do autor)", () => {
   it("tem as 11 semanas, com material nas semanas 1 a 7", () => {
     expect(weeks.map((w) => w.week)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
     expect(weeks.filter((w) => w.status === "com_material").map((w) => w.week)).toEqual([1, 2, 3, 4, 5, 6, 7])
-    expect(items.some((i) => i.week >= 8)).toBe(false)
+    // Semanas 8–11: itens da linha do tempo da escola, ainda sem o resumo do autor.
+    expect(items.filter((i) => i.week >= 8).length).toBeGreaterThanOrEqual(29)
   })
 
   it("segue a ordem da história no mesmo ano: Criação, Adão e Eva, Queda", () => {
@@ -63,7 +64,8 @@ describe("visão geral (material do autor)", () => {
   })
 
   it("todo item da jornada tem passagem para o dossiê", () => {
-    for (const i of items) expect(i.refs.length, i.id).toBeGreaterThan(0)
+    // Itens só históricos (Nero, Roma queimada…) dizem a fonte em vez da passagem.
+    for (const i of items) expect(i.refs.length > 0 || !!i.historico, i.id).toBe(true)
   })
 
   it("toda semana com material tem o texto NAA do versículo para memorizar", () => {

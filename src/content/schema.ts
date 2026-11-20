@@ -237,7 +237,7 @@ export const Scene = z
         alsoItemIds: z.array(z.string()).optional(),
         /** Mapa de contexto no lugar da ilustração (src/content/overview/mapas.ts). */
         mapa: z
-          .object({ id: z.enum(["exodo", "reinos", "exilios", "imperios"]), foco: z.string().optional() })
+          .object({ id: z.enum(["exodo", "reinos", "exilios", "imperios", "ara"]), foco: z.string().optional() })
           .optional(),
         slotId: z.string().optional(),
         /** Versículo: qual referência da semana (a semana 3 tem duas). */

@@ -36,7 +36,7 @@ export interface OverviewView {
   /** Outros itens do mesmo slide. */
   alsoItemIds?: string[]
   /** Mapa de contexto no lugar da ilustração. */
-  mapa?: { id: "exodo" | "reinos" | "exilios" | "imperios"; foco?: string }
+  mapa?: { id: "exodo" | "reinos" | "exilios" | "imperios" | "ara"; foco?: string }
   slotId?: string
   stageLine?: string
   refIndex?: number

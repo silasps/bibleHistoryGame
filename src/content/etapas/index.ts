@@ -151,10 +151,10 @@ const ETAPAS = z.array(Etapa).parse([
   },
   {
     n: 9, id: "o-reino-dividido", title: "O reino dividido", color: "azul", status: "com_material",
-    // Briefing (16/11/2026): a divisão abre a etapa; o altar do Carmelo vem depois de Acabe; Arã sai dos slides.
-    itemIds: ["divisao-reino", "jeroboao", "roboao", "reis-julgamento", "acabe", "elias", "profetas-do-reino", "eliseu", "assiria", "aram"],
+    // Briefing (16/11/2026): a divisão abre a etapa; o altar do Carmelo vem depois de Acabe.
+    // Harã-Síria voltou como slide curto (linha do tempo da escola, 19/11/2026), antes de Acabe.
+    itemIds: ["divisao-reino", "jeroboao", "roboao", "reis-julgamento", "aram", "acabe", "elias", "profetas-do-reino", "eliseu", "assiria"],
     ordemManual: true,
-    semSlide: ["aram"],
   },
   {
     n: 10, id: "os-profetas-avisam", title: "Os profetas avisam", color: "turquesa", status: "com_material",
@@ -182,15 +182,29 @@ const ETAPAS = z.array(Etapa).parse([
     // Fecho do Antigo Testamento: "a plenitude dos tempos" (Gl 4:4), onde Jesus é dito por extenso.
     beats: [{ id: "plenitude", afterItemId: "herodes", label: "A plenitude dos tempos", momento: "plenitude", art: "estrela-belem" }],
   },
-  // Semanas 8–11: uma etapa por semana até chegar o material (títulos do Manual).
-  ...[8, 9, 10, 11].map((week, i) => ({
-    n: 14 + i,
-    id: `semana-${week}`,
-    title: getWeek(week)!.title,
-    color: getWeek(week)!.color,
-    status: "aguardando_material" as const,
-    week,
-  })),
+  // Semanas 8–11 (Novo Testamento): itens e datas da linha do tempo da escola. As frases dos slides
+  // esperam o resumo do autor; por enquanto o slide mostra nome, data e referência bíblica.
+  {
+    n: 14, id: "jesus", title: "Jesus", color: "dourado", status: "com_material",
+    itemIds: ["augusto", "nascimento-jesus", "jesus", "herodes-antipas", "pilatos", "ministerio-jesus", "morte-ressurreicao", "ascensao"],
+    ordemManual: true,
+    prd: [{ week: 8, afterItemId: "morte-ressurreicao" }],
+  },
+  {
+    n: 15, id: "a-igreja", title: "A Igreja", color: "coral", status: "com_material",
+    itemIds: ["pentecostes", "ministerio-pedro", "estevao", "conversao-paulo", "ministerio-paulo", "visao-pedro", "primeira-viagem", "concilio", "nero", "roma-queimada"],
+    prd: [{ week: 9, afterItemId: "pentecostes" }],
+  },
+  {
+    n: 16, id: "paulo", title: "Paulo", color: "magenta", status: "com_material",
+    itemIds: ["segunda-viagem", "timoteo", "terceira-viagem", "templo-artemis", "prisao-roma", "martirio-paulo-pedro"],
+    prd: [{ week: 10, afterItemId: "prisao-roma" }],
+  },
+  {
+    n: 17, id: "apocalipse", title: "Apocalipse", color: "carmim", status: "com_material",
+    itemIds: ["queda-jerusalem-70", "domiciano", "patmos", "morte-joao", "fim-nt"],
+    prd: [{ week: 11, afterItemId: "morte-joao" }],
+  },
 ])
 
 // Minijogos das etapas 2–11 (src/content/etapas/jogos.ts): rodam no slide do

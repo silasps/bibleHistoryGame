@@ -2,7 +2,7 @@
 // de lugares que estão no texto bíblico ou nas aulas do autor. O slide do item
 // mostra o mapa no lugar da ilustração.
 
-export type MapaId = "exodo" | "reinos" | "exilios" | "imperios"
+export type MapaId = "exodo" | "reinos" | "exilios" | "imperios" | "ara"
 
 export interface MapaSpec {
   id: MapaId
@@ -13,6 +13,7 @@ export interface MapaSpec {
 export const MAPA_DO_ITEM: Record<string, MapaSpec> = {
   exodo: { id: "exodo" },
   "divisao-reino": { id: "reinos" },
+  aram: { id: "ara" },
   "queda-samaria": { id: "exilios", foco: "assiria" },
   "inicio-exilio": { id: "exilios", foco: "babilonia" },
   persia: { id: "imperios", foco: "persa" },

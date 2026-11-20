@@ -195,7 +195,7 @@ function Step({ scene, onGameDone }: { scene: Scene; onGameDone: (relicId: strin
       <div className="space-y-4">
       <article className="glass space-y-3 rounded-3xl p-5 text-center">
         {o.mapa ? (
-          <div className={`mx-auto w-full ${o.mapa.id === "reinos" ? "aspect-[600/650] max-w-[80%]" : "aspect-[1000/640]"}`}>
+          <div className={`mx-auto w-full ${o.mapa.id === "reinos" || o.mapa.id === "ara" ? "aspect-[600/650] max-w-[80%]" : "aspect-[1000/640]"}`}>
             <ContextMap spec={o.mapa as Parameters<typeof ContextMap>[0]["spec"]} title={`Mapa · ${item.label}`} compact />
           </div>
         ) : (

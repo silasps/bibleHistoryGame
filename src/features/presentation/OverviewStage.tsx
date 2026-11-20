@@ -77,7 +77,7 @@ export function OverviewStage({ overview, game, hideVerse = false }: { overview:
               transition={{ duration: fx.motion ? 0.5 : 0 }}
             >
               {mapa ? (
-                <div className={`mx-auto max-h-[64cqh] w-full ${mapa.id === "reinos" ? "aspect-[600/650] max-w-[59cqh]" : "aspect-[1000/640]"}`}>
+                <div className={`mx-auto max-h-[64cqh] w-full ${mapa.id === "reinos" || mapa.id === "ara" ? "aspect-[600/650] max-w-[59cqh]" : "aspect-[1000/640]"}`}>
                   <ContextMap spec={mapa as Parameters<typeof ContextMap>[0]["spec"]} title={`Mapa · ${item.label}`} />
                 </div>
               ) : (
@@ -96,6 +96,9 @@ export function OverviewStage({ overview, game, hideVerse = false }: { overview:
                 <p className="text-[2.6cqw] font-semibold tabular-nums" style={{ color: ITEM_COLORS[item.color] }}>
                   {[item.sub, formatSpan(item)].filter(Boolean).join(" · ")}
                 </p>
+                {/* Sem frase do resumo (ex.: Novo Testamento, até chegar o material): a referência bíblica. */}
+                {!line && item.refs.length > 0 && <p className="text-[2.2cqw] text-sand">{formatRefs(item.refs, "long")}</p>}
+                {!line && item.refs.length === 0 && item.historico && <p className="text-[1.8cqw] text-mist">Fonte: {item.historico}</p>}
                 <AnimatePresence mode="wait">
                   {line && (
                     <motion.p

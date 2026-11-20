@@ -48,6 +48,7 @@ import { cn } from "@/lib/utils"
 import { SilentSound } from "@/fx/useSound"
 import { clickerAction } from "./clicker"
 import { DeepDive } from "./DeepDive"
+import { PresenterNotes } from "./PresenterNotes"
 import { clock, useElapsed } from "../etapas/games/LiveGameCard"
 import { ProjectorStage } from "./ProjectorStage"
 import { RehearsalTimer } from "./RehearsalTimer"
@@ -349,6 +350,8 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
                   </>
                 )}
               </div>
+
+              <PresenterNotes sequenceId={state.sequenceId} sceneId={scene.id} sceneTitle={scene.title} />
 
               {deepOpen && <DeepDive scene={scene} onClose={() => setDeepOpen(false)} />}
 
