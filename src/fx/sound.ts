@@ -12,7 +12,7 @@ export type AmbientMood = "night" | "garden" | "tension" | "warm" | "wonder" | "
 /** Trilhas de jogo: animadas, no estilo dos games, com melodia gerada aqui (não é cópia de nenhum jogo). */
 export type ArcadeMood = "play" | "play-tense" | "play-epic"
 export type Mood = AmbientMood | ArcadeMood
-export type Stinger = "reveal" | "seal" | "whoosh" | "heartbeat" | "train" | "vote" | "light" | "rewind" | "tap" | "buzzer" | "beep"
+export type Stinger = "reveal" | "seal" | "whoosh" | "heartbeat" | "train" | "vote" | "light" | "rewind" | "tap" | "buzzer" | "beep" | "tick" | "rattle"
 
 interface MoodDef {
   bpm: number
@@ -515,6 +515,32 @@ class SoundEngine {
         beep.volume.value = -8 + level * 6
         beep.triggerAttackRelease(level >= 0.7 ? "E6" : "A5", level >= 0.7 ? 0.16 : 0.09, now)
         later([beep], 800)
+        break
+      }
+      case "tick": {
+        // Roleta: o "tac" da lingueta passando por cada fatia.
+        const f = new T.Filter(2600 + level * 1200, "bandpass").connect(out)
+        const click = new T.NoiseSynth({ noise: { type: "white" }, envelope: { attack: 0.001, decay: 0.025, sustain: 0 } }).connect(f)
+        click.volume.value = -10
+        const wood = new T.MembraneSynth({ pitchDecay: 0.008, octaves: 1.5, envelope: { attack: 0.001, decay: 0.05, sustain: 0 } }).connect(out)
+        wood.volume.value = -18
+        click.triggerAttackRelease(0.025, now)
+        wood.triggerAttackRelease("C5", 0.04, now)
+        later([click, f, wood], 600)
+        break
+      }
+      case "rattle": {
+        // Dado chacoalhando: três batidinhas secas, cada uma num tom.
+        const f = new T.Filter(1500, "bandpass").connect(out)
+        const hit = new T.NoiseSynth({ noise: { type: "brown" }, envelope: { attack: 0.001, decay: 0.04, sustain: 0 } }).connect(f)
+        hit.volume.value = -8
+        const knock = new T.MembraneSynth({ pitchDecay: 0.01, octaves: 2, envelope: { attack: 0.001, decay: 0.06, sustain: 0 } }).connect(out)
+        knock.volume.value = -16
+        ;[0, 0.045, 0.1].forEach((dt, i) => {
+          hit.triggerAttackRelease(0.03, now + dt)
+          knock.triggerAttackRelease(["E4", "G4", "C5"][i], 0.04, now + dt)
+        })
+        later([hit, f, knock], 900)
         break
       }
       case "buzzer": {

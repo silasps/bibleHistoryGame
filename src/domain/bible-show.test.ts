@@ -8,12 +8,14 @@ import {
   controla,
   estadoInicial,
   montarTrilha,
+  normalizar,
   painel,
   reduceShow,
   segundosDaVez,
   tentando,
   trilhaDe,
   veCarta,
+  VOGAIS,
   type Config,
   type ShowAction,
   type ShowState,
@@ -64,7 +66,7 @@ describe("rodada", () => {
     s = run(s, { type: "girar", r: 0.4 })
     expect(s.rodada?.estilo).toBe("perguntas")
     expect(run(s, { type: "girar", r: 0 }).rodada?.estilo).toBe("perguntas") // não gira de novo
-    s = run(s, { type: "rolar", r: 0.5 }, { type: "sortear", r1: 0, r2: 0 })
+    s = run(s, { type: "rolar", r: 0.2 }, { type: "sortear", r1: 0, r2: 0 })
     expect(s.rodada?.passos).toBe(2)
     expect(s.fase).toBe("carta")
     s = run(s, { type: "valendo", agora: 0 }, { type: "acertaram", agora: 1 })
@@ -192,37 +194,74 @@ describe("perguntas", () => {
 
 describe("letras", () => {
   const letras = (nomes = ["A", "B", "C"]) => preparar(jogo({ estilos: ["letras"], nomes, categorias: ["quem"] }))
-  it("a palavra fica escondida; letra certa continua, errada passa a vez; 20 s por jogada", () => {
+  const palavraDe = (s: ShowState) => CARTAS.find((c) => c.id === s.carta!.id)!.palavra
+  const letrasDe = (palavra: string) => [...new Set(painel(palavra, []).filter((x) => x.letra).map((x) => normalizar(x.c)))]
+  const fora = (palavra: string) => "BCDFGHJKLMNPQRSTVWXYZ".split("").filter((l) => !letrasDe(palavra).includes(l))
+
+  it("consoante certa: aparece e joga de novo; errada: apaga uma lâmpada e passa; 15 s por jogada", () => {
     let s = letras()
     expect(s.fase).toBe("letras")
-    const palavra = CARTAS.find((c) => c.id === s.carta!.id)!.palavra
-    expect(painel(palavra, []).filter((x) => x.letra).every((x) => !x.aberta)).toBe(true)
-    expect(run(s, { type: "letra", l: "A", agora: 0 })).toBe(s) // precisa tocar em Valendo
+    expect(s.carta!.lampadas).toBe(7)
+    expect(run(s, { type: "letra", l: "B", agora: 0 })).toBe(s) // precisa tocar em Valendo
     s = run(s, { type: "valendo", agora: 0 })
-    expect(s.relogio?.prazo).toBe(20_000)
-    const tem = [...new Set(painel(palavra, []).filter((x) => x.letra).map((x) => x.c.normalize("NFD")[0].toUpperCase()))]
-    const nao = "QWXYZKJ".split("").find((l) => !tem.includes(l))!
-    s = run(s, { type: "letra", l: tem[0], agora: 1000 })
-    expect(tentando(s).id).toBe("l1")
-    expect(s.relogio?.prazo).toBe(21_000)
-    s = run(s, { type: "letra", l: nao, agora: 2000 })
-    expect(tentando(s).id).toBe("l2")
-    expect(run(s, { type: "letra", l: nao, agora: 3000 })).toBe(s) // letra repetida
+    expect(s.relogio?.prazo).toBe(15_000)
+    const palavra = palavraDe(s)
+    const consoante = letrasDe(palavra).find((l) => !VOGAIS.includes(l))!
+    s = run(s, { type: "letra", l: consoante, agora: 1000 })
+    expect([tentando(s).id, s.carta!.lampadas, s.relogio?.prazo]).toEqual(["l1", 7, 16_000])
+    s = run(s, { type: "letra", l: fora(palavra)[0], agora: 2000 })
+    expect([tentando(s).id, s.carta!.lampadas]).toEqual(["l2", 6])
+    expect(run(s, { type: "letra", l: fora(palavra)[0], agora: 3000 })).toBe(s) // letra repetida
     s = run(s, { type: "passar", agora: 5000 })
-    expect(tentando(s).id).toBe("l3")
-    s = run(s, { type: "chutar", palavra: "errado", agora: 6000 })
-    expect(tentando(s).id).toBe("l1") // volta à primeira
-    s = run(s, { type: "chutar", palavra: palavra.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""), agora: 7000 })
-    expect(s.fase).toBe("resultado")
-    expect(s.lados.map((l) => l.casa)).toEqual([1, 0, 0])
+    expect([tentando(s).id, s.carta!.lampadas]).toEqual(["l3", 6]) // tempo esgotado não apaga
   })
 
-  it("abrir a última letra vence; no celular de cada equipe, só quem está na vez tem o teclado", () => {
+  it("vogal sempre apaga uma lâmpada, mesmo estando na palavra", () => {
+    let s = run(letras(), { type: "valendo", agora: 0 })
+    const vogal = letrasDe(palavraDe(s)).find((l) => VOGAIS.includes(l))!
+    s = run(s, { type: "letra", l: vogal, agora: 1 })
+    expect([tentando(s).id, s.carta!.lampadas]).toEqual(["l1", 6])
+  })
+
+  it("arriscar para o tempo e não tem volta; errou apaga e passa; acertou anda", () => {
+    let s = run(letras(), { type: "valendo", agora: 0 })
+    expect(run(s, { type: "chutar", palavra: "x", agora: 1 })).toBe(s) // precisa tocar em Arriscar antes
+    s = run(s, { type: "arriscar", agora: 4000 })
+    expect(s.relogio).toEqual({ restante: 11_000 })
+    expect(run(s, { type: "letra", l: "B", agora: 5000 })).toBe(s)
+    expect(run(s, { type: "passar", agora: 5000 })).toBe(s)
+    expect(run(s, { type: "continuar", agora: 5000 })).toBe(s)
+    s = run(s, { type: "chutar", palavra: "errado", agora: 9000 })
+    expect([tentando(s).id, s.carta!.lampadas, s.carta!.arriscando, s.relogio?.prazo]).toEqual(["l2", 6, false, 24_000])
+    s = run(s, { type: "arriscar", agora: 10_000 }, { type: "chutar", palavra: normalizar(palavraDe(s)).toLowerCase(), agora: 11_000 })
+    expect(s.fase).toBe("resultado")
+    expect(s.lados.map((l) => l.casa)).toEqual([0, 1, 0])
+  })
+
+  it("tempo esgotado avisado por dois celulares: só o primeiro aviso vale", () => {
+    let s = run(letras(["A", "B"]), { type: "valendo", agora: 0 })
+    const prazo = s.relogio!.prazo!
+    s = run(s, { type: "passar", agora: 15_000, prazo }, { type: "passar", agora: 15_050, prazo })
+    expect(tentando(s).id).toBe("l2")
+    let p = run(preparar(jogo({ estilos: ["perguntas"], nomes: ["A", "B"] })), { type: "valendo", agora: 0 })
+    const fim = p.relogio!.prazo!
+    p = run(p, { type: "errou", prazo: fim }, { type: "errou", prazo: fim })
+    expect(p.fase).toBe("passa")
+  })
+
+  it("todas as lâmpadas apagadas: ninguém anda", () => {
+    let s = run(letras(["A", "B"]), { type: "valendo", agora: 0 })
+    for (const l of fora(palavraDe(s)).slice(0, 7)) s = run(s, { type: "letra", l, agora: 1 })
+    expect(s.fase).toBe("resultado")
+    expect(s.ultima?.tipo).toBe("tempo")
+    expect(s.lados.every((l) => l.casa === 0)).toBe(true)
+  })
+
+  it("abrir a última letra vence; numa sala, só quem está na vez tem o teclado", () => {
     let s = run(letras(["A", "B"]), { type: "valendo", agora: 0 })
     expect([controla(s, "l1"), controla(s, "l2")]).toEqual([true, false])
-    const palavra = CARTAS.find((c) => c.id === s.carta!.id)!.palavra
-    const todas = [...new Set(painel(palavra, []).filter((x) => x.letra).map((x) => x.c.normalize("NFD")[0].toUpperCase()))]
-    for (const l of todas) s = run(s, { type: "letra", l, agora: 1 })
+    s = { ...s, carta: { ...s.carta!, lampadas: 99 } }
+    for (const l of letrasDe(palavraDe(s))) s = run(s, { type: "letra", l, agora: 1 })
     expect(s.fase).toBe("resultado")
     expect(s.lados[0].casa).toBe(1)
   })

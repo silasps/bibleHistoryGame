@@ -8,8 +8,11 @@ import { escolheOutro, getSituacao, SITUACOES, type SituacaoId } from "@/content
 export type Modo = "equipes" | "individual"
 export type Estilo = "mimica" | "perguntas" | "letras"
 export const ESTILOS: Estilo[] = ["mimica", "perguntas", "letras"]
-/** Letras: tempo de cada jogada (escolher uma letra ou arriscar a palavra). */
-export const LETRAS_MS = 20_000
+/** Letras: tempo de cada jogada (escolher uma letra ou decidir arriscar). */
+export const LETRAS_MS = 15_000
+/** Letras: lâmpadas acesas no começo, para todas as equipes juntas. */
+export const LAMPADAS = 7
+export const VOGAIS = ["A", "E", "I", "O", "U"]
 
 export interface Lado {
   id: string
@@ -64,8 +67,18 @@ export interface ShowState {
   /**
    * `tentativa`: em Perguntas e em Letras, quantas vezes a vez já passou para a equipe seguinte.
    * `letras`: em Letras, as letras já escolhidas (sem acento, maiúsculas).
+   * `lampadas`: em Letras, quantas ainda estão acesas. `arriscando`: a equipe da vez vai dizer a palavra.
    */
-  carta: { id: string; estilo: Estilo; todos: boolean; trocou: boolean; tentativa: number; letras?: string[] } | null
+  carta: {
+    id: string
+    estilo: Estilo
+    todos: boolean
+    trocou: boolean
+    tentativa: number
+    letras?: string[]
+    lampadas?: number
+    arriscando?: boolean
+  } | null
   usadas: string[]
   /** Cronômetro: prazo absoluto quando corre; `restante` quando pausado. */
   relogio: { prazo?: number; restante: number } | null
@@ -90,13 +103,16 @@ export type ShowAction =
   | { type: "acertaram"; agora: number }
   | { type: "acertou"; por: string }
   | { type: "voltar"; agora: number }
-  | { type: "errou" }
+  /** `prazo`: aviso de tempo esgotado; vale só se o relógio ainda for aquele (vários celulares avisam). */
+  | { type: "errou"; prazo?: number }
   /** Letras: escolhe uma letra; se não houver na palavra, a vez passa. */
   | { type: "letra"; l: string; agora: number }
-  /** Letras: arrisca a palavra inteira; se errar, a vez passa. */
+  /** Letras: a equipe vai arriscar (o tempo para e não tem volta). */
+  | { type: "arriscar"; agora: number }
+  /** Letras: a palavra arriscada; se errar, apaga uma lâmpada e a vez passa. */
   | { type: "chutar"; palavra: string; agora: number }
   /** Letras: o tempo da jogada acabou (ou a equipe passou a vez). */
-  | { type: "passar"; agora: number }
+  | { type: "passar"; agora: number; prazo?: number }
   | { type: "proxima" }
   /** Cumpre a casa especial; `alvo` quando a casa manda escolher alguém. */
   | { type: "cumprir"; alvo?: string }
@@ -106,7 +122,7 @@ export type ShowAction =
 export const CORES = ["#d8a948", "#5fb3c9", "#e0736b", "#8fbf6a", "#b18ad8", "#e89a4f", "#e7c6a0", "#6fd1b0", "#f08fb5", "#9aa7ff", "#c9d36b", "#ff9f80"]
 export const LIMITES = { equipes: { min: 2, max: 4 }, individual: { min: 2, max: 12 } } as const
 export const SEGUNDOS = [30, 45, 60, 90] as const
-export const PASSOS = [1, 2, 3] as const
+export const PASSOS = [1, 2, 3, 4, 5, 6] as const
 export const TRILHAS = [
   { casas: 15, nome: "Curta" },
   { casas: 25, nome: "Média" },
@@ -320,6 +336,9 @@ function avancar(state: ShowState, ids: string[]): ShowState {
   }
 }
 
+/** Letras: as lâmpadas se apagaram; a palavra aparece e ninguém anda. */
+const apagou = (state: ShowState): ShowState => ({ ...state, fase: "resultado", relogio: null, ultima: { tipo: "tempo", cartaId: state.carta!.id, moveu: [] } })
+
 /** Passa a vez: "o sol parou" joga de novo; quem está no exílio pula uma vez. */
 function passarVez(state: ShowState): ShowState {
   const n = state.lados.length
@@ -397,7 +416,7 @@ export function reduceShow(state: ShowState, a: ShowAction): ShowState {
       const { id, usadas } = sortearCarta(state, categoria, a.r1)
       // Letras: ninguém vê a carta; a palavra aparece escondida para todos.
       if (rodada.estilo === "letras")
-        return { ...state, fase: "letras", carta: { id, estilo: "letras", todos: rodada.todos, trocou: false, tentativa: 0, letras: [] }, relogio: { restante: LETRAS_MS }, usadas }
+        return { ...state, fase: "letras", carta: { id, estilo: "letras", todos: rodada.todos, trocou: false, tentativa: 0, letras: [], lampadas: LAMPADAS }, relogio: { restante: LETRAS_MS }, usadas }
       return { ...state, fase: "carta", carta: { id, estilo: rodada.estilo, todos: rodada.todos, trocou: false, tentativa: 0 }, usadas }
     }
     case "trocar": {
@@ -419,7 +438,7 @@ export function reduceShow(state: ShowState, a: ShowAction): ShowState {
       if ((state.fase !== "tempo" && state.fase !== "letras") || !state.relogio?.prazo) return state
       return { ...state, relogio: { restante: Math.max(0, state.relogio.prazo - a.agora) } }
     case "continuar":
-      if ((state.fase !== "tempo" && state.fase !== "letras") || !state.relogio || state.relogio.prazo) return state
+      if ((state.fase !== "tempo" && state.fase !== "letras") || !state.relogio || state.relogio.prazo || state.carta?.arriscando) return state
       return { ...state, relogio: { prazo: a.agora + state.relogio.restante, restante: state.relogio.restante } }
     case "acertaram": {
       if (state.fase !== "tempo" || !state.carta) return state
@@ -447,26 +466,39 @@ export function reduceShow(state: ShowState, a: ShowAction): ShowState {
     case "letra": {
       const c = state.carta
       const l = normalizar(a.l)
-      if (state.fase !== "letras" || !c || !state.relogio?.prazo || !/^[A-Z]$/.test(l) || c.letras?.includes(l)) return state
+      if (state.fase !== "letras" || !c || c.arriscando || !state.relogio?.prazo || !/^[A-Z]$/.test(l) || c.letras?.includes(l)) return state
       const letras = [...(c.letras ?? []), l]
       const palavra = getCartaPalavra(c.id)
-      const com = { ...state, carta: { ...c, letras } }
-      if (painel(palavra, letras).every((x) => x.aberta)) return avancar(com, [tentando(state).id])
       const tem = normalizar(palavra).includes(l)
-      // Acertou a letra: a mesma equipe continua. Errou: a vez passa.
-      return { ...com, carta: { ...com.carta, tentativa: c.tentativa + (tem ? 0 : 1) }, relogio: { prazo: a.agora + LETRAS_MS, restante: LETRAS_MS } }
+      // Letra que não está na palavra apaga uma lâmpada; vogal apaga sempre ("comprar vogal").
+      const lampadas = (c.lampadas ?? LAMPADAS) - (!tem || VOGAIS.includes(l) ? 1 : 0)
+      const com: ShowState = { ...state, carta: { ...c, letras, lampadas } }
+      if (painel(palavra, letras).every((x) => x.aberta)) return avancar(com, [tentando(state).id])
+      if (lampadas <= 0) return apagou(com)
+      // Acertou a letra: a mesma equipe joga de novo. Errou: a vez passa.
+      return { ...com, carta: { ...com.carta!, tentativa: c.tentativa + (tem ? 0 : 1) }, relogio: { prazo: a.agora + LETRAS_MS, restante: LETRAS_MS } }
+    }
+    case "arriscar": {
+      const c = state.carta
+      if (state.fase !== "letras" || !c || c.arriscando || !state.relogio?.prazo) return state
+      return { ...state, carta: { ...c, arriscando: true }, relogio: { restante: Math.max(0, state.relogio.prazo - a.agora) } }
     }
     case "chutar": {
       const c = state.carta
-      if (state.fase !== "letras" || !c || !state.relogio?.prazo) return state
+      if (state.fase !== "letras" || !c || !c.arriscando) return state
       const so = (t: string) => normalizar(t).replace(/[^A-Z]/g, "")
       if (so(a.palavra) && so(a.palavra) === so(getCartaPalavra(c.id))) return avancar(state, [tentando(state).id])
-      return { ...state, carta: { ...c, tentativa: c.tentativa + 1 }, relogio: { prazo: a.agora + LETRAS_MS, restante: LETRAS_MS } }
+      const lampadas = (c.lampadas ?? LAMPADAS) - 1
+      const errou: ShowState = { ...state, carta: { ...c, lampadas, arriscando: false, tentativa: c.tentativa + 1 } }
+      if (lampadas <= 0) return apagou(errou)
+      return { ...errou, relogio: { prazo: a.agora + LETRAS_MS, restante: LETRAS_MS } }
     }
     case "passar":
-      if (state.fase !== "letras" || !state.carta) return state
+      if (state.fase !== "letras" || !state.carta || state.carta.arriscando) return state
+      if (a.prazo !== undefined && state.relogio?.prazo !== a.prazo) return state
       return { ...state, carta: { ...state.carta, tentativa: state.carta.tentativa + 1 }, relogio: { prazo: a.agora + LETRAS_MS, restante: LETRAS_MS } }
     case "errou":
+      if (a.prazo !== undefined && state.relogio?.prazo !== a.prazo) return state
       if (state.fase === "letras" && state.carta) return { ...state, fase: "resultado", relogio: null, ultima: { tipo: "tempo", cartaId: state.carta.id, moveu: [] } }
       if ((state.fase !== "tempo" && state.fase !== "quem") || !state.carta) return state
       // Perguntas em equipes: a equipe seguinte tenta, com menos tempo, até todas terem tentado.

@@ -36,10 +36,14 @@ const ActionSchema: z.ZodType<ShowAction> = z.discriminatedUnion("type", [
   z.object({ type: z.literal("acertaram"), agora: T }),
   z.object({ type: z.literal("acertou"), por: LadoId }),
   z.object({ type: z.literal("voltar"), agora: T }),
-  z.object({ type: z.literal("errou") }),
+  z.object({ type: z.literal("errou"), prazo: T.optional() }),
+  z.object({ type: z.literal("letra"), l: z.string().length(1), agora: T }),
+  z.object({ type: z.literal("arriscar"), agora: T }),
+  z.object({ type: z.literal("chutar"), palavra: z.string().max(60), agora: T }),
+  z.object({ type: z.literal("passar"), agora: T, prazo: T.optional() }),
   z.object({ type: z.literal("proxima") }),
   z.object({ type: z.literal("cumprir"), alvo: LadoId.optional() }),
-  z.object({ type: z.literal("revanche") }),
+  z.object({ type: z.literal("revanche"), r: R.optional() }),
   z.object({ type: z.literal("configurar") }),
 ])
 

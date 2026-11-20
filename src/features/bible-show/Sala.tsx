@@ -35,9 +35,15 @@ export function SalaShow({ code }: { code: string }) {
   const [eu, setEu] = useNoAparelho(`bph-show-eu-${code}`)
   const [anf] = useNoAparelho(`bph-show-anf-${code}`)
   const [convite, setConvite] = useState(false)
+  const [assumida, setAssumida] = useState<string | null>(null)
   const anfitriao = anf === "1"
   const meu = state?.lados.find((l) => l.id === eu) ?? null
-  const jogo = useMemo<Jogo | null>(() => (state && meu ? { state, dispatch, agora, eu: meu.id, anfitriao } : null), [state, dispatch, agora, meu, anfitriao])
+  // A vez em curso: quem conduz, a carta, quem tenta e quem cumpre a casa especial.
+  const vez = state ? [state.vez, state.rodada?.lider, state.carta?.id, state.carta?.tentativa, state.fase === "situacao" ? state.pendentes[0]?.lado : ""].join("|") : ""
+  const jogo = useMemo<Jogo | null>(
+    () => (state && meu ? { state, dispatch, agora, eu: meu.id, anfitriao, assumiu: assumida === vez, assumir: () => setAssumida(vez) } : null),
+    [state, dispatch, agora, meu, anfitriao, assumida, vez],
+  )
 
   if (!state)
     return (

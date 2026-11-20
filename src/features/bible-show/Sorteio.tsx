@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "motion/react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { Estilo } from "@/domain/bible-show"
 import { HAPTIC, vibrate } from "@/fx/haptics"
 import { useFx } from "@/fx/useFx"
@@ -39,6 +39,19 @@ export function Roleta({ opcoes, resultado, chave, onFim }: { opcoes: Estilo[]; 
   useEffect(() => {
     if (parou) onFim?.()
   }, [parou, onFim])
+  // Um "tac" a cada fatia que passa pelo ponteiro (com folga mínima entre eles).
+  const fatiaAtual = useRef(0)
+  const ultimoTac = useRef(0)
+  const tac = (rotate: number) => {
+    if (!animar || parou) return
+    const k = Math.floor((rotate + passo / 2) / passo)
+    if (k === fatiaAtual.current) return
+    fatiaAtual.current = k
+    const agora = performance.now()
+    if (agora - ultimoTac.current < 45) return
+    ultimoTac.current = agora
+    stinger("tick", Math.min(1, rotate / final))
+  }
   const fatia = (i: number) => {
     const a0 = ((i * passo - 90) * Math.PI) / 180
     const a1 = (((i + 1) * passo - 90) * Math.PI) / 180
@@ -54,6 +67,7 @@ export function Roleta({ opcoes, resultado, chave, onFim }: { opcoes: Estilo[]; 
           initial={{ rotate: animar ? 0 : final }}
           animate={{ rotate: final }}
           transition={{ duration: animar ? 3.2 : 0, ease: [0.12, 0.65, 0.2, 1] }}
+          onUpdate={(v) => tac(Number(v.rotate ?? 0))}
           onAnimationComplete={() => {
             if (parou) return
             stinger("reveal")
@@ -84,20 +98,42 @@ export function Roleta({ opcoes, resultado, chave, onFim }: { opcoes: Estilo[]; 
   )
 }
 
+const [E, M, D] = [27, 50, 73]
 const PONTOS: Record<number, [number, number][]> = {
-  1: [[50, 50]],
+  1: [[M, M]],
   2: [
-    [30, 30],
-    [70, 70],
+    [E, E],
+    [D, D],
   ],
   3: [
-    [28, 28],
-    [50, 50],
-    [72, 72],
+    [E, E],
+    [M, M],
+    [D, D],
+  ],
+  4: [
+    [E, E],
+    [D, E],
+    [E, D],
+    [D, D],
+  ],
+  5: [
+    [E, E],
+    [D, E],
+    [M, M],
+    [E, D],
+    [D, D],
+  ],
+  6: [
+    [E, E],
+    [D, E],
+    [E, M],
+    [D, M],
+    [E, D],
+    [D, D],
   ],
 }
 
-/** Dado de 1 a 3 casas. */
+/** Dado de 1 a 6 casas. */
 export function Dado({ valor, chave }: { valor: number | null; chave: string | null }) {
   const stinger = useStinger()
   const animar = usePrimeiraVez(valor ? chave : null)
@@ -121,8 +157,8 @@ export function Dado({ valor, chave }: { valor: number | null; chave: string | n
         vibrate(HAPTIC.light)
         return
       }
-      setMostrado((m) => ((m ?? 1) % 3) + 1)
-      stinger("tap", n / 12)
+      setMostrado((m) => ((m ?? 1) + 1 + Math.floor(Math.random() * 4)) % 6 + 1)
+      if (n % 2 === 1) stinger("rattle")
     }, 90)
     return () => {
       clearTimeout(t0)
@@ -140,7 +176,7 @@ export function Dado({ valor, chave }: { valor: number | null; chave: string | n
         {v ? (
           <svg viewBox="0 0 100 100" className="size-full" aria-label={`${v} ${v === 1 ? "casa" : "casas"}`}>
             {PONTOS[v].map(([x, y], i) => (
-              <circle key={i} cx={x} cy={y} r="10" fill="#0b0f19" />
+              <circle key={i} cx={x} cy={y} r="9" fill="#0b0f19" />
             ))}
           </svg>
         ) : (

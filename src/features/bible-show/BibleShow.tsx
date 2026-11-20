@@ -25,11 +25,11 @@ export function BibleShow() {
 
 const REGRAS = [
   "Na sua vez, girem a roleta: ela decide se a carta é de mímica, perguntas ou letras.",
-  "Depois, sorteiem quantas casas a carta vale: de 1 a 3.",
+  "Depois, joguem o dado: ele diz quantas casas a carta vale, de 1 a 6.",
   "A categoria da carta é a da casa em que vocês estão. Na partida e nas casas especiais, ela é sorteada.",
   "Mímica: só quem representa vê a carta. Nada de falar nem fazer sons.",
   "Perguntas: todos veem a carta, menos quem adivinha. Essa pessoa faz perguntas e o grupo só responde sim ou não. Em equipes, se o tempo acabar, a equipe seguinte tenta com metade do tempo.",
-  "Letras: a palavra aparece escondida para todos. Na sua vez, escolham uma letra: se ela estiver na palavra, aparece e vocês continuam; se não, a vez passa. Também dá para arriscar a palavra inteira. Cada jogada tem 20 segundos.",
+  "Letras: a palavra aparece escondida para todos e há 7 lâmpadas acesas. Na sua vez (15 s), escolham uma letra: se estiver na palavra, aparece e vocês jogam de novo; se não estiver, apaga uma lâmpada e a vez passa. Vogal sempre apaga uma lâmpada. Ao tocar em Arriscar, o tempo para e não tem volta: errou, apaga uma lâmpada e a vez passa. Se todas se apagarem, ninguém anda.",
   "Acertou antes do tempo acabar? Anda as casas sorteadas (Desafio: uma a mais).",
   "Casas especiais: quem para nelas cumpre o que a casa diz, como voltar casas, ficar uma vez de fora ou reunir todo o arraial numa rodada para todos.",
   "Quem chegar primeiro ao fim da trilha vence.",
@@ -282,7 +282,7 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
         <ul className="space-y-1 text-xs text-mist">
           {c.estilos.length > 1 && <li>Com mais de um ligado, a roleta sorteia o jeito a cada vez.</li>}
           {c.estilos.includes("letras") && (
-            <li>Letras: a palavra aparece escondida para todos. Na sua vez, escolham uma letra ou arrisquem a palavra; errou, a vez passa. Cada jogada tem 20 s.</li>
+            <li>Letras: palavra escondida e 7 lâmpadas para todos. Letra errada ou vogal apaga uma lâmpada; se todas se apagarem, ninguém anda. 15 s por jogada.</li>
           )}
           {c.estilos.includes("perguntas") && (
             <li>

@@ -14,8 +14,11 @@ export interface Jogo {
   agora: () => number
   /** Lado deste aparelho na sala; nulo num celular só. */
   eu: string | null
-  /** Quem criou a sala: pode conduzir qualquer vez (se um celular sair). */
+  /** Quem criou a sala: pode assumir a vez de outro celular (se ele sair). */
   anfitriao: boolean
+  /** O anfitrião assumiu a vez em curso. */
+  assumiu?: boolean
+  assumir?: () => void
 }
 
 const Ctx = createContext<Jogo | null>(null)
@@ -30,7 +33,7 @@ export function useJogo() {
   return {
     ...j,
     /** Este aparelho conduz a vez agora. */
-    conduz: controla(j.state, j.eu, j.anfitriao),
+    conduz: controla(j.state, j.eu) || (j.anfitriao && !!j.assumiu),
     /** Este aparelho pode mostrar a carta. */
     ve: veCarta(j.state, j.eu),
     sala: j.eu !== null,
