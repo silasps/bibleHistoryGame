@@ -1,12 +1,12 @@
 "use client"
 
-import { BookOpen, Check, Dices, ExternalLink, Eye, Flame, Hand, Hourglass, Pause, Play, RotateCcw, Send, Shuffle, SkipForward, Trophy, Volume2, X } from "lucide-react"
+import { BookOpen, Check, Dices, ExternalLink, Eye, Hand, Hourglass, Pause, Play, RotateCcw, Send, Shuffle, Trophy, Volume2, X } from "lucide-react"
 import { motion } from "motion/react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { getCarta } from "@/content/bible-show/cartas"
 import { escolheOutro, getSituacao, regraDoEfeito } from "@/content/bible-show/situacoes"
 import { formatRef, linkNaa } from "@/content/refs"
-import { casaDe, classificacao, LAMPADAS, LETRAS_MS, lider, normalizar, painel, segundosDaVez, tentando, VOGAIS, type Estilo, type ShowState } from "@/domain/bible-show"
+import { casaDe, classificacao, emJogo, LETRA_CERTA_MS, LETRA_ERRADA_MS, lider, normalizar, painel, segundosDaVez, tempoLetras, tentando, tentandoCom, textoTempo, type Estilo, type ShowState } from "@/domain/bible-show"
 import { PhoneSheet } from "@/features/presentation/PhoneDock"
 import { HAPTIC, vibrate } from "@/fx/haptics"
 import { useFx } from "@/fx/useFx"
@@ -78,8 +78,8 @@ function instrucao(state: ShowState, estilo: Estilo | null): string {
   const quem = lider(state).nome
   if (estilo === "letras")
     return equipes
-      ? "Palavra escondida e 7 lâmpadas para todas as equipes. Letra certa: joguem de novo. Letra errada ou vogal apaga uma lâmpada. Quem acertar a palavra anda."
-      : "Palavra escondida e 7 lâmpadas para todos. Letra certa: jogue de novo. Letra errada ou vogal apaga uma lâmpada. Quem acertar a palavra anda."
+      ? `Palavra escondida. Cada equipe tem ${textoTempo(tempoLetras(state.config) / 1000)}: letra certa dá 10 s, errada tira 5 s. A vez só passa quando o tempo acaba ou quando erram a palavra.`
+      : `Palavra escondida. Cada um tem ${textoTempo(tempoLetras(state.config) / 1000)}: letra certa dá 10 s, errada tira 5 s. A vez só passa quando o tempo acaba ou quando erra a palavra.`
   if (state.rodada?.todos)
     return estilo === "perguntas"
       ? "Cada equipe manda alguém para perguntar, todos ao mesmo tempo. Essas pessoas não veem a carta. Quem acertar primeiro anda."
@@ -259,7 +259,7 @@ export function CartaSecreta() {
               }}
               className={cn(BIG, "bg-gold text-night")}
             >
-              <Play className="size-5 fill-current" aria-hidden /> Valendo! ({segundosDaVez(state)}s)
+              <Play className="size-5 fill-current" aria-hidden /> Valendo! ({textoTempo(segundosDaVez(state))})
             </button>
             <button
               type="button"
@@ -280,6 +280,9 @@ export function CartaSecreta() {
     </div>
   )
 }
+
+/** "52", "1:05", "3:00". */
+const relogioTexto = (seg: number) => (seg < 60 ? String(seg) : `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, "0")}`)
 
 /** Cronômetro grande: o grupo vê o tempo, nunca a palavra. */
 export function Cronometro() {
@@ -328,7 +331,7 @@ export function Cronometro() {
   const perguntas = state.carta!.estilo === "perguntas"
   const todos = state.carta!.todos
   const quem = tentando(state)
-  const passa = perguntas && !todos && state.config.modo === "equipes" && state.carta!.tentativa + 1 < state.lados.length
+  const passa = perguntas && !todos && state.config.modo === "equipes" && state.carta!.tentativa + 1 < emJogo(state).length
   const R = 46
   const C = 2 * Math.PI * R
 
@@ -372,7 +375,7 @@ export function Cronometro() {
           transition={{ duration: 1, repeat: Infinity }}
         >
           <div>
-            <p className={cn("font-display text-[min(30vw,20dvh)] leading-none tabular-nums", urgente ? "text-[#ff9f80]" : "text-parchment")}>{seg}</p>
+            <p className={cn("font-display leading-none tabular-nums", seg >= 60 ? "text-[min(22vw,15dvh)]" : "text-[min(30vw,20dvh)]", urgente ? "text-[#ff9f80]" : "text-parchment")}>{relogioTexto(seg)}</p>
             {!correndo && state.fase === "tempo" && <p className="text-sm uppercase tracking-[0.3em] text-mist">Pausado</p>}
           </div>
         </motion.div>
@@ -432,7 +435,7 @@ export function QuemAcertou() {
   const { state, dispatch, agora, conduz } = useJogo()
   const ator = lider(state)
   const individual = state.config.modo === "individual" && !state.carta?.todos
-  const opcoes = individual ? state.lados.filter((l) => l.id !== ator.id) : state.lados
+  const opcoes = individual ? emJogo(state).filter((l) => l.id !== ator.id) : emJogo(state)
   if (!conduz)
     return (
       <div className="flex min-h-full flex-col items-center justify-center gap-4">
@@ -478,9 +481,7 @@ export function Passa() {
   const { state, dispatch, agora, conduz } = useJogo()
   const stinger = useStinger()
   const quem = tentando(state)
-  const n = state.lados.length
-  const i = state.lados.indexOf(lider(state))
-  const antes = state.lados[(i + state.carta!.tentativa - 1 + n) % n]
+  const antes = tentandoCom(state, state.carta!.tentativa - 1)
   const carta = getCarta(state.carta!.id)!
   return (
     <div className="flex min-h-full flex-col items-center gap-4 text-center">
@@ -509,7 +510,7 @@ export function Passa() {
             }}
             className={cn(BIG, "bg-gold text-night")}
           >
-            <Play className="size-5 fill-current" aria-hidden /> Valendo! ({segundosDaVez(state)}s)
+            <Play className="size-5 fill-current" aria-hidden /> Valendo! ({textoTempo(segundosDaVez(state))})
           </button>
         ) : (
           <Aguarde>Aguardando {lider(state).nome} tocar em Valendo!</Aguarde>
@@ -525,12 +526,11 @@ export function Resultado() {
   const ultima = state.ultima!
   const carta = getCarta(ultima.cartaId)!
   const acertou = ultima.tipo === "acerto"
-  const apagou = !acertou && state.carta?.estilo === "letras" && (state.carta.lampadas ?? 1) <= 0
   const nome = (id: string) => state.lados.find((l) => l.id === id)?.nome ?? ""
   return (
     <div className="flex min-h-full flex-col gap-3">
       <div className="flex flex-col items-center text-center">
-        <p className={cn("font-display text-4xl", acertou ? "text-[#8fdc93]" : "text-[#ff9f80]")}>{acertou ? "Acertou!" : apagou ? "As lâmpadas se apagaram" : "Tempo!"}</p>
+        <p className={cn("font-display text-4xl", acertou ? "text-[#8fdc93]" : "text-[#ff9f80]")}>{acertou ? "Acertou!" : "Tempo!"}</p>
         <p className="mt-1 text-sm text-mist">A palavra era</p>
         <p className="font-display text-3xl leading-tight text-parchment">{carta.palavra}</p>
         <p className="text-xs text-sand">{formatRef(carta.ref as RefArg, "long")}</p>
@@ -570,7 +570,7 @@ export function Situacao() {
   const Icone = info.icone
   const quem = state.lados.find((l) => l.id === p.lado)!
   const equipes = state.config.modo === "equipes"
-  const outros = state.lados.filter((l) => l.id !== quem.id)
+  const outros = emJogo(state).filter((l) => l.id !== quem.id)
   useEffect(() => {
     stinger("reveal")
     vibrate(HAPTIC.seal)
@@ -717,33 +717,36 @@ export function AvisoSom() {
 
 const ALFABETO = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")
 
-/** Letras: a palavra escondida, o teclado e o tempo de cada jogada. */
+/** Letras: a palavra escondida, o teclado e o tempo da equipe. */
 export function Letras() {
   const { state, dispatch, agora, conduz } = useJogo()
   const stinger = useStinger()
+  const fx = useFx()
   const carta = getCarta(state.carta!.id)!
   const escolhidas = state.carta!.letras ?? []
   const quem = tentando(state)
   const relogio = state.relogio
   const correndo = !!relogio?.prazo
-  const [restante, setRestante] = useState(relogio?.restante ?? LETRAS_MS)
+  const comecou = !!state.carta!.comecou
+  const cheio = tempoLetras(state.config)
+  const [restante, setRestante] = useState(relogio?.restante ?? cheio)
   const [chute, setChute] = useState("")
   const arriscando = !!state.carta!.arriscando
-  const lampadas = state.carta!.lampadas ?? LAMPADAS
   const ultimoSeg = useRef<number | null>(null)
   const fim = useRef<number | null>(null)
   const naPalavra = new Set(painel(carta.palavra, []).filter((x) => x.letra).map((x) => normalizar(x.c)))
+  const ultima = escolhidas.at(-1)
 
   useEffect(() => {
     const tick = () => {
-      const ms = relogio?.prazo ? Math.max(0, relogio.prazo - agora()) : (relogio?.restante ?? LETRAS_MS)
+      const ms = relogio?.prazo ? Math.max(0, relogio.prazo - agora()) : (relogio?.restante ?? cheio)
       setRestante(ms)
       const seg = Math.ceil(ms / 1000)
       if (relogio?.prazo && seg !== ultimoSeg.current) {
         ultimoSeg.current = seg
-        if (seg <= 5 && seg > 0) stinger("beep", 1 - seg / 10)
+        if (seg <= 10 && seg > 0) stinger("beep", 1 - seg / 10)
       }
-      // Acabou o tempo da jogada: a vez passa. Todos avisam; só o primeiro aviso deste relógio vale.
+      // Acabou o tempo da equipe: a vez passa. Todos avisam; só o primeiro aviso deste relógio vale.
       if (relogio?.prazo && ms <= 0 && fim.current !== relogio.prazo) {
         fim.current = relogio.prazo
         stinger("buzzer")
@@ -753,7 +756,7 @@ export function Letras() {
     }
     const id = setInterval(tick, 100)
     return () => clearInterval(id)
-  }, [relogio, agora, conduz, dispatch, stinger])
+  }, [relogio, agora, conduz, dispatch, stinger, cheio])
 
   // A palavra em grupos (um por palavra), para quebrar a linha só entre palavras.
   const grupos = painel(carta.palavra, escolhidas).reduce<ReturnType<typeof painel>[]>(
@@ -767,6 +770,7 @@ export function Letras() {
   const maior = Math.max(...grupos.map((g) => g.length))
   const lado = Math.min(36, Math.floor((340 - (maior - 1) * 4) / maior))
   const seg = Math.ceil(restante / 1000)
+  const urgente = correndo && seg <= 10
 
   return (
     <div className="flex min-h-full flex-col items-center gap-3 text-center">
@@ -782,17 +786,28 @@ export function Letras() {
       </div>
 
       <div className="h-2 w-full overflow-hidden rounded-full bg-white/10" role="timer" aria-label={`${seg} segundos`}>
-        <div className={cn("h-full rounded-full transition-[width] duration-100 ease-linear", seg <= 5 ? "bg-[#e0736b]" : "bg-gold")} style={{ width: `${(restante / LETRAS_MS) * 100}%` }} />
+        <div className={cn("h-full rounded-full transition-[width] duration-100 ease-linear", urgente ? "bg-[#e0736b]" : "bg-gold")} style={{ width: `${Math.min(1, restante / cheio) * 100}%` }} />
       </div>
-      <div className="-mt-1 flex w-full items-center justify-between">
-        <div className="flex items-center gap-1" role="img" aria-label={`${lampadas} de ${LAMPADAS} lâmpadas acesas`}>
-          {Array.from({ length: LAMPADAS }, (_, i) => (
-            <motion.span key={i} animate={{ opacity: i < lampadas ? 1 : 0.25, scale: i < lampadas ? 1 : 0.8 }} transition={{ duration: 0.4 }}>
-              <Flame className={cn("size-5", i < lampadas ? "fill-gold/60 text-gold-bright" : "text-mist")} aria-hidden />
+      <div className="-mt-1 flex w-full items-center justify-between gap-2">
+        <p className="text-left text-xs text-mist">
+          <span className="text-[#8fdc93]">Certa +{LETRA_CERTA_MS / 1000} s</span> · <span className="text-[#ff9f80]">Errada −{LETRA_ERRADA_MS / 1000} s</span>
+        </p>
+        <div className="relative flex items-baseline gap-2">
+          {ultima && (
+            <motion.span
+              key={escolhidas.length}
+              initial={{ opacity: 1, y: 0 }}
+              animate={{ opacity: 0, y: fx.motion ? -18 : 0 }}
+              transition={{ duration: 1.4, ease: "easeOut" }}
+              className={cn("pointer-events-none absolute -left-12 top-0 text-sm font-semibold", naPalavra.has(ultima) ? "text-[#8fdc93]" : "text-[#ff9f80]")}
+              aria-hidden
+            >
+              {naPalavra.has(ultima) ? `+${LETRA_CERTA_MS / 1000} s` : `−${LETRA_ERRADA_MS / 1000} s`}
             </motion.span>
-          ))}
+          )}
+          {!correndo && <span className="text-xs text-mist">{arriscando ? "Arriscando…" : comecou ? "Pausado" : ""}</span>}
+          <span className={cn("font-display text-3xl leading-none tabular-nums", urgente ? "text-[#ff9f80]" : "text-parchment")}>{relogioTexto(seg)}</span>
         </div>
-        <p className={cn("text-xs tabular-nums", seg <= 5 && correndo ? "text-[#ff9f80]" : "text-mist")}>{arriscando ? "Arriscando…" : correndo ? `${seg}s` : "Pausado"}</p>
       </div>
 
       <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 py-2" aria-label="Palavra escondida">
@@ -812,17 +827,20 @@ export function Letras() {
       </div>
 
       {conduz ? (
-        !correndo && escolhidas.length === 0 ? (
-          <button
-            type="button"
-            onClick={() => {
-              stinger("vote")
-              dispatch({ type: "valendo", agora: agora() })
-            }}
-            className={cn(BIG, "mt-auto max-w-md bg-gold text-night")}
-          >
-            <Play className="size-5 fill-current" aria-hidden /> Valendo! (15s por jogada)
-          </button>
+        !comecou ? (
+          <div className="mt-auto grid w-full max-w-md gap-2">
+            {state.carta!.tentativa > 0 && <p className="text-sm text-sand">A vez passou para {quem.nome}. As letras abertas continuam.</p>}
+            <button
+              type="button"
+              onClick={() => {
+                stinger("vote")
+                dispatch({ type: "valendo", agora: agora() })
+              }}
+              className={cn(BIG, "bg-gold text-night")}
+            >
+              <Play className="size-5 fill-current" aria-hidden /> Valendo! ({textoTempo(cheio / 1000)})
+            </button>
+          </div>
         ) : arriscando ? (
           <form
             className="mt-auto grid w-full max-w-md gap-2"
@@ -832,7 +850,7 @@ export function Letras() {
               setChute("")
             }}
           >
-            <p className="text-sm text-sand">O tempo parou. Digitem a resposta: se errarem, apaga uma lâmpada e a vez passa.</p>
+            <p className="text-sm text-sand">O tempo parou. Digitem a resposta: se errarem, a vez passa.</p>
             <input
               autoFocus
               value={chute}
@@ -852,39 +870,31 @@ export function Letras() {
             <div className="grid grid-cols-7 gap-1.5" aria-label="Teclado">
               {ALFABETO.map((l) => {
                 const usada = escolhidas.includes(l)
-                const vogal = VOGAIS.includes(l)
                 return (
                   <button
                     key={l}
                     type="button"
                     disabled={usada || !correndo}
-                    aria-label={vogal ? `${l} (vogal: apaga uma lâmpada)` : l}
                     onClick={() => {
                       const certa = naPalavra.has(l)
-                      vibrate(certa && !vogal ? HAPTIC.tap : HAPTIC.no)
+                      vibrate(certa ? HAPTIC.tap : HAPTIC.no)
                       stinger(certa ? "reveal" : "tap")
                       dispatch({ type: "letra", l, agora: agora() })
                     }}
                     className={cn(
-                      "relative h-11 rounded-xl border font-semibold transition active:scale-95",
+                      "h-11 rounded-xl border font-semibold transition active:scale-95",
                       usada ? (naPalavra.has(l) ? "border-[#6fbf73]/50 bg-[#6fbf73]/20 text-[#8fdc93]" : "border-border bg-night/40 text-mist/40 line-through") : "border-gold/40 bg-night/80 text-parchment",
                     )}
                   >
                     {l}
-                    {vogal && !usada && <Flame className="absolute right-0.5 top-0.5 size-3 text-gold" aria-hidden />}
                   </button>
                 )
               })}
             </div>
-            <p className="text-center text-xs text-mist">
-              Letra que não está na palavra, ou vogal <Flame className="inline size-3 align-[-1px] text-gold" aria-hidden />, apaga uma lâmpada.
-            </p>
-            <div className="grid grid-cols-3 gap-2">
+            <p className="text-center text-xs text-mist">A vez só passa quando o tempo acaba ou quando vocês arriscam e erram a palavra.</p>
+            <div className="grid grid-cols-2 gap-2">
               <button type="button" onClick={() => dispatch(correndo ? { type: "pausar", agora: agora() } : { type: "continuar", agora: agora() })} className={cn(BIG, "h-12 border border-border text-sm text-parchment")}>
                 {correndo ? <Pause className="size-4" aria-hidden /> : <Play className="size-4" aria-hidden />} {correndo ? "Pausar" : "Seguir"}
-              </button>
-              <button type="button" disabled={!correndo} onClick={() => dispatch({ type: "passar", agora: agora() })} className={cn(BIG, "h-12 border border-border text-sm text-parchment")}>
-                <SkipForward className="size-4" aria-hidden /> Passar
               </button>
               <button
                 type="button"
@@ -903,7 +913,7 @@ export function Letras() {
       ) : (
         <div className="mt-auto w-full max-w-md">
           <Aguarde>
-            {arriscando ? `${quem.nome} está arriscando a palavra!` : correndo || escolhidas.length ? `${quem.nome} está escolhendo` : `Aguardando ${quem.nome} tocar em Valendo!`}
+            {arriscando ? `${quem.nome} está arriscando a palavra!` : !comecou ? `Aguardando ${quem.nome} tocar em Valendo!` : correndo ? `${quem.nome} está escolhendo` : `${quem.nome} pausou o tempo`}
           </Aguarde>
         </div>
       )}

@@ -1,16 +1,19 @@
 "use client"
 
-import { ArrowLeft, Plus, QrCode, Smartphone, X } from "lucide-react"
+import { ArrowLeft, Plus, QrCode, Smartphone, Users, X } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMemo, useState, type ReactNode } from "react"
 import { criarSalaShow } from "@/app/actions/show"
 import { isRoomCode, normalizeRoomCode } from "@/data/room-code"
 import { CATEGORIAS, type CategoriaId } from "@/content/bible-show/cartas"
-import { CORES, ESTILOS, LIMITES, SEGUNDOS, TRILHAS, type Config, type Estilo, type Modo } from "@/domain/bible-show"
+import { comoJogar } from "@/content/bible-show/como-jogar"
+import { CORES, ESTILOS, LIMITES, nivelDe, NIVEIS, SEGUNDOS, SEGUNDOS_LETRAS, SEGUNDOS_PERGUNTAS, textoTempo, TRILHAS, type Config, type Estilo, type Modo } from "@/domain/bible-show"
 import { cn } from "@/lib/utils"
 import { useBibleShow } from "@/stores/bible-show"
 import { JogoProvider, type Jogo } from "./jogo"
+import { Participantes } from "./Participantes"
+import { COR_ESTILO } from "./Sorteio"
 import { AvisoSom, CartaSecreta, Cronometro, Fim, Letras, Passa, QuemAcertou, Resultado, Situacao, Vez } from "./Telas"
 import { ESTILO, ICONE } from "./Trilha"
 
@@ -29,7 +32,8 @@ const REGRAS = [
   "A categoria da carta é a da casa em que vocês estão. Na partida e nas casas especiais, ela é sorteada.",
   "Mímica: só quem representa vê a carta. Nada de falar nem fazer sons.",
   "Perguntas: todos veem a carta, menos quem adivinha. Essa pessoa faz perguntas e o grupo só responde sim ou não. Em equipes, se o tempo acabar, a equipe seguinte tenta com metade do tempo.",
-  "Letras: a palavra aparece escondida para todos e há 7 lâmpadas acesas. Na sua vez (15 s), escolham uma letra: se estiver na palavra, aparece e vocês jogam de novo; se não estiver, apaga uma lâmpada e a vez passa. Vogal sempre apaga uma lâmpada. Ao tocar em Arriscar, o tempo para e não tem volta: errou, apaga uma lâmpada e a vez passa. Se todas se apagarem, ninguém anda.",
+  "Letras: a palavra aparece escondida para todos. Cada equipe começa a vez com o tempo do jogo e escolhe letras: se a letra estiver na palavra, aparece e o tempo ganha 10 s; se não estiver, perde 5 s. A vez só passa quando o tempo acaba ou quando a equipe arrisca e erra a palavra. Ao tocar em Arriscar, o tempo para e não tem volta. Quem abrir a última letra ou acertar a palavra anda.",
+  "O tempo de cada jogo é escolhido no começo: Fácil, Normal ou Difícil, ou ajustado um a um. No Normal, mímica e letras têm 1 minuto e perguntas, 3 minutos.",
   "Acertou antes do tempo acabar? Anda as casas sorteadas (Desafio: uma a mais).",
   "Casas especiais: quem para nelas cumpre o que a casa diz, como voltar casas, ficar uma vez de fora ou reunir todo o arraial numa rodada para todos.",
   "Quem chegar primeiro ao fim da trilha vence.",
@@ -80,6 +84,58 @@ function Opcao({ ativo, onClick, icone, titulo, sub }: { ativo: boolean; onClick
 }
 
 /** Entrar na sala que outro celular criou. */
+/** Tempo de cada jogo: um nível (Fácil, Normal, Difícil) ou ajustado um a um. */
+function Tempos({ c, set }: { c: Config; set: (patch: Partial<Config>) => void }) {
+  const nivel = nivelDe(c)
+  const [ajustar, setAjustar] = useState(!nivel)
+  const jogos: { e: Estilo; chave: "segundos" | "perguntas" | "letras"; opcoes: readonly number[]; valor: number }[] = [
+    { e: "mimica", chave: "segundos", opcoes: SEGUNDOS, valor: c.segundos },
+    { e: "perguntas", chave: "perguntas", opcoes: SEGUNDOS_PERGUNTAS, valor: c.perguntas ?? 180 },
+    { e: "letras", chave: "letras", opcoes: SEGUNDOS_LETRAS, valor: c.letras ?? 60 },
+  ]
+  const ligados = jogos.filter((j) => c.estilos.includes(j.e))
+  return (
+    <Bloco titulo="Tempo">
+      <div className="grid grid-cols-3 gap-2">
+        {NIVEIS.map((n) => (
+          <Chip key={n.id} ativo={nivel?.id === n.id} onClick={() => set({ segundos: n.segundos, perguntas: n.perguntas, letras: n.letras })}>
+            {n.nome}
+          </Chip>
+        ))}
+      </div>
+      {ajustar ? (
+        <ul className="space-y-2">
+          {ligados.map(({ e, chave, opcoes, valor }) => {
+            const Icone = ESTILO[e].icone
+            return (
+              <li key={e} className="space-y-1.5">
+                <p className="inline-flex items-center gap-1.5 text-sm text-sand">
+                  <Icone className="size-4" aria-hidden /> {ESTILO[e].nome}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {opcoes.map((s) => (
+                    <Chip key={s} ativo={valor === s} onClick={() => set({ [chave]: s })}>
+                      {textoTempo(s)}
+                    </Chip>
+                  ))}
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      ) : (
+        <p className="text-xs text-mist">
+          {ligados.map(({ e, valor }) => `${ESTILO[e].nome}: ${textoTempo(valor)}`).join(" · ")}
+          {" · "}
+          <button type="button" onClick={() => setAjustar(true)} className="text-gold underline underline-offset-2">
+            Ajustar cada jogo
+          </button>
+        </p>
+      )}
+    </Bloco>
+  )
+}
+
 function EntrarNaSala() {
   const router = useRouter()
   const [codigo, setCodigo] = useState("")
@@ -247,16 +303,6 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
         </button>
       </Bloco>
 
-      <Bloco titulo="Tempo por vez">
-        <div className="flex flex-wrap gap-2">
-          {SEGUNDOS.map((s) => (
-            <Chip key={s} ativo={c.segundos === s} onClick={() => set({ segundos: s })}>
-              {s}s
-            </Chip>
-          ))}
-        </div>
-      </Bloco>
-
       <Bloco titulo="Trilha">
         <div className="flex flex-wrap gap-2">
           {TRILHAS.map((t) => (
@@ -268,30 +314,48 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
       </Bloco>
 
       <Bloco titulo="Como jogar a carta">
-        <div className="flex flex-wrap gap-2">
+        <p className="text-sm text-mist">
+          Liguem um ou mais jeitos de jogar.{c.estilos.length > 1 ? " Com mais de um ligado, a roleta sorteia qual vale em cada vez." : ""}
+        </p>
+        <div className="space-y-2">
           {ESTILOS.map((e) => {
             const Icone = ESTILO[e].icone
+            const on = c.estilos.includes(e)
+            const cor = COR_ESTILO[e]
+            const info = comoJogar(e, c.modo === "equipes")
             return (
-              <Chip key={e} ativo={c.estilos.includes(e)} onClick={() => toggleEstilo(e)}>
-                <Icone className="size-4" aria-hidden />
-                {ESTILO[e].nome}
-              </Chip>
+              <section key={e} className={cn("rounded-2xl border p-3 transition", on ? "bg-night/70" : "border-border opacity-60")} style={on ? { borderColor: `${cor}99` } : undefined}>
+                <button type="button" role="switch" aria-checked={on} aria-label={ESTILO[e].nome} onClick={() => toggleEstilo(e)} className="flex w-full items-center gap-3 text-left">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-xl" style={{ background: `${cor}26`, color: cor }}>
+                    <Icone className="size-5" aria-hidden />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-semibold text-parchment">{ESTILO[e].nome}</span>
+                    <span className="block text-xs leading-snug text-mist">{info.resumo}</span>
+                  </span>
+                  <span aria-hidden className={cn("relative h-6 w-11 shrink-0 rounded-full transition", on ? "bg-gold" : "bg-white/15")}>
+                    <span className={cn("absolute top-0.5 size-5 rounded-full bg-parchment shadow transition-all", on ? "left-[1.375rem]" : "left-0.5")} />
+                  </span>
+                </button>
+                {on && (
+                  <ol className="mt-3 space-y-2 border-t border-border pt-3">
+                    {info.passos.map((passo, i) => (
+                      <li key={i} className="flex gap-2.5 text-sm leading-snug text-sand">
+                        <span className="grid size-5 shrink-0 place-items-center rounded-full text-[0.7rem] font-semibold text-night" style={{ background: cor }}>
+                          {i + 1}
+                        </span>
+                        <span>{passo}</span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </section>
             )
           })}
         </div>
-        <ul className="space-y-1 text-xs text-mist">
-          {c.estilos.length > 1 && <li>Com mais de um ligado, a roleta sorteia o jeito a cada vez.</li>}
-          {c.estilos.includes("letras") && (
-            <li>Letras: palavra escondida e 7 lâmpadas para todos. Letra errada ou vogal apaga uma lâmpada; se todas se apagarem, ninguém anda. 15 s por jogada.</li>
-          )}
-          {c.estilos.includes("perguntas") && (
-            <li>
-              Perguntas: quem adivinha pergunta e os outros só respondem sim ou não.
-              {c.modo === "equipes" ? " Se errar, a próxima equipe tenta com metade do tempo." : ""}
-            </li>
-          )}
-        </ul>
       </Bloco>
+
+      <Tempos c={c} set={set} />
 
       <Bloco titulo="Categorias">
         <div className="grid grid-cols-2 gap-2">
@@ -334,8 +398,9 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
 }
 
 /** A partida em tela fixa, como um app: só o miolo rola. Serve ao celular único e à sala. */
-export function Partida({ jogo, topo, sair }: { jogo: Jogo; topo?: ReactNode; sair?: { rotulo: string; aviso: string; acao: () => void } }) {
+export function Partida({ jogo, topo, convite, sair }: { jogo: Jogo; topo?: ReactNode; convite?: ReactNode; sair?: { rotulo: string; aviso: string; acao: () => void } }) {
   const [confirmar, setConfirmar] = useState(false)
+  const [quem, setQuem] = useState(false)
   const { state } = jogo
   return (
     <JogoProvider value={jogo}>
@@ -345,6 +410,16 @@ export function Partida({ jogo, topo, sair }: { jogo: Jogo; topo?: ReactNode; sa
           <p className="shrink-0 font-display text-xl text-gold-bright">Bible Show</p>
           <div className="flex min-w-0 items-center gap-2">
             {topo}
+            {state.fase !== "fim" && (
+              <button
+                type="button"
+                onClick={() => setQuem(true)}
+                className="grid size-8 shrink-0 place-items-center rounded-full border border-border text-mist"
+                aria-label={convite ? "QR da sala e equipes" : state.config.modo === "equipes" ? "Equipes" : "Jogadores"}
+              >
+                {convite ? <QrCode className="size-4" /> : <Users className="size-4" />}
+              </button>
+            )}
             {sair && (
               <button type="button" onClick={() => setConfirmar(true)} className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs text-mist">
                 {sair.rotulo}
@@ -353,6 +428,7 @@ export function Partida({ jogo, topo, sair }: { jogo: Jogo; topo?: ReactNode; sa
           </div>
         </header>
         <AvisoSom />
+        <Participantes open={quem} onClose={() => setQuem(false)} convite={convite} />
         <main id="conteudo" className="relative z-10 min-h-0 flex-1 touch-pan-y overflow-y-auto overflow-x-hidden overscroll-contain">
           <div className="mx-auto flex min-h-full max-w-lg flex-col px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
             {state.fase === "vez" && <Vez key={`${state.vez}-${state.rodada?.lider}-${state.rodada?.todos}-${state.usadas.length}`} />}

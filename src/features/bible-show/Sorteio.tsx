@@ -24,7 +24,7 @@ function usePrimeiraVez(chave: string | null) {
   return animar
 }
 
-const COR_ESTILO: Record<Estilo, string> = { mimica: "#d8a948", perguntas: "#b18ad8", letras: "#5fb3c9" }
+export const COR_ESTILO: Record<Estilo, string> = { mimica: "#d8a948", perguntas: "#b18ad8", letras: "#5fb3c9" }
 const FATIAS = 6
 
 export function Roleta({ opcoes, resultado, chave, onFim }: { opcoes: Estilo[]; resultado: Estilo; chave: string; onFim?: () => void }) {

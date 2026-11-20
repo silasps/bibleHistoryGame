@@ -102,7 +102,7 @@ export function Trilha({ state, destaque }: { state: ShowState; destaque?: strin
         <span className="text-[0.65rem] uppercase tracking-[0.3em] text-mist">Partida</span>
         <div className="flex flex-wrap gap-1">
           {naCasa(0).map((l) => (
-            <Peao key={l.id} lado={l} naTrilha />
+            <Peao key={l.id} lado={l} naTrilha className={l.fora ? "opacity-35" : undefined} />
           ))}
         </div>
       </div>
@@ -130,7 +130,7 @@ export function Trilha({ state, destaque }: { state: ShowState; destaque?: strin
               {peoes.length > 0 && (
                 <div className="absolute inset-x-0.5 bottom-0.5 flex flex-wrap justify-center gap-0.5">
                   {peoes.map((l) => (
-                    <Peao key={l.id} lado={l} naTrilha className={peoes.length > 3 ? "size-3.5 text-[0]" : undefined} />
+                    <Peao key={l.id} lado={l} naTrilha className={cn(peoes.length > 3 && "size-3.5 text-[0]", l.fora && "opacity-35")} />
                   ))}
                 </div>
               )}
@@ -149,10 +149,11 @@ export function Placar({ state }: { state: ShowState }) {
       {state.lados.map((l, i) => (
         <span
           key={l.id}
-          className={cn("flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs", i === state.vez ? "border-gold bg-gold/15 text-parchment" : "border-border text-mist")}
+          className={cn("flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs", i === state.vez ? "border-gold bg-gold/15 text-parchment" : "border-border text-mist", l.fora && "border-dashed opacity-50")}
         >
           <span className="size-2.5 rounded-full" style={{ background: l.cor }} aria-hidden />
           <span className="max-w-24 truncate">{l.nome}</span>
+          {l.fora && <span className="text-[0.65rem] uppercase tracking-wider">saiu</span>}
           {l.exilio && <Lock className="size-3 text-[#ff8a7a]" aria-label="no exílio" />}
           <span className="tabular-nums text-gold">{l.casa}</span>
         </span>
