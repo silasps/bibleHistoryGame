@@ -1,6 +1,6 @@
 # O que falta você fazer
 
-Lista para lembrar, atualizada em 4 de novembro de 2026. O estado ao vivo de cada item fica na **Área de preparação** (`/presenter/prep`), na folha de notas.
+Lista para lembrar, atualizada em 19 de novembro de 2026. O estado ao vivo de cada item fica na **Área de preparação** (`/presenter/prep`), na folha de notas.
 
 ## Para a nota (folha de notas do Manual, p. 14 e 18)
 
@@ -21,7 +21,7 @@ Lista para lembrar, atualizada em 4 de novembro de 2026. O estado ao vivo de cad
 - [x] **Semana 7** entrou (16/11/2026): Etapas 12 e 13, com Ed 1:3. Sem parágrafo “PRD -”: a pista 7 fica só com o versículo.
 - [x] **Linha do tempo da escola** (19/11/2026): todos os itens das 12 semanas da escola têm slide. O Novo Testamento entrou como Etapas 14 a 17 (Jesus, A Igreja, Paulo, Apocalipse), com nome, data e referência, e os versículos do plano conferidos na NAA. Harã-Síria voltou como slide curto, com mapa.
 - [ ] **Semanas 8 a 11 (Novo Testamento):** falta o seu resumo. Até lá, os slides mostram só nome, data e referência bíblica (ou a fonte, quando não há passagem). Quando chegar, eu ponho as frases como nas outras semanas.
-- [ ] **Tempo:** com o Novo Testamento, a estimativa sem jogos passa de 70 min (o limite é 45). Os cortes são seus; a Área de preparação mostra os tempos por etapa.
+- [ ] **Tempo (45 min):** o roteiro enxuto (19/11/2026) está em cerca de 54 min. Falta você ensaiar e dizer onde gastar mais e onde cortar (ver “Tempo” abaixo).
 - [ ] **Jó:** mandar o seu material. O momento já está no fim da Etapa 3 (entre Abraão e Moisés), só com a imagem.
 - [ ] **2 convidados de fora da escola** (20 pontos).
 - [ ] **Ensaio** no fim do Antigo Testamento. **Apresentação final:** 10 e 11 de dezembro.
@@ -30,32 +30,42 @@ Como preencher os espaços: `docs/reflexoes.md`.
 
 ## Tempo: a Bíblia inteira em 45 minutos
 
-O Manual recomenda, para cada semana, um tempo **acumulado** de compartilhamento: 10, 13, 16, 22, 25, 28, 31, 34, 37, 40 e 45 minutos. Por semana, isso dá 10, 3, 3, 6, 3, 3, 3, 3, 3, 3 e 5 minutos. A referência de cada etapa divide esses minutos pela quantidade de itens.
+**Roteiro enxuto (19/11/2026).** A linha do tempo da escola é a referência:
+- só os itens dela viram slide;
+- os seus itens fora da lista entram no slide do tópico da escola ao lado. Amós, Oseias e Jonas vão para a Queda de Samaria; Alexandre, para o Império Grego; Crônicas, para o Primeiro Retorno; e assim por diante;
+- os momentos (as suas falas e os rascunhos, como o bezerro de ouro, Daniel na cova e a plenitude dos tempos) viram linhas do “Aprofundar” do tópico, e a fala completa fica no “Aprofundar mais”, só no painel.
 
-Hoje, só com as semanas 1 a 6, a estimativa é de **45,5 minutos** sem os minijogos opcionais (mais uns 4 min com eles); a referência até a semana 6 é de **28 minutos**. Já passou do limite de 45 da apresentação inteira. É preciso cortar perto de 16 minutos, e mais um pouco para a abertura e a conclusão, que saem do mesmo total.
+A estimativa caiu de **71 para cerca de 54 min** (164 cenas). Os jogos das etapas 2 a 11 não contam: eles rodam enquanto você fala do tópico.
 
-| Etapa | Estimado hoje | Referência |
+| Tipo de cena | Cenas | Estimado |
 | --- | --- | --- |
-| 1 · O começo | 7:15 | 2:00 |
-| 2 · O mundo se afasta | 1:55 | 2:00 |
-| 3 · A promessa | 2:25 | 3:20 |
-| 4 · No Egito | 3:25 | 2:00 |
-| 5 · Libertação | 0:40 | 0:40 |
-| 6 · Deus no meio do povo | 4:55 | 3:00 |
-| 7 · A terra | 3:00 | 1:45 |
-| 8 · O reino | 6:40 | 2:15 |
-| 9 · O reino dividido | 2:55 | 5:00 |
-| 10 · Os profetas avisam | 5:40 | 3:00 |
-| 11 · Exílio e esperança | 5:10 | 3:00 |
-| 12–16 · semanas 7 a 11 | — | 3:00 cada (João: 5:00) |
+| Tópicos da escola (15 s cada) | 97 | 26:05 |
+| Seus espaços de C&N e revelação pessoal (30 s cada) | 22 | 11:00 |
+| Versículos do plano (35 s) | 12 | 7:00 |
+| Pistas (20 s) | 11 | 3:40 |
+| Aberturas de etapa (10 s) | 18 | 3:20 |
+| Minijogos da Etapa 1 | 3 | 2:00 |
+| Abertura e conclusão | 2 | 1:00 |
 
-- [ ] **Decidir o que encurtar.**
-  - **Etapa 1:** os minijogos somam quase 5 minutos sozinhos.
-  - **Onde ajustar:**
-    - o tempo de cada minijogo (`seconds` em `src/content/etapas/index.ts`);
-    - os momentos da sua fala (`beats`, no mesmo arquivo);
-    - os itens que entram em cada etapa.
-  - **Onde conferir:** a tabela da Área de preparação e o cronômetro do ensaio mostram estimado × referência.
+| Etapa | Estimado | Etapa | Estimado |
+| --- | --- | --- | --- |
+| 1 · O começo | 6:40 | 10 · Os profetas avisam | 3:35 |
+| 2 · O mundo se afasta | 0:55 | 11 · Exílio e esperança | 4:05 |
+| 3 · A promessa | 1:10 | 12 · A volta para casa | 3:20 |
+| 4 · No Egito | 0:55 | 13 · Entre os Testamentos | 1:25 |
+| 5 · Libertação | 0:25 | 14 · Jesus | 4:05 |
+| 6 · Deus no meio do povo | 4:05 | 15 · A Igreja | 4:35 |
+| 7 · A terra | 2:30 | 16 · Paulo | 3:35 |
+| 8 · O reino | 5:45 | 17 · Apocalipse | 3:20 |
+| 9 · O reino dividido | 2:10 | | |
+
+- [ ] **Ensaiar no modo Ensaio** (o cronômetro grava o tempo real de cada cena) e dizer onde gastar mais tempo.
+- [ ] **Escolher o que cortar** para chegar a 45 (as decisões são suas):
+  - juntar os espaços de C&N e revelação pessoal em uma pausa só por semana (−5,5 min);
+  - juntar os subitens da escola (a., b., c.) no slide do item principal (−5 min);
+  - juntar o versículo do plano e a pista da semana em um slide (−3,7 min);
+  - encurtar os minijogos da Etapa 1 (−2 min).
+- **Onde ajustar:** `src/content/etapas/escola.ts` (a lista da escola) e `src/content/etapas/index.ts` (tempo dos jogos e momentos). A Área de preparação mostra os tempos por etapa.
 
 ## Imagens
 
