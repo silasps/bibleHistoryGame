@@ -86,3 +86,4 @@ Hoje, só com as semanas 1 a 6, a estimativa é de **45,5 minutos** sem os minij
 
 - [ ] **Revisar as 99 cartas** em `src/content/bible-show/cartas.ts` (palavra, categoria e referência NAA). Estão como rascunho: a maioria vem da sua linha do tempo e dos minijogos; as marcadas com fonte "Bíblia" (ex.: José do Egito, Escada de Jacó, Jumenta que fala) não estão no seu material. Diga o que tirar, trocar ou acrescentar.
 - [ ] **Aprovar os nomes das categorias** (Quem é?, O que é?, O que aconteceu?, Onde fica?, Bichos da Bíblia, Desafio, Rodada de todos) e as regras da tela "Como jogar".
+- [ ] **Testar o modo Perguntas** (ligar em "Como jogar a carta"). Regras que eu defini e você pode mudar: cada equipe tenta uma vez; o tempo cai pela metade a cada equipe (mínimo de 10 s); se todas errarem, ninguém anda; a categoria da casa aparece para quem adivinha; a Rodada de todos é sempre de mímica ou desenho; no "cada um por si", só quem adivinhou anda.

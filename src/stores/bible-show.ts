@@ -20,7 +20,7 @@ function read(): ShowState {
   let state = estadoInicial
   try {
     const parsed = raw ? (JSON.parse(raw) as ShowState) : null
-    if (parsed?.v === 1) state = parsed
+    if (parsed?.v === 2) state = parsed
   } catch {
     // valor inválido: começa de novo
   }

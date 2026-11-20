@@ -1,23 +1,32 @@
 "use client"
 
-import { Drama, Flag, Flame, Gem, MapPin, PawPrint, Pencil, Sparkles, User, Users, type LucideIcon } from "lucide-react"
+import { Drama, Flag, Flame, Gem, MapPin, MessageCircleQuestion, PawPrint, Pencil, Sparkles, User, Users, type LucideIcon } from "lucide-react"
 import { motion } from "motion/react"
 import { getCategoria, type CategoriaId } from "@/content/bible-show/cartas"
 import { montarTrilha, type Casa, type Estilo, type Lado, type ShowState } from "@/domain/bible-show"
 import { cn } from "@/lib/utils"
 
-export const ICONE: Record<CategoriaId, LucideIcon> = {
-  quem: User,
-  objeto: Gem,
-  acontecimento: Sparkles,
-  lugar: MapPin,
-  bicho: PawPrint,
-  desafio: Flame,
-}
+export const ICONE: Record<CategoriaId, LucideIcon> = { quem: User, objeto: Gem, acontecimento: Sparkles, lugar: MapPin, bicho: PawPrint, desafio: Flame }
 
 export const ESTILO: Record<Estilo, { icone: LucideIcon; nome: string; regra: string }> = {
   mimica: { icone: Drama, nome: "Mímica", regra: "Sem falar e sem fazer sons" },
   desenho: { icone: Pencil, nome: "Desenho", regra: "No papel, sem letras e sem números" },
+  perguntas: { icone: MessageCircleQuestion, nome: "Perguntas", regra: "Só vale responder sim ou não" },
+}
+
+/** A classe da carta, no mesmo formato das categorias da configuração. */
+export function CategoriaTag({ id, className }: { id: CategoriaId; className?: string }) {
+  const c = getCategoria(id)
+  const Icone = ICONE[id]
+  return (
+    <div className={cn("flex items-center gap-2.5 rounded-2xl border px-3 py-2 text-left", className)} style={{ borderColor: `${c.cor}99`, background: `${c.cor}1f` }}>
+      <Icone className="size-5 shrink-0" style={{ color: c.cor }} aria-hidden />
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold leading-tight text-parchment">{c.nome}</span>
+        <span className="block truncate text-[0.7rem] text-mist">{c.sub}</span>
+      </span>
+    </div>
+  )
 }
 
 export const TODOS = { nome: "Rodada de todos", cor: "#f3e9d2" }
@@ -81,7 +90,9 @@ export function Trilha({ state, destaque }: { state: ShowState; destaque?: strin
               className={cn("relative flex aspect-square flex-col items-center justify-center rounded-xl border", n === alvo && "ring-2 ring-gold-bright")}
               aria-label={`Casa ${n}: ${info.nome}${chegada ? " (chegada)" : ""}`}
             >
-              {n === alvo && <motion.span aria-hidden className="absolute inset-0 rounded-xl bg-gold-bright/15" animate={{ opacity: [0.2, 0.8, 0.2] }} transition={{ duration: 1.6, repeat: Infinity }} />}
+              {n === alvo && (
+                <motion.span aria-hidden className="absolute inset-0 rounded-xl bg-gold-bright/15" animate={{ opacity: [0.2, 0.8, 0.2] }} transition={{ duration: 1.6, repeat: Infinity }} />
+              )}
               <span className="absolute left-1 top-0.5 text-[0.55rem] tabular-nums text-mist">{n}</span>
               {chegada ? <Flag className="size-5 text-gold-bright" aria-hidden /> : <Icone className="size-4" style={{ color: info.cor }} aria-hidden />}
               {peoes.length > 0 && (

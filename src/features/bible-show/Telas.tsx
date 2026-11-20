@@ -3,14 +3,14 @@
 import { Check, Eye, Hand, Pause, Play, RotateCcw, Shuffle, Trophy, X } from "lucide-react"
 import { motion } from "motion/react"
 import { useEffect, useRef, useState } from "react"
-import { getCarta, getCategoria } from "@/content/bible-show/cartas"
+import { getCarta } from "@/content/bible-show/cartas"
 import { formatRef } from "@/content/refs"
-import { classificacao, proximaCasa, type ShowAction, type ShowState } from "@/domain/bible-show"
+import { classificacao, proximaCasa, segundosDaVez, tentando, type ShowAction, type ShowState } from "@/domain/bible-show"
 import { HAPTIC, vibrate } from "@/fx/haptics"
 import { useFx } from "@/fx/useFx"
 import { useStinger } from "@/fx/useSound"
 import { cn } from "@/lib/utils"
-import { casaInfo, ESTILO, ICONE, Peao, Placar, TODOS, Trilha } from "./Trilha"
+import { casaInfo, CategoriaTag, ESTILO, Peao, Placar, TODOS, Trilha } from "./Trilha"
 
 type Dispatch = (a: ShowAction) => void
 type RefArg = Parameters<typeof formatRef>[0]
@@ -24,6 +24,19 @@ export function Vez({ state, dispatch }: { state: ShowState; dispatch: Dispatch 
   const info = casaInfo(casa)
   const Icone = info.icone
   const equipes = state.config.modo === "equipes"
+  const { estilos } = state.config
+  const instrucao =
+    casa.tipo === "todos"
+      ? "Um representante de cada equipe vê a mesma carta. A equipe que acertar primeiro anda."
+      : estilos.length > 1 && estilos.includes("perguntas")
+        ? "Mímica, desenho ou perguntas: o jeito de jogar é sorteado com a carta."
+        : estilos[0] === "perguntas"
+          ? equipes
+            ? "Cada equipe escolhe quem vai adivinhar. Essas pessoas não veem a carta."
+            : `${lado.nome} adivinha fazendo perguntas. Os outros veem a carta.`
+          : equipes
+            ? "Escolham quem vai representar. Só essa pessoa vê a carta."
+            : `${lado.nome} representa. Quem acertar anda junto.`
   return (
     <div className="flex min-h-full flex-col gap-3">
       <Placar state={state} />
@@ -42,13 +55,7 @@ export function Vez({ state, dispatch }: { state: ShowState; dispatch: Dispatch 
             <p className="font-semibold text-parchment">
               Casa {Math.min(lado.casa + 1, state.config.casas)}: {info.nome}
             </p>
-            <p className="text-mist">
-              {casa.tipo === "todos"
-                ? "Um representante de cada equipe vê a mesma carta. A equipe que acertar primeiro anda."
-                : equipes
-                  ? "Escolham quem vai representar. Só essa pessoa vê a carta."
-                  : `${lado.nome} representa. Quem acertar anda junto.`}
-            </p>
+            <p className="text-mist">{instrucao}</p>
           </div>
         </div>
         <button type="button" onClick={() => dispatch({ type: "sortear", r1: Math.random(), r2: Math.random() })} className={cn(BIG, "bg-gold text-night")}>
@@ -66,10 +73,17 @@ export function CartaSecreta({ state, dispatch }: { state: ShowState; dispatch: 
   const [aberta, setAberta] = useState(false)
   const [viu, setViu] = useState(false)
   const carta = getCarta(state.carta!.id)!
-  const cat = getCategoria(carta.categoria)
+  const cor = casaInfo({ tipo: "categoria", categoria: carta.categoria }).cor
   const estilo = ESTILO[state.carta!.estilo]
-  const Icone = ICONE[carta.categoria]
   const EstiloIcone = estilo.icone
+  const perguntas = state.carta!.estilo === "perguntas"
+  const quemOlha = state.carta!.todos
+    ? `${TODOS.nome}: um representante de cada equipe olha junto.`
+    : perguntas
+      ? state.config.modo === "equipes"
+        ? "Quem vai adivinhar, de cada equipe, não olha. Todos os outros veem a carta."
+        : `${state.lados[state.vez].nome} vai adivinhar e não olha. Os outros veem a carta.`
+      : "Só quem vai representar pode olhar."
   const mostrar = (v: boolean) => {
     setAberta(v)
     if (v) {
@@ -78,10 +92,11 @@ export function CartaSecreta({ state, dispatch }: { state: ShowState; dispatch: 
     }
   }
   return (
-    <div className="flex min-h-full flex-col items-center gap-4 text-center">
-      <p className="text-sm text-mist">
-        {state.carta!.todos ? `${TODOS.nome}: um representante de cada equipe olha junto.` : "Só quem vai representar pode olhar."}
+    <div className="flex min-h-full flex-col items-center gap-3 text-center">
+      <p className="inline-flex items-center gap-2 rounded-full border border-gold/50 bg-gold/10 px-4 py-1.5 font-semibold text-gold-bright">
+        <EstiloIcone className="size-4" aria-hidden /> {estilo.nome}
       </p>
+      <p className="text-sm text-mist">{quemOlha}</p>
       <button
         type="button"
         onPointerDown={() => mostrar(true)}
@@ -104,11 +119,9 @@ export function CartaSecreta({ state, dispatch }: { state: ShowState; dispatch: 
           {/* Frente */}
           <div
             className="absolute inset-0 flex flex-col items-center justify-between rounded-3xl border-2 p-5 [backface-visibility:hidden] [transform:rotateY(180deg)]"
-            style={{ borderColor: cat.cor, background: `linear-gradient(170deg, ${cat.cor}40, #0b0f19 55%)` }}
+            style={{ borderColor: cor, background: `linear-gradient(170deg, ${cor}40, #0b0f19 55%)` }}
           >
-            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em]" style={{ color: cat.cor }}>
-              <Icone className="size-4" aria-hidden /> {cat.nome}
-            </p>
+            <CategoriaTag id={carta.categoria} className="bg-night/70" />
             <p className="font-display text-4xl leading-tight text-parchment [overflow-wrap:anywhere]">{carta.palavra}</p>
             <div className="space-y-2">
               <p className="inline-flex items-center gap-2 rounded-full bg-night/80 px-3 py-1.5 text-sm font-semibold text-gold-bright">
@@ -133,7 +146,7 @@ export function CartaSecreta({ state, dispatch }: { state: ShowState; dispatch: 
           }}
           className={cn(BIG, "bg-gold text-night")}
         >
-          <Play className="size-5 fill-current" aria-hidden /> Valendo! ({state.config.segundos}s)
+          <Play className="size-5 fill-current" aria-hidden /> Valendo! ({segundosDaVez(state)}s)
         </button>
         <button
           type="button"
@@ -155,7 +168,7 @@ export function CartaSecreta({ state, dispatch }: { state: ShowState; dispatch: 
 export function Cronometro({ state, dispatch }: { state: ShowState; dispatch: Dispatch }) {
   const stinger = useStinger()
   const fx = useFx()
-  const total = state.config.segundos * 1000
+  const total = segundosDaVez(state) * 1000
   const relogio = state.relogio
   const [restante, setRestante] = useState(relogio?.restante ?? total)
   const fim = useRef(false)
@@ -187,23 +200,30 @@ export function Cronometro({ state, dispatch }: { state: ShowState; dispatch: Di
   const urgente = seg <= 10
   const correndo = !!relogio?.prazo
   const carta = getCarta(state.carta!.id)!
-  const cat = getCategoria(carta.categoria)
   const estilo = ESTILO[state.carta!.estilo]
-  const Icone = ICONE[carta.categoria]
   const EstiloIcone = estilo.icone
+  const perguntas = state.carta!.estilo === "perguntas"
+  const quem = tentando(state)
+  const passa = perguntas && state.config.modo === "equipes" && state.carta!.tentativa + 1 < state.lados.length
   const R = 46
   const C = 2 * Math.PI * R
 
   return (
     <div className="flex min-h-full flex-col items-center gap-4 text-center">
       <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
-        <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1" style={{ borderColor: `${cat.cor}80`, color: cat.cor }}>
-          <Icone className="size-3.5" aria-hidden /> {cat.nome}
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 px-3 py-1 text-gold-bright">
-          <EstiloIcone className="size-3.5" aria-hidden /> {estilo.nome}
-        </span>
-        {state.carta!.todos && <span className="rounded-full border border-parchment/40 px-3 py-1 text-parchment">{TODOS.nome}</span>}
+        <CategoriaTag id={carta.categoria} />
+        <div className="flex flex-col items-start gap-1.5">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 px-3 py-1 text-gold-bright">
+            <EstiloIcone className="size-3.5" aria-hidden /> {estilo.nome}
+          </span>
+          {state.carta!.todos && <span className="rounded-full border border-parchment/40 px-3 py-1 text-parchment">{TODOS.nome}</span>}
+          {perguntas && (
+            <span className="inline-flex max-w-40 items-center gap-1.5 text-sand">
+              <Peao lado={quem} className="size-4 text-[0.5rem]" />
+              <span className="truncate">{quem.nome} pergunta</span>
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="relative aspect-square w-full max-w-[min(80vw,52dvh)]" role="timer" aria-live="off" aria-label={`${seg} segundos`}>
@@ -244,9 +264,9 @@ export function Cronometro({ state, dispatch }: { state: ShowState; dispatch: Di
           }}
           className={cn(BIG, "h-16 bg-[#6fbf73] text-xl text-night")}
         >
-          <Check className="size-6" aria-hidden /> Acertaram!
+          <Check className="size-6" aria-hidden /> {perguntas ? "Acertou!" : "Acertaram!"}
         </button>
-        <div className="grid grid-cols-3 gap-2">
+        <div className={cn("grid gap-2", perguntas ? "grid-cols-2" : "grid-cols-3")}>
           <button
             type="button"
             onClick={() => dispatch(correndo ? { type: "pausar", agora: Date.now() } : { type: "continuar", agora: Date.now() })}
@@ -254,20 +274,22 @@ export function Cronometro({ state, dispatch }: { state: ShowState; dispatch: Di
           >
             {correndo ? <Pause className="size-4" aria-hidden /> : <Play className="size-4" aria-hidden />} {correndo ? "Pausar" : "Seguir"}
           </button>
-          <button
-            type="button"
-            onPointerDown={() => setEspiar(true)}
-            onPointerUp={() => setEspiar(false)}
-            onPointerLeave={() => setEspiar(false)}
-            onPointerCancel={() => setEspiar(false)}
-            onContextMenu={(e) => e.preventDefault()}
-            className={cn(BIG, "h-12 touch-none select-none border border-border text-sm text-parchment")}
-            aria-label="Segure para rever a palavra"
-          >
-            <Eye className="size-4" aria-hidden /> {espiar ? carta.palavra : "Rever"}
-          </button>
+          {!perguntas && (
+            <button
+              type="button"
+              onPointerDown={() => setEspiar(true)}
+              onPointerUp={() => setEspiar(false)}
+              onPointerLeave={() => setEspiar(false)}
+              onPointerCancel={() => setEspiar(false)}
+              onContextMenu={(e) => e.preventDefault()}
+              className={cn(BIG, "h-12 touch-none select-none border border-border text-sm text-parchment")}
+              aria-label="Segure para rever a palavra"
+            >
+              <Eye className="size-4" aria-hidden /> {espiar ? carta.palavra : "Rever"}
+            </button>
+          )}
           <button type="button" onClick={() => dispatch({ type: "errou" })} className={cn(BIG, "h-12 border border-rose/40 text-sm text-rose")}>
-            <X className="size-4" aria-hidden /> Desistir
+            <X className="size-4" aria-hidden /> {passa ? "Passar" : "Desistir"}
           </button>
         </div>
       </div>
@@ -309,6 +331,44 @@ export function QuemAcertou({ state, dispatch }: { state: ShowState; dispatch: D
           <RotateCcw className="size-4" aria-hidden /> Voltar ao tempo
         </button>
       </div>
+    </div>
+  )
+}
+
+/** Perguntas em equipes: ninguém acertou ainda e a próxima equipe tenta com menos tempo. */
+export function Passa({ state, dispatch }: { state: ShowState; dispatch: Dispatch }) {
+  const stinger = useStinger()
+  const quem = tentando(state)
+  const n = state.lados.length
+  const antes = state.lados[(state.vez + state.carta!.tentativa - 1 + n) % n]
+  const carta = getCarta(state.carta!.id)!
+  return (
+    <div className="flex min-h-full flex-col items-center gap-4 text-center">
+      <div>
+        <p className="font-display text-4xl text-[#ff9f80]">Tempo!</p>
+        <p className="mt-1 text-sm text-mist">{antes.nome} não acertou. A carta continua em segredo.</p>
+      </div>
+      <CategoriaTag id={carta.categoria} />
+      <section className="w-full max-w-md space-y-3 rounded-3xl border border-gold/30 bg-night/80 p-4 text-left">
+        <div className="flex items-center gap-3">
+          <Peao lado={quem} className="size-9 text-base" />
+          <div className="min-w-0">
+            <p className="text-xs uppercase tracking-[0.3em] text-mist">Agora tenta</p>
+            <p className="truncate font-display text-2xl leading-tight text-parchment">{quem.nome}</p>
+          </div>
+        </div>
+        <p className="text-sm text-sand">Quem adivinha pela {quem.nome} pode usar as respostas que já ouviu. O tempo agora é menor.</p>
+      </section>
+      <button
+        type="button"
+        onClick={() => {
+          stinger("vote")
+          dispatch({ type: "valendo", agora: Date.now() })
+        }}
+        className={cn(BIG, "mt-auto max-w-md bg-gold text-night")}
+      >
+        <Play className="size-5 fill-current" aria-hidden /> Valendo! ({segundosDaVez(state)}s)
+      </button>
     </div>
   )
 }

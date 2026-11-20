@@ -1,13 +1,13 @@
 "use client"
 
-import { ArrowLeft, Minus, Plus, X } from "lucide-react"
+import { ArrowLeft, Plus, X } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import { CATEGORIAS, type CategoriaId } from "@/content/bible-show/cartas"
-import { CORES, LIMITES, SEGUNDOS, TRILHAS, type Config, type EstiloConfig, type Modo, type ShowAction, type ShowState } from "@/domain/bible-show"
+import { CORES, ESTILOS, LIMITES, SEGUNDOS, TRILHAS, type Config, type Estilo, type Modo, type ShowAction, type ShowState } from "@/domain/bible-show"
 import { cn } from "@/lib/utils"
 import { useBibleShow } from "@/stores/bible-show"
-import { CartaSecreta, Cronometro, Fim, QuemAcertou, Resultado, Vez } from "./Telas"
+import { CartaSecreta, Cronometro, Fim, Passa, QuemAcertou, Resultado, Vez } from "./Telas"
 import { ESTILO, ICONE } from "./Trilha"
 
 /** Bible Show: configuração e partida (o estado fica salvo no aparelho). */
@@ -21,6 +21,7 @@ export function BibleShow() {
 const REGRAS = [
   "Na sua vez, quem vai representar vê a carta em segredo.",
   "Toque em Valendo! e faça mímica ou desenhe, sem falar e sem letras.",
+  "Perguntas: todos veem a carta, menos quem adivinha. Essa pessoa faz perguntas e o grupo só responde sim ou não. Em equipes, se o tempo acabar, a equipe seguinte tenta com metade do tempo, e assim por diante.",
   "Acertou antes do tempo acabar? Anda uma casa na trilha (Desafio: duas).",
   "Em equipes, a cada cinco casas há a Rodada de todos: um de cada equipe representa a mesma carta, ao mesmo tempo.",
   "Quem chegar primeiro ao fim da trilha vence.",
@@ -32,7 +33,10 @@ function Chip({ ativo, onClick, children }: { ativo: boolean; onClick: () => voi
       type="button"
       onClick={onClick}
       aria-pressed={ativo}
-      className={cn("inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border px-4 text-sm transition", ativo ? "border-gold bg-gold/20 text-parchment" : "border-border text-mist")}
+      className={cn(
+        "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border px-4 text-sm transition",
+        ativo ? "border-gold bg-gold/20 text-parchment" : "border-border text-mist",
+      )}
     >
       {children}
     </button>
@@ -60,6 +64,11 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
     const on = c.categorias.includes(id)
     if (on && c.categorias.length === 1) return
     set({ categorias: on ? c.categorias.filter((x) => x !== id) : [...c.categorias, id] })
+  }
+  const toggleEstilo = (e: Estilo) => {
+    const on = c.estilos.includes(e)
+    if (on && c.estilos.length === 1) return
+    set({ estilos: ESTILOS.filter((x) => (x === e ? !on : c.estilos.includes(x))) })
   }
   const base = c.modo === "equipes" ? "Equipe" : "Jogador"
 
@@ -93,9 +102,7 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
             Cada um por si
           </Chip>
         </div>
-        <p className="text-xs text-mist">
-          {c.modo === "equipes" ? "A equipe da vez adivinha o que um dos seus representa." : "Uma pessoa representa e todos os outros tentam adivinhar."}
-        </p>
+        <p className="text-xs text-mist">{c.modo === "equipes" ? "A equipe da vez adivinha o que um dos seus representa." : "Uma pessoa representa e todos os outros tentam adivinhar."}</p>
       </Bloco>
 
       <Bloco titulo={c.modo === "equipes" ? `Equipes (${min} a ${max})` : `Jogadores (${min} a ${max})`}>
@@ -153,19 +160,28 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
         </div>
       </Bloco>
 
-      <Bloco titulo="Como representar">
+      <Bloco titulo="Como jogar a carta">
         <div className="flex flex-wrap gap-2">
-          {(["mimica", "desenho", "misto"] as EstiloConfig[]).map((e) => {
-            const Icone = e === "misto" ? null : ESTILO[e].icone
+          {ESTILOS.map((e) => {
+            const Icone = ESTILO[e].icone
             return (
-              <Chip key={e} ativo={c.estilo === e} onClick={() => set({ estilo: e })}>
-                {Icone ? <Icone className="size-4" aria-hidden /> : <Minus className="size-4 rotate-45" aria-hidden />}
-                {e === "misto" ? "Sorteado" : ESTILO[e].nome}
+              <Chip key={e} ativo={c.estilos.includes(e)} onClick={() => toggleEstilo(e)}>
+                <Icone className="size-4" aria-hidden />
+                {ESTILO[e].nome}
               </Chip>
             )
           })}
         </div>
-        {c.estilo !== "mimica" && <p className="text-xs text-mist">Para o desenho, tenham papel e caneta (ou um quadro) à mão.</p>}
+        <ul className="space-y-1 text-xs text-mist">
+          {c.estilos.length > 1 && <li>Com mais de um ligado, cada vez sorteia o jeito.</li>}
+          {c.estilos.includes("desenho") && <li>Para o desenho, tenham papel e caneta (ou um quadro) à mão.</li>}
+          {c.estilos.includes("perguntas") && (
+            <li>
+              Perguntas: quem adivinha pergunta e os outros só respondem sim ou não.
+              {c.modo === "equipes" ? " Se errar, a próxima equipe tenta com metade do tempo." : ""}
+            </li>
+          )}
+        </ul>
       </Bloco>
 
       <Bloco titulo="Categorias">
@@ -194,7 +210,11 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
       </Bloco>
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-night/90 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
-        <button type="button" onClick={() => onStart(c)} className="mx-auto flex h-14 w-full max-w-lg items-center justify-center rounded-full bg-gold text-lg font-semibold text-night active:scale-[0.98]">
+        <button
+          type="button"
+          onClick={() => onStart(c)}
+          className="mx-auto flex h-14 w-full max-w-lg items-center justify-center rounded-full bg-gold text-lg font-semibold text-night active:scale-[0.98]"
+        >
           Começar
         </button>
       </div>
@@ -220,6 +240,7 @@ function Partida({ state, dispatch }: { state: ShowState; dispatch: (a: ShowActi
           {state.fase === "carta" && <CartaSecreta key={state.carta?.id} state={state} dispatch={dispatch} />}
           {state.fase === "tempo" && <Cronometro state={state} dispatch={dispatch} />}
           {state.fase === "quem" && <QuemAcertou state={state} dispatch={dispatch} />}
+          {state.fase === "passa" && <Passa state={state} dispatch={dispatch} />}
           {state.fase === "resultado" && <Resultado state={state} dispatch={dispatch} />}
           {state.fase === "fim" && <Fim state={state} dispatch={dispatch} />}
         </div>

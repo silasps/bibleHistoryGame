@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { CARTAS, CATEGORIA_IDS } from "@/content/bible-show/cartas"
 import { formatRef } from "@/content/refs"
-import { configPadrao, estadoInicial, montarTrilha, proximaCasa, reduceShow, type ShowAction, type ShowState } from "./bible-show"
+import { configPadrao, estadoInicial, montarTrilha, proximaCasa, reduceShow, segundosDaVez, tentando, type ShowAction, type ShowState } from "./bible-show"
 
 const run = (s: ShowState, ...as: ShowAction[]) => as.reduce(reduceShow, s)
 const equipes = () => run(estadoInicial, { type: "comecar", config: { ...configPadrao, nomes: ["Azul", "Ouro", ""] } })
@@ -94,5 +94,41 @@ describe("cada um por si", () => {
     const s = run(individual(), { type: "sortear", r1: 0, r2: 0 }, { type: "valendo", agora: 0 }, { type: "acertaram", agora: 15_000 }, { type: "voltar", agora: 50_000 })
     expect(s.fase).toBe("tempo")
     expect(s.relogio?.prazo).toBe(95_000)
+  })
+})
+
+describe("perguntas", () => {
+  const perguntas = (modo: "equipes" | "individual", nomes: string[]) => run(estadoInicial, { type: "comecar", config: { ...configPadrao, modo, nomes, estilos: ["perguntas"] } })
+
+  it("errou: a equipe seguinte tenta com metade do tempo; quem acerta anda", () => {
+    let s = run(perguntas("equipes", ["A", "B", "C"]), { type: "sortear", r1: 0, r2: 0 })
+    expect(s.carta!.estilo).toBe("perguntas")
+    s = run(s, { type: "valendo", agora: 0 })
+    expect(s.relogio?.prazo).toBe(60_000)
+    s = run(s, { type: "errou" })
+    expect(s.fase).toBe("passa")
+    expect(tentando(s).id).toBe("l2")
+    expect(segundosDaVez(s)).toBe(30)
+    s = run(s, { type: "valendo", agora: 100_000 }, { type: "errou" })
+    expect(tentando(s).id).toBe("l3")
+    expect(segundosDaVez(s)).toBe(15)
+    s = run(s, { type: "valendo", agora: 0 }, { type: "acertaram", agora: 5000 })
+    expect(s.lados.map((l) => l.casa)).toEqual([0, 0, 1])
+    expect(run(s, { type: "proxima" }).vez).toBe(1)
+  })
+
+  it("todas as equipes erraram: ninguém anda; individual não passa a vez", () => {
+    let s = run(perguntas("equipes", ["A", "B"]), { type: "sortear", r1: 0, r2: 0 }, { type: "valendo", agora: 0 }, { type: "errou" }, { type: "valendo", agora: 0 }, { type: "errou" })
+    expect(s.fase).toBe("resultado")
+    expect(s.lados.every((l) => l.casa === 0)).toBe(true)
+    s = run(perguntas("individual", ["Ana", "Bia"]), { type: "sortear", r1: 0, r2: 0 }, { type: "valendo", agora: 0 }, { type: "acertaram", agora: 1 })
+    expect(s.lados.map((l) => l.casa)).toEqual([1, 0])
+  })
+
+  it("só perguntas: sem rodada de todos; com mímica, a rodada de todos nunca é de perguntas", () => {
+    expect(montarTrilha({ casas: 15, categorias: ["bicho"], modo: "equipes", estilos: ["perguntas"] }).some((c) => c.tipo === "todos")).toBe(false)
+    let s = run(estadoInicial, { type: "comecar", config: { ...configPadrao, estilos: ["mimica", "perguntas"] } })
+    s = { ...s, lados: s.lados.map((l, i) => (i === 0 ? { ...l, casa: 4 } : l)) }
+    expect(run(s, { type: "sortear", r1: 0, r2: 0.99 }).carta).toMatchObject({ todos: true, estilo: "mimica" })
   })
 })
