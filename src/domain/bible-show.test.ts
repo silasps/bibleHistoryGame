@@ -356,3 +356,29 @@ describe("sair e voltar", () => {
     expect(run(s, { type: "sair", id: "l4" })).toBe(s)
   })
 })
+
+describe("só brincar", () => {
+  const livre = (config: Partial<Config> = {}) => jogo({ modo: "livre", nomes: ["x", "y"], ...config })
+
+  it("um grupo só, sem dado; a carta sai direto da roleta", () => {
+    const s = livre({ estilos: ["mimica"] })
+    expect(s.lados.map((l) => l.nome)).toEqual(["Grupo"])
+    expect(run(s, { type: "rolar", r: 0.9 })).toBe(s)
+    expect(run(s, { type: "sortear", r1: 0, r2: 0 }).fase).toBe("carta")
+  })
+
+  it("acertaram: ninguém anda; próxima carta volta à roleta", () => {
+    let s = run(livre({ estilos: ["mimica", "perguntas"] }), { type: "girar", r: 0 }, { type: "sortear", r1: 0, r2: 0 }, { type: "valendo", agora: 0 }, { type: "acertaram", agora: 5000 })
+    expect([s.fase, s.ultima?.tipo, s.ultima?.moveu, s.lados[0].casa]).toEqual(["resultado", "acerto", [], 0])
+    s = run(s, { type: "proxima" })
+    expect([s.fase, s.rodada?.estilo, s.pendentes]).toEqual(["vez", null, []])
+  })
+
+  it("letras: tempo esgotado ou palavra errada acabam a carta", () => {
+    const s = run(livre({ estilos: ["letras"], categorias: ["quem"] }), { type: "sortear", r1: 0, r2: 0 }, { type: "valendo", agora: 0 })
+    expect(run(s, { type: "passar", agora: 60_000 })).toMatchObject({ fase: "resultado", ultima: { tipo: "tempo" } })
+    expect(run(s, { type: "arriscar", agora: 1000 }, { type: "chutar", palavra: "zzz", agora: 2000 })).toMatchObject({ fase: "resultado", ultima: { tipo: "errou" } })
+    const palavra = CARTAS.find((c) => c.id === s.carta!.id)!.palavra
+    expect(run(s, { type: "arriscar", agora: 1000 }, { type: "chutar", palavra, agora: 2000 })).toMatchObject({ fase: "resultado", ultima: { tipo: "acerto", moveu: [] } })
+  })
+})

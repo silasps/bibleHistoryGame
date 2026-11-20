@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, Plus, QrCode, Smartphone, Tv, Users, X } from "lucide-react"
+import { ArrowLeft, PartyPopper, Plus, QrCode, Smartphone, Tv, Users, X } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMemo, useState, type ReactNode } from "react"
@@ -23,7 +23,8 @@ export function BibleShow() {
   const jogo = useMemo<Jogo | null>(() => (state ? { state, dispatch, agora: Date.now, eu: null, anfitriao: true } : null), [state, dispatch])
   if (!jogo) return <p className="grid min-h-dvh place-items-center text-mist">Carregando…</p>
   if (jogo.state.fase === "config") return <Configurar inicial={jogo.state.config} onStart={(config) => dispatch({ type: "comecar", config })} />
-  return <Partida jogo={jogo} sair={{ rotulo: "Encerrar partida", aviso: "A trilha e os pontos desta partida serão apagados.", acao: () => dispatch({ type: "configurar" }) }} />
+  const aviso = jogo.state.config.modo === "livre" ? "Vocês voltam para a escolha do jogo." : "A trilha e os pontos desta partida serão apagados."
+  return <Partida jogo={jogo} sair={{ rotulo: "Encerrar partida", aviso, acao: () => dispatch({ type: "configurar" }) }} />
 }
 
 const REGRAS = [
@@ -37,6 +38,15 @@ const REGRAS = [
   "Acertou antes do tempo acabar? Anda as casas sorteadas (Desafio: uma a mais).",
   "Casas especiais: quem para nelas cumpre o que a casa diz, como voltar casas, ficar uma vez de fora ou reunir todo o arraial numa rodada para todos.",
   "Quem chegar primeiro ao fim da trilha vence.",
+]
+
+const REGRAS_LIVRE = [
+  "Só brincar: sem equipes, sem trilha e sem pontos. Acabou a carta, vem a próxima.",
+  "Com mais de um jeito de jogar ligado, girem a roleta: ela decide se a carta é de mímica, perguntas ou letras.",
+  "Mímica: alguém vai à frente e só essa pessoa vê a carta. Nada de falar nem fazer sons. O resto do grupo adivinha.",
+  "Perguntas: alguém vai à frente e não olha a carta. Essa pessoa faz perguntas e o grupo só responde sim ou não.",
+  "Letras: a palavra aparece escondida e o grupo escolhe as letras junto. A certa dá 10 s; a errada tira 5 s. Ao tocar em Arriscar, o tempo para e não tem volta.",
+  "O tempo de cada jogo é escolhido no começo: Fácil, Normal ou Difícil, ou ajustado um a um.",
 ]
 
 function Chip({ ativo, onClick, children }: { ativo: boolean; onClick: () => void; children: React.ReactNode }) {
@@ -174,8 +184,9 @@ function EntrarNaSala() {
 function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config) => void }) {
   const router = useRouter()
   const [c, setC] = useState<Config>(inicial)
-  const [jeito, setJeito] = useState<"celular" | "sala" | "telao">("celular")
-  const sala = jeito !== "celular"
+  const [jeito, setJeitoBase] = useState<"celular" | "sala" | "telao" | "livre">(inicial.modo === "livre" ? "livre" : "celular")
+  const sala = jeito === "sala" || jeito === "telao"
+  const livre = jeito === "livre"
   const [criando, setCriando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const comecar = async () => {
@@ -201,7 +212,13 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
   const set = (patch: Partial<Config>) => setC((x) => ({ ...x, ...patch }))
   const trocarModo = (modo: Modo) => {
     if (modo === c.modo) return
-    set({ modo, nomes: modo === "equipes" ? ["Equipe 1", "Equipe 2"] : ["", "", ""] })
+    set({ modo, nomes: modo === "equipes" ? ["Equipe 1", "Equipe 2"] : modo === "livre" ? ["Grupo"] : ["", "", ""] })
+  }
+  // Só brincar é um jeito e um modo ao mesmo tempo: sem disputa, num celular só.
+  const setJeito = (j: typeof jeito) => {
+    setJeitoBase(j)
+    if (j === "livre") trocarModo("livre")
+    else if (c.modo === "livre") trocarModo("equipes")
   }
   const toggleCat = (id: CategoriaId) => {
     const on = c.categorias.includes(id)
@@ -241,7 +258,16 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
             sub={c.modo === "equipes" ? "Um celular por equipe" : "Um celular por pessoa"}
           />
         </div>
-        <Opcao ativo={jeito === "telao"} onClick={() => setJeito("telao")} icone={<Tv className="size-7" aria-hidden />} titulo="No telão" sub="Projetor ou TV, e este celular conduz" className="min-h-0 w-full py-3" />
+        <div className="grid grid-cols-2 gap-2">
+          <Opcao ativo={jeito === "telao"} onClick={() => setJeito("telao")} icone={<Tv className="size-7" aria-hidden />} titulo="No telão" sub="Projetor ou TV, e este celular conduz" />
+          <Opcao ativo={livre} onClick={() => setJeito("livre")} icone={<PartyPopper className="size-7" aria-hidden />} titulo="Só brincar" sub="Sem disputa, um celular conduz" />
+        </div>
+        {livre && (
+          <p className="rounded-2xl border border-gold/30 bg-gold/10 px-3 py-2 text-xs leading-relaxed text-sand">
+            Sem equipes, sem trilha e sem pontos. Alguém vai à frente: representa a mímica ou adivinha fazendo perguntas, e o resto do grupo adivinha ou responde. Em Letras, o grupo todo escolhe as
+            letras. Este celular conduz tudo, carta após carta.
+          </p>
+        )}
         {jeito === "telao" && (
           <p className="rounded-2xl border border-gold/30 bg-gold/10 px-3 py-2 text-xs leading-relaxed text-sand">
             Toquem em <b className="text-parchment">Criar a sala</b>. No computador ligado ao projetor, abram Bible Show, digitem o código e escolham <b className="text-parchment">Esta tela é o telão</b>. O jogo
@@ -261,68 +287,72 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
       <details className="rounded-2xl border border-border bg-night/60 p-4 text-sm text-sand open:space-y-2">
         <summary className="cursor-pointer font-semibold text-parchment">Como jogar</summary>
         <ol className="list-decimal space-y-1 pl-5">
-          {REGRAS.map((r) => (
+          {(livre ? REGRAS_LIVRE : REGRAS).map((r) => (
             <li key={r}>{r}</li>
           ))}
         </ol>
       </details>
 
-      <Bloco titulo="Modo">
-        <div className="grid grid-cols-2 gap-2">
-          <Chip ativo={c.modo === "equipes"} onClick={() => trocarModo("equipes")}>
-            Equipes
-          </Chip>
-          <Chip ativo={c.modo === "individual"} onClick={() => trocarModo("individual")}>
-            Cada um por si
-          </Chip>
-        </div>
-        <p className="text-xs text-mist">{c.modo === "equipes" ? "A equipe da vez adivinha o que um dos seus representa." : "Uma pessoa representa e todos os outros tentam adivinhar."}</p>
-      </Bloco>
+      {!livre && (
+        <>
+          <Bloco titulo="Modo">
+            <div className="grid grid-cols-2 gap-2">
+              <Chip ativo={c.modo === "equipes"} onClick={() => trocarModo("equipes")}>
+                Equipes
+              </Chip>
+              <Chip ativo={c.modo === "individual"} onClick={() => trocarModo("individual")}>
+                Cada um por si
+              </Chip>
+            </div>
+            <p className="text-xs text-mist">{c.modo === "equipes" ? "A equipe da vez adivinha o que um dos seus representa." : "Uma pessoa representa e todos os outros tentam adivinhar."}</p>
+          </Bloco>
 
-      <Bloco titulo={c.modo === "equipes" ? `Equipes (${min} a ${max})` : `Jogadores (${min} a ${max})`}>
-        <ul className="space-y-2">
-          {c.nomes.map((nome, i) => (
-            <li key={i} className="flex items-center gap-2">
-              <span className="size-4 shrink-0 rounded-full" style={{ background: CORES[i % CORES.length] }} aria-hidden />
-              <input
-                value={nome}
-                maxLength={20}
-                onChange={(e) => set({ nomes: c.nomes.map((n, j) => (j === i ? e.target.value : n)) })}
-                placeholder={`${base} ${i + 1}`}
-                aria-label={`Nome: ${base} ${i + 1}`}
-                className="h-11 min-w-0 flex-1 rounded-xl border border-input bg-night/70 px-3 text-parchment focus:border-gold"
-              />
-              <button
-                type="button"
-                disabled={c.nomes.length <= min}
-                onClick={() => set({ nomes: c.nomes.filter((_, j) => j !== i) })}
-                className="grid size-11 place-items-center rounded-xl border border-border text-mist disabled:opacity-30"
-                aria-label={`Remover ${nome || `${base} ${i + 1}`}`}
-              >
-                <X className="size-4" />
-              </button>
-            </li>
-          ))}
-        </ul>
-        <button
-          type="button"
-          disabled={c.nomes.length >= max}
-          onClick={() => set({ nomes: [...c.nomes, c.modo === "equipes" ? `Equipe ${c.nomes.length + 1}` : ""] })}
-          className="inline-flex h-11 items-center gap-2 rounded-full border border-dashed border-gold/50 px-4 text-sm text-gold disabled:opacity-30"
-        >
-          <Plus className="size-4" /> Adicionar
-        </button>
-      </Bloco>
+          <Bloco titulo={c.modo === "equipes" ? `Equipes (${min} a ${max})` : `Jogadores (${min} a ${max})`}>
+            <ul className="space-y-2">
+              {c.nomes.map((nome, i) => (
+                <li key={i} className="flex items-center gap-2">
+                  <span className="size-4 shrink-0 rounded-full" style={{ background: CORES[i % CORES.length] }} aria-hidden />
+                  <input
+                    value={nome}
+                    maxLength={20}
+                    onChange={(e) => set({ nomes: c.nomes.map((n, j) => (j === i ? e.target.value : n)) })}
+                    placeholder={`${base} ${i + 1}`}
+                    aria-label={`Nome: ${base} ${i + 1}`}
+                    className="h-11 min-w-0 flex-1 rounded-xl border border-input bg-night/70 px-3 text-parchment focus:border-gold"
+                  />
+                  <button
+                    type="button"
+                    disabled={c.nomes.length <= min}
+                    onClick={() => set({ nomes: c.nomes.filter((_, j) => j !== i) })}
+                    className="grid size-11 place-items-center rounded-xl border border-border text-mist disabled:opacity-30"
+                    aria-label={`Remover ${nome || `${base} ${i + 1}`}`}
+                  >
+                    <X className="size-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              disabled={c.nomes.length >= max}
+              onClick={() => set({ nomes: [...c.nomes, c.modo === "equipes" ? `Equipe ${c.nomes.length + 1}` : ""] })}
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-dashed border-gold/50 px-4 text-sm text-gold disabled:opacity-30"
+            >
+              <Plus className="size-4" /> Adicionar
+            </button>
+          </Bloco>
 
-      <Bloco titulo="Trilha">
-        <div className="flex flex-wrap gap-2">
-          {TRILHAS.map((t) => (
-            <Chip key={t.casas} ativo={c.casas === t.casas} onClick={() => set({ casas: t.casas })}>
-              {t.nome} · {t.casas} casas
-            </Chip>
-          ))}
-        </div>
-      </Bloco>
+          <Bloco titulo="Trilha">
+            <div className="flex flex-wrap gap-2">
+              {TRILHAS.map((t) => (
+                <Chip key={t.casas} ativo={c.casas === t.casas} onClick={() => set({ casas: t.casas })}>
+                  {t.nome} · {t.casas} casas
+                </Chip>
+              ))}
+            </div>
+          </Bloco>
+        </>
+      )}
 
       <Bloco titulo="Como jogar a carta">
         <p className="text-sm text-mist">
@@ -333,7 +363,7 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
             const Icone = ESTILO[e].icone
             const on = c.estilos.includes(e)
             const cor = COR_ESTILO[e]
-            const info = comoJogar(e, c.modo === "equipes")
+            const info = comoJogar(e, c.modo)
             return (
               <section key={e} className={cn("rounded-2xl border p-3 transition", on ? "bg-night/70" : "border-border opacity-60")} style={on ? { borderColor: `${cor}99` } : undefined}>
                 <button type="button" role="switch" aria-checked={on} aria-label={ESTILO[e].nome} onClick={() => toggleEstilo(e)} className="flex w-full items-center gap-3 text-left">
@@ -385,7 +415,7 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
                 <Icone className="size-5 shrink-0" style={{ color: cat.cor }} aria-hidden />
                 <span className="min-w-0">
                   <span className="block text-sm font-semibold leading-tight">{cat.nome}</span>
-                  <span className="block truncate text-[0.7rem] text-mist">{cat.sub}</span>
+                  {!(livre && cat.id === "desafio") && <span className="block truncate text-[0.7rem] text-mist">{cat.sub}</span>}
                 </span>
               </button>
             )
@@ -421,7 +451,7 @@ export function Partida({ jogo, topo, convite, sair }: { jogo: Jogo; topo?: Reac
           <p className="shrink-0 font-display text-xl text-gold-bright">Bible Show</p>
           <div className="flex min-w-0 items-center gap-2">
             {topo}
-            {state.fase !== "fim" && (
+            {state.fase !== "fim" && state.config.modo !== "livre" && (
               <button
                 type="button"
                 onClick={() => setQuem(true)}

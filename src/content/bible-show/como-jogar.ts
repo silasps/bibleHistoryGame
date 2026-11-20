@@ -8,7 +8,10 @@ export interface ComoJogar {
   passos: string[]
 }
 
-export function comoJogar(tipo: TipoDeCarta, equipes: boolean): ComoJogar {
+/** `modo`: em equipes, cada um por si ou só brincar (sem disputa). */
+export function comoJogar(tipo: TipoDeCarta, modo: "equipes" | "individual" | "livre"): ComoJogar {
+  const equipes = modo === "equipes"
+  if (modo === "livre") return soBrincar(tipo)
   switch (tipo) {
     case "mimica":
       return {
@@ -39,6 +42,37 @@ export function comoJogar(tipo: TipoDeCarta, equipes: boolean): ComoJogar {
           "A vez só passa quando o tempo acaba ou quando arriscam a palavra e erram.",
           "Arriscar para o tempo e não tem volta.",
           "Quem abrir a última letra ou acertar a palavra anda.",
+        ],
+      }
+  }
+}
+
+/** Só brincar: alguém vai à frente e o resto do grupo joga junto; sem pontos. */
+function soBrincar(tipo: TipoDeCarta): ComoJogar {
+  switch (tipo) {
+    case "mimica":
+      return {
+        resumo: "Alguém vai à frente e representa a carta, sem falar.",
+        passos: ["Alguém vai à frente. Só essa pessoa vê a carta.", "Ela representa com gestos, sem falar e sem fazer sons.", "O resto do grupo tenta adivinhar antes de o tempo acabar."],
+      }
+    case "perguntas":
+      return {
+        resumo: "Alguém vai à frente e descobre a carta com perguntas de sim ou não.",
+        passos: [
+          "Alguém vai à frente e não olha a carta; o resto do grupo olha.",
+          "Ela faz perguntas como “Sou um profeta?” ou “Estou no Antigo Testamento?”.",
+          "O grupo só pode responder sim ou não.",
+          "A categoria da carta fica em segredo. No nível Fácil, ela aparece como dica.",
+        ],
+      }
+    case "letras":
+      return {
+        resumo: "O grupo todo descobre a palavra escondida escolhendo letras.",
+        passos: [
+          "A palavra aparece escondida, com um espaço para cada letra.",
+          "Escolham as letras juntos. A certa aparece e dá +10 s; a errada tira 5 s.",
+          "Arriscar para o tempo e não tem volta: se errarem, a carta acaba.",
+          "Se o tempo acabar, a palavra aparece e vem a próxima carta.",
         ],
       }
   }

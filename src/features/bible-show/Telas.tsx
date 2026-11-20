@@ -15,7 +15,7 @@ import { useSoundState, useStinger } from "@/fx/useSound"
 import { usePreferences } from "@/stores/preferences-store"
 import { cn } from "@/lib/utils"
 import { useJogo } from "./jogo"
-import { Dado, Roleta } from "./Sorteio"
+import { COR_ESTILO, Dado, Roleta } from "./Sorteio"
 import { casaInfo, CategoriaTag, COR_TOM, ESTILO, Peao, Placar, Trilha } from "./Trilha"
 
 type RefArg = Parameters<typeof formatRef>[0]
@@ -76,6 +76,12 @@ const nomesEstilos = (lista: Estilo[]) => {
 export function instrucao(state: ShowState, estilo: Estilo | null): string {
   const equipes = state.config.modo === "equipes"
   const quem = lider(state).nome
+  if (state.config.modo === "livre") {
+    if (!estilo) return `A roleta decide: ${nomesEstilos(state.config.estilos)}.`
+    if (estilo === "letras") return `Palavra escondida. O grupo tem ${textoTempo(tempoLetras(state.config) / 1000)}: letra certa dá 10 s, errada tira 5 s.`
+    if (estilo === "perguntas") return "Alguém vai à frente para adivinhar e não olha a carta. O resto do grupo vê e só responde sim ou não."
+    return "Alguém vai à frente para representar. Só essa pessoa vê a carta."
+  }
   if (estilo === "letras")
     return equipes
       ? `Palavra escondida. Cada equipe tem ${textoTempo(tempoLetras(state.config) / 1000)}: letra certa dá 10 s, errada tira 5 s. A vez só passa quando o tempo acaba ou quando erram a palavra.`
@@ -92,6 +98,54 @@ export function instrucao(state: ShowState, estilo: Estilo | null): string {
 
 /** Vez: a trilha e a roleta; depois a roleta grande, o sorteio de casas e a carta. */
 export function Vez() {
+  const { state } = useJogo()
+  return state.config.modo === "livre" ? <VezLivre /> : <VezDisputa />
+}
+
+/** Só brincar: sem trilha nem dado; a roleta (se houver mais de um jeito) e a carta. */
+function VezLivre() {
+  const { state, dispatch } = useJogo()
+  const rodada = state.rodada!
+  const roleta = state.config.estilos.length > 1
+  const [girou, setGirou] = useState(false)
+  const fimRoleta = useCallback(() => setGirou(true), [])
+  const pronto = !roleta || girou
+  return (
+    <div className="flex min-h-full flex-col items-center gap-4 pt-2 text-center">
+      {roleta && rodada.estilo ? (
+        <Roleta opcoes={state.config.estilos} resultado={rodada.estilo} chave={`r-${state.semente}-${state.usadas.length}-${state.usadas.at(-1) ?? ""}`} onFim={fimRoleta} />
+      ) : (
+        <div className="flex flex-1 flex-col items-center justify-center gap-4">
+          <div className="flex gap-3">
+            {state.config.estilos.map((e) => {
+              const Icone = ESTILO[e].icone
+              return (
+                <span key={e} className="grid size-16 place-items-center rounded-2xl" style={{ background: `${COR_ESTILO[e]}26`, color: COR_ESTILO[e] }}>
+                  <Icone className="size-8" aria-hidden />
+                </span>
+              )
+            })}
+          </div>
+          <p className="font-display text-4xl leading-tight text-parchment">Próxima carta</p>
+        </div>
+      )}
+      {(!rodada.estilo || pronto) && <p className="max-w-sm text-sm text-mist">{instrucao(state, rodada.estilo)}</p>}
+      <div className="mt-auto w-full max-w-md">
+        {roleta && !rodada.estilo ? (
+          <button type="button" onClick={() => dispatch({ type: "girar", r: Math.random() })} className={cn(BIG, "bg-gold text-night")}>
+            <Dices className="size-5" aria-hidden /> Girar a roleta
+          </button>
+        ) : (
+          <button type="button" disabled={!pronto} onClick={() => dispatch({ type: "sortear", r1: Math.random(), r2: Math.random() })} className={cn(BIG, "bg-gold text-night")}>
+            <Eye className="size-5" aria-hidden /> Ver a carta
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function VezDisputa() {
   const { state, dispatch, conduz } = useJogo()
   const rodada = state.rodada!
   const quem = lider(state)
@@ -184,8 +238,11 @@ export function CartaSecreta() {
   const perguntas = state.carta!.estilo === "perguntas"
   const quem = lider(state)
   const passos = (state.rodada?.passos ?? 1) + (carta.categoria === "desafio" ? 1 : 0)
+  const livre = state.config.modo === "livre"
   const quemOlha = perguntas
-    ? state.config.modo === "equipes"
+    ? livre
+      ? "Quem vai adivinhar não olha. O resto do grupo vê a carta."
+      : state.config.modo === "equipes"
       ? "Quem vai adivinhar, de cada equipe, não olha. Todos os outros veem a carta."
       : `${tentando(state).nome} vai adivinhar e não olha. Os outros veem a carta.`
     : state.carta!.todos
@@ -230,12 +287,13 @@ export function CartaSecreta() {
                 className="absolute inset-0 flex flex-col items-center justify-between rounded-3xl border-2 p-5 [backface-visibility:hidden] [transform:rotateY(180deg)]"
                 style={{ borderColor: cor, background: `linear-gradient(170deg, ${cor}40, #0b0f19 55%)` }}
               >
-                <CategoriaTag id={carta.categoria} className="bg-night/70" />
+                <CategoriaTag id={carta.categoria} className="bg-night/70" semCasas={livre} />
                 <p className="font-display text-4xl leading-tight text-parchment [overflow-wrap:anywhere]">{carta.palavra}</p>
                 <div className="space-y-2">
                   <p className="text-xs text-mist">{estilo.regra}</p>
                   <p className="text-xs text-sand">
-                    {formatRef(carta.ref as RefArg, "long")} · vale {passos} {passos === 1 ? "casa" : "casas"}
+                    {formatRef(carta.ref as RefArg, "long")}
+                    {!livre && ` · vale ${passos} ${passos === 1 ? "casa" : "casas"}`}
                   </p>
                 </div>
               </div>
@@ -366,13 +424,13 @@ export function Cronometro() {
   return (
     <div className="flex min-h-full flex-col items-center gap-4 text-center">
       <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
-        {categoriaVisivel(state) && <CategoriaTag id={carta.categoria} />}
+        {categoriaVisivel(state) && <CategoriaTag id={carta.categoria} semCasas={state.config.modo === "livre"} />}
         <div className="flex flex-col items-start gap-1.5">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 px-3 py-1 text-gold-bright">
             <EstiloIcone className="size-3.5" aria-hidden /> {estilo.nome}
           </span>
           {todos && <span className="rounded-full border border-parchment/40 px-3 py-1 text-parchment">Todo o arraial</span>}
-          {perguntas && !todos && (
+          {perguntas && !todos && state.config.modo !== "livre" && (
             <span className="inline-flex max-w-40 items-center gap-1.5 text-sand">
               <Peao lado={quem} className="size-4 text-[0.5rem]" />
               <span className="truncate">{quem.nome} pergunta</span>
@@ -507,7 +565,7 @@ export function Passa() {
         <p className="font-display text-4xl text-[#ff9f80]">Tempo!</p>
         <p className="mt-1 text-sm text-mist">{antes.nome} não acertou. A carta continua em segredo.</p>
       </div>
-      {categoriaVisivel(state) && <CategoriaTag id={carta.categoria} />}
+      {categoriaVisivel(state) && <CategoriaTag id={carta.categoria} semCasas={state.config.modo === "livre"} />}
       <section className="w-full max-w-md space-y-3 rounded-3xl border border-gold/30 bg-night/80 p-4 text-left">
         <div className="flex items-center gap-3">
           <Peao lado={quem} className="size-9 text-base" />
@@ -544,11 +602,13 @@ export function Resultado() {
   const ultima = state.ultima!
   const carta = getCarta(ultima.cartaId)!
   const acertou = ultima.tipo === "acerto"
+  const livre = state.config.modo === "livre"
+  const titulo = acertou ? (livre ? "Acertaram!" : "Acertou!") : ultima.tipo === "errou" ? "Não era essa!" : "Tempo!"
   const nome = (id: string) => state.lados.find((l) => l.id === id)?.nome ?? ""
   return (
     <div className="flex min-h-full flex-col gap-3">
       <div className="flex flex-col items-center text-center">
-        <p className={cn("font-display text-4xl", acertou ? "text-[#8fdc93]" : "text-[#ff9f80]")}>{acertou ? "Acertou!" : "Tempo!"}</p>
+        <p className={cn("font-display text-4xl", acertou ? "text-[#8fdc93]" : "text-[#ff9f80]")}>{titulo}</p>
         <p className="mt-1 text-sm text-mist">A palavra era</p>
         <p className="font-display text-3xl leading-tight text-parchment">{carta.palavra}</p>
         <p className="text-xs text-sand">{formatRef(carta.ref as RefArg, "long")}</p>
@@ -563,11 +623,11 @@ export function Resultado() {
           </ul>
         )}
       </div>
-      <Trilha state={state} destaque="resultado" />
+      {!livre && <Trilha state={state} destaque="resultado" />}
       <div className="mt-auto">
         {conduz ? (
           <button type="button" onClick={() => dispatch({ type: "proxima" })} className={cn(BIG, "bg-gold text-night")}>
-            {state.pendentes.length ? "Casa especial! →" : "Próxima vez →"}
+            {state.pendentes.length ? "Casa especial! →" : livre ? "Próxima carta →" : "Próxima vez →"}
           </button>
         ) : (
           <Aguarde>Aguardando {lider(state).nome} seguir</Aguarde>
@@ -754,6 +814,7 @@ export function Letras() {
   const fim = useRef<number | null>(null)
   const naPalavra = new Set(painel(carta.palavra, []).filter((x) => x.letra).map((x) => normalizar(x.c)))
   const ultima = escolhidas.at(-1)
+  const livre = state.config.modo === "livre"
 
   useEffect(() => {
     const tick = () => {
@@ -792,15 +853,17 @@ export function Letras() {
 
   return (
     <div className="flex min-h-full flex-col items-center gap-3 text-center">
-      <div className="flex w-full items-center justify-between gap-2">
-        <CategoriaTag id={carta.categoria} />
-        <div className="flex min-w-0 items-center gap-2 text-left">
-          <Peao lado={quem} className="size-8 text-sm" />
-          <div className="min-w-0">
-            <p className="text-[0.65rem] uppercase tracking-[0.25em] text-mist">Vez de</p>
-            <p className="truncate font-display text-xl leading-tight text-parchment">{quem.nome}</p>
+      <div className={cn("flex w-full items-center gap-2", livre ? "justify-center" : "justify-between")}>
+        <CategoriaTag id={carta.categoria} semCasas={livre} />
+        {!livre && (
+          <div className="flex min-w-0 items-center gap-2 text-left">
+            <Peao lado={quem} className="size-8 text-sm" />
+            <div className="min-w-0">
+              <p className="text-[0.65rem] uppercase tracking-[0.25em] text-mist">Vez de</p>
+              <p className="truncate font-display text-xl leading-tight text-parchment">{quem.nome}</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="h-2 w-full overflow-hidden rounded-full bg-white/10" role="timer" aria-label={`${seg} segundos`}>
@@ -868,7 +931,7 @@ export function Letras() {
               setChute("")
             }}
           >
-            <p className="text-sm text-sand">O tempo parou. Digitem a resposta: se errarem, a vez passa.</p>
+            <p className="text-sm text-sand">O tempo parou. Digitem a resposta: se errarem, {livre ? "a carta acaba" : "a vez passa"}.</p>
             <input
               autoFocus
               value={chute}
@@ -909,7 +972,7 @@ export function Letras() {
                 )
               })}
             </div>
-            <p className="text-center text-xs text-mist">A vez só passa quando o tempo acaba ou quando vocês arriscam e erram a palavra.</p>
+            <p className="text-center text-xs text-mist">{livre ? "Quando o tempo acaba, a palavra aparece." : "A vez só passa quando o tempo acaba ou quando vocês arriscam e erram a palavra."}</p>
             <div className="grid grid-cols-2 gap-2">
               <button type="button" onClick={() => dispatch(correndo ? { type: "pausar", agora: agora() } : { type: "continuar", agora: agora() })} className={cn(BIG, "h-12 border border-border text-sm text-parchment")}>
                 {correndo ? <Pause className="size-4" aria-hidden /> : <Play className="size-4" aria-hidden />} {correndo ? "Pausar" : "Seguir"}

@@ -113,4 +113,5 @@ A estimativa caiu de **71 para cerca de 54 min** (164 cenas). Os jogos das etapa
 - [ ] **Testar os tempos por nível** (Fácil / Normal / Difícil, ou ajustar cada jogo). Valores que eu defini: Mímica 1:30 / 1 min / 45 s; Perguntas 5 / 3 / 2 min; Letras 1:30 / 1 min / 45 s.
 - [ ] **Testar sair e voltar no meio da partida** (botão de equipes no topo; na sala, o botão do QR). Precisa de pelo menos 2 na partida; quem volta continua na mesma casa.
 - [ ] **Testar o telão** (configuração → "No telão"): no computador do projetor, abrir Bible Show, digitar o código e escolher "Esta tela é o telão"; tocar em "Ligar o som" no telão. O celular de quem criou conduz tudo.
+- [ ] **Testar o "Só brincar"** (configuração → "Só brincar"): um celular conduz, sem equipes, trilha nem pontos. Alguém vai à frente (mímica ou perguntas) e o grupo adivinha ou responde; em Letras, o grupo escolhe as letras junto (tempo esgotado ou palavra errada: a carta acaba e a palavra aparece).
 - [ ] **Aprovar as regras novas da tela "Como jogar"** (roleta, dado de 1 a 6 casas, categoria da casa em que a equipe está, Desafio vale 1 casa a mais, Letras).

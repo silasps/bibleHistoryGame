@@ -16,7 +16,8 @@ export const ESTILO: Record<Estilo, { icone: LucideIcon; nome: string; regra: st
 }
 
 /** A classe da carta, no mesmo formato das categorias da configuração. */
-export function CategoriaTag({ id, className }: { id: CategoriaId; className?: string }) {
+/** `semCasas`: só brincar (sem trilha), sem o "vale 1 casa a mais" do Desafio. */
+export function CategoriaTag({ id, className, semCasas }: { id: CategoriaId; className?: string; semCasas?: boolean }) {
   const c = getCategoria(id)
   const Icone = ICONE[id]
   return (
@@ -24,7 +25,7 @@ export function CategoriaTag({ id, className }: { id: CategoriaId; className?: s
       <Icone className="size-5 shrink-0" style={{ color: c.cor }} aria-hidden />
       <span className="min-w-0">
         <span className="block text-sm font-semibold leading-tight text-parchment">{c.nome}</span>
-        <span className="block truncate text-[0.7rem] text-mist">{c.sub}</span>
+        {!(semCasas && id === "desafio") && <span className="block truncate text-[0.7rem] text-mist">{c.sub}</span>}
       </span>
     </div>
   )

@@ -5,7 +5,8 @@ import { escolheOutro, getSituacao, SITUACOES, type SituacaoId } from "@/content
 // trilha fica na tela. Lógica pura (o relógio e o sorteio entram pelas ações),
 // a mesma num celular só ou numa sala com um celular por equipe.
 
-export type Modo = "equipes" | "individual"
+/** livre: só brincar, sem disputa (sem equipes, trilha nem pontos), num celular só. */
+export type Modo = "equipes" | "individual" | "livre"
 export type Estilo = "mimica" | "perguntas" | "letras"
 export const ESTILOS: Estilo[] = ["mimica", "perguntas", "letras"]
 /** Letras: letra que está na palavra dá tempo; letra que não está tira. */
@@ -87,7 +88,8 @@ export interface ShowState {
   usadas: string[]
   /** Cronômetro: prazo absoluto quando corre; `restante` quando pausado. */
   relogio: { prazo?: number; restante: number } | null
-  ultima: { tipo: "acerto" | "tempo"; cartaId: string; moveu: { id: string; de: number; para: number }[] } | null
+  /** `errou`: em Letras, arriscaram e erraram (só brincar). */
+  ultima: { tipo: "acerto" | "tempo" | "errou"; cartaId: string; moveu: { id: string; de: number; para: number }[] } | null
   /** Casas especiais em que alguém parou e que ainda vão ser cumpridas. */
   pendentes: { situacao: SituacaoId; lado: string }[]
   /** "O sol parou": joga de novo na próxima vez. */
@@ -128,7 +130,7 @@ export type ShowAction =
   | { type: "configurar" }
 
 export const CORES = ["#d8a948", "#5fb3c9", "#e0736b", "#8fbf6a", "#b18ad8", "#e89a4f", "#e7c6a0", "#6fd1b0", "#f08fb5", "#9aa7ff", "#c9d36b", "#ff9f80"]
-export const LIMITES = { equipes: { min: 2, max: 4 }, individual: { min: 2, max: 12 } } as const
+export const LIMITES = { equipes: { min: 2, max: 4 }, individual: { min: 2, max: 12 }, livre: { min: 1, max: 1 } } as const
 /** Tempos que dá para escolher em cada jogo (segundos). */
 export const SEGUNDOS = [30, 45, 60, 90] as const
 export const SEGUNDOS_PERGUNTAS = [120, 180, 240, 300] as const
@@ -320,8 +322,8 @@ const valeCasas = (state: ShowState) => (state.rodada?.passos ?? 1) + (CARTAS.fi
 
 function limpar(config: Config): Config {
   const { min, max } = LIMITES[config.modo]
-  const base = config.modo === "equipes" ? "Equipe" : "Jogador"
-  const nomes = config.nomes.slice(0, max).map((n, i) => n.trim().slice(0, 20) || `${base} ${i + 1}`)
+  const base = config.modo === "equipes" ? "Equipe" : config.modo === "livre" ? "Grupo" : "Jogador"
+  const nomes = (config.modo === "livre" ? ["Grupo"] : config.nomes).slice(0, max).map((n, i) => n.trim().slice(0, 20) || `${base} ${i + 1}`)
   while (nomes.length < min) nomes.push(`${base} ${nomes.length + 1}`)
   const categorias = config.categorias.filter((c) => CATEGORIA_IDS.includes(c))
   const estilos = ESTILOS.filter((e) => (config.estilos ?? []).includes(e))
@@ -359,6 +361,8 @@ const chegou = (state: ShowState, lados: Lado[]) =>
   lados.filter((l) => l.casa >= state.config.casas).sort((a, b) => b.acertos - a.acertos)[0]?.id ?? null
 
 function avancar(state: ShowState, ids: string[]): ShowState {
+  // Só brincar: acertaram e pronto (ninguém anda).
+  if (state.config.modo === "livre") return { ...state, relogio: null, ultima: { tipo: "acerto", cartaId: state.carta!.id, moveu: [] }, pendentes: [], fase: "resultado" }
   const passos = valeCasas(state)
   const trilha = trilhaDe(state)
   const moveu: { id: string; de: number; para: number }[] = []
@@ -384,12 +388,18 @@ function avancar(state: ShowState, ids: string[]): ShowState {
   }
 }
 
-/** Letras: a vez passa para a equipe seguinte, que começa com o tempo cheio ao tocar em Valendo. */
-const vezSeguinte = (state: ShowState): ShowState => ({
-  ...state,
-  carta: { ...state.carta!, tentativa: state.carta!.tentativa + 1, arriscando: false, comecou: false },
-  relogio: { restante: tempoLetras(state.config) },
-})
+/**
+ * Letras: a vez passa para a equipe seguinte, que começa com o tempo cheio ao tocar em Valendo.
+ * Só brincar: não há seguinte; a carta acaba e a palavra aparece.
+ */
+const vezSeguinte = (state: ShowState, errou = false): ShowState =>
+  state.config.modo === "livre"
+    ? { ...state, fase: "resultado", relogio: null, ultima: { tipo: errou ? "errou" : "tempo", cartaId: state.carta!.id, moveu: [] } }
+    : {
+        ...state,
+        carta: { ...state.carta!, tentativa: state.carta!.tentativa + 1, arriscando: false, comecou: false },
+        relogio: { restante: tempoLetras(state.config) },
+      }
 
 /** Passa a vez: "o sol parou" joga de novo; quem está no exílio pula uma vez. */
 function passarVez(state: ShowState): ShowState {
@@ -458,11 +468,12 @@ export function reduceShow(state: ShowState, a: ShowAction): ShowState {
       return { ...state, rodada: { ...state.rodada, estilo: lista[Math.min(lista.length - 1, Math.floor(a.r * lista.length))] } }
     }
     case "rolar":
-      if (state.fase !== "vez" || !state.rodada?.estilo || state.rodada.passos) return state
+      if (state.fase !== "vez" || !state.rodada?.estilo || state.rodada.passos || state.config.modo === "livre") return state
       return { ...state, rodada: { ...state.rodada, passos: PASSOS[Math.min(PASSOS.length - 1, Math.floor(a.r * PASSOS.length))] } }
     case "sortear": {
       const rodada = state.rodada
-      if (state.fase !== "vez" || !rodada?.estilo || !rodada.passos) return state
+      // Só brincar: sem dado (a carta não vale casas).
+      if (state.fase !== "vez" || !rodada?.estilo || (!rodada.passos && state.config.modo !== "livre")) return state
       // Categoria da casa em que o líder está; na partida e nas casas especiais, sorteada.
       const casa = casaDe(state, lider(state))
       const cats = state.config.categorias
@@ -500,6 +511,7 @@ export function reduceShow(state: ShowState, a: ShowAction): ShowState {
       return { ...state, relogio: { prazo: a.agora + state.relogio.restante, restante: state.relogio.restante } }
     case "acertaram": {
       if (state.fase !== "tempo" || !state.carta) return state
+      if (state.config.modo === "livre") return avancar(state, [])
       if (!state.carta.todos) {
         // Perguntas: quem estava perguntando acertou. Equipes: a equipe da vez acertou a própria carta.
         if (state.carta.estilo === "perguntas") return avancar(state, [tentando(state).id])
@@ -546,7 +558,7 @@ export function reduceShow(state: ShowState, a: ShowAction): ShowState {
       const so = (t: string) => normalizar(t).replace(/[^A-Z]/g, "")
       if (so(a.palavra) && so(a.palavra) === so(getCartaPalavra(c.id))) return avancar(state, [tentando(state).id])
       // Errou a palavra: a vez passa.
-      return vezSeguinte(state)
+      return vezSeguinte(state, true)
     }
     case "passar":
       // Letras: acabou o tempo da equipe; a vez passa.
