@@ -1,73 +1,170 @@
 "use client"
 
-import { Check, Eye, Hand, Pause, Play, RotateCcw, Shuffle, Trophy, X } from "lucide-react"
+import { BookOpen, Check, Dices, ExternalLink, Eye, Hand, Hourglass, Pause, Play, RotateCcw, Send, Shuffle, SkipForward, Trophy, Volume2, X } from "lucide-react"
 import { motion } from "motion/react"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { getCarta } from "@/content/bible-show/cartas"
-import { formatRef } from "@/content/refs"
-import { classificacao, proximaCasa, segundosDaVez, tentando, type ShowAction, type ShowState } from "@/domain/bible-show"
+import { escolheOutro, getSituacao, regraDoEfeito } from "@/content/bible-show/situacoes"
+import { formatRef, linkNaa } from "@/content/refs"
+import { casaDe, classificacao, LETRAS_MS, lider, normalizar, painel, segundosDaVez, tentando, type Estilo, type ShowState } from "@/domain/bible-show"
+import { PhoneSheet } from "@/features/presentation/PhoneDock"
 import { HAPTIC, vibrate } from "@/fx/haptics"
 import { useFx } from "@/fx/useFx"
-import { useStinger } from "@/fx/useSound"
+import { soundEngine } from "@/fx/sound"
+import { useSoundState, useStinger } from "@/fx/useSound"
+import { usePreferences } from "@/stores/preferences-store"
 import { cn } from "@/lib/utils"
-import { casaInfo, CategoriaTag, ESTILO, Peao, Placar, TODOS, Trilha } from "./Trilha"
+import { useJogo } from "./jogo"
+import { Dado, Roleta } from "./Sorteio"
+import { casaInfo, CategoriaTag, COR_TOM, ESTILO, Peao, Placar, Trilha } from "./Trilha"
 
-type Dispatch = (a: ShowAction) => void
 type RefArg = Parameters<typeof formatRef>[0]
 
 const BIG = "flex h-14 w-full items-center justify-center gap-2 rounded-full text-lg font-semibold transition active:scale-[0.98] disabled:opacity-40"
 
-/** Vez: a trilha, quem joga e a casa que vale. */
-export function Vez({ state, dispatch }: { state: ShowState; dispatch: Dispatch }) {
-  const lado = state.lados[state.vez]
-  const casa = proximaCasa(state)!
-  const info = casaInfo(casa)
-  const Icone = info.icone
-  const equipes = state.config.modo === "equipes"
-  const { estilos } = state.config
-  const instrucao =
-    casa.tipo === "todos"
-      ? "Um representante de cada equipe vê a mesma carta. A equipe que acertar primeiro anda."
-      : estilos.length > 1 && estilos.includes("perguntas")
-        ? "Mímica, desenho ou perguntas: o jeito de jogar é sorteado com a carta."
-        : estilos[0] === "perguntas"
-          ? equipes
-            ? "Cada equipe escolhe quem vai adivinhar. Essas pessoas não veem a carta."
-            : `${lado.nome} adivinha fazendo perguntas. Os outros veem a carta.`
-          : equipes
-            ? "Escolham quem vai representar. Só essa pessoa vê a carta."
-            : `${lado.nome} representa. Quem acertar anda junto.`
+/** Aviso para quem espera o outro celular agir. */
+function Aguarde({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-full flex-col gap-3">
-      <Placar state={state} />
-      <Trilha state={state} />
-      <section className="mt-auto space-y-3 rounded-3xl border border-gold/30 bg-night/80 p-4">
-        <div className="flex items-center gap-3">
-          <Peao lado={lado} className="size-9 text-base" />
-          <div className="min-w-0">
-            <p className="text-xs uppercase tracking-[0.3em] text-mist">Vez de</p>
-            <p className="truncate font-display text-2xl leading-tight text-parchment">{lado.nome}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-2xl border p-3" style={{ borderColor: `${info.cor}80`, background: `${info.cor}1a` }}>
-          <Icone className="size-7 shrink-0" style={{ color: info.cor }} aria-hidden />
-          <div className="min-w-0 text-sm">
-            <p className="font-semibold text-parchment">
-              Casa {Math.min(lado.casa + 1, state.config.casas)}: {info.nome}
-            </p>
-            <p className="text-mist">{instrucao}</p>
-          </div>
-        </div>
-        <button type="button" onClick={() => dispatch({ type: "sortear", r1: Math.random(), r2: Math.random() })} className={cn(BIG, "bg-gold text-night")}>
-          <Eye className="size-5" aria-hidden /> Ver a carta
-        </button>
-      </section>
+    <p className="flex items-center justify-center gap-2 rounded-full border border-border bg-night/70 px-4 py-3 text-center text-sm text-mist">
+      <Hourglass className="size-4 shrink-0 animate-pulse text-gold" aria-hidden /> {children}
+    </p>
+  )
+}
+
+/** Conferir a referência: a passagem na NAA, para quem quiser checar. */
+export function Conferir({ refs, titulo, className }: { refs: RefArg[]; titulo: string; className?: string }) {
+  const [aberto, setAberto] = useState(false)
+  return (
+    <>
+      <button type="button" onClick={() => setAberto(true)} className={cn("inline-flex min-h-9 items-center gap-1.5 rounded-full border border-gold/40 px-3 text-xs text-gold-bright", className)}>
+        <BookOpen className="size-3.5" aria-hidden /> Conferir na Bíblia
+      </button>
+      <PhoneSheet title="Conferir" open={aberto} onClose={() => setAberto(false)}>
+        <p className="font-display text-2xl leading-tight text-parchment">{titulo}</p>
+        <ul className="space-y-2">
+          {refs.map((r) => (
+            <li key={formatRef(r)} className="space-y-2 rounded-2xl border border-border bg-night/60 p-3">
+              <p className="text-sm text-sand">
+                {formatRef(r, "long")} <span className="text-mist">· Bíblia NAA</span>
+              </p>
+              <a href={linkNaa(r)} target="_blank" rel="noopener noreferrer" className="inline-flex h-11 items-center gap-2 rounded-full bg-gold px-4 text-sm font-semibold text-night">
+                Ler a passagem <ExternalLink className="size-4" aria-hidden />
+              </a>
+            </li>
+          ))}
+        </ul>
+        <p className="text-xs text-mist">O link abre o texto da NAA no site bible.com.</p>
+      </PhoneSheet>
+    </>
+  )
+}
+
+const nomesEstilos = (lista: Estilo[]) => {
+  const n = lista.map((e) => ESTILO[e].nome.toLowerCase())
+  return n.length > 1 ? `${n.slice(0, -1).join(", ")} ou ${n[n.length - 1]}` : n[0]
+}
+
+/** O que fazer na rodada, conforme o jeito (se já se sabe) e o modo. */
+function instrucao(state: ShowState, estilo: Estilo | null): string {
+  const equipes = state.config.modo === "equipes"
+  const quem = lider(state).nome
+  if (estilo === "letras")
+    return equipes
+      ? "Todas as equipes veem a palavra escondida. Na sua vez, escolham uma letra ou arrisquem a palavra; errou, a vez passa. Quem completar a palavra anda."
+      : "Todos veem a palavra escondida. Na sua vez, escolha uma letra ou arrisque a palavra; errou, a vez passa. Quem completar a palavra anda."
+  if (state.rodada?.todos)
+    return estilo === "perguntas"
+      ? "Cada equipe manda alguém para perguntar, todos ao mesmo tempo. Essas pessoas não veem a carta. Quem acertar primeiro anda."
+      : `${quem} escolhe quem representa para todas as equipes. Quem acertar primeiro anda.`
+  if (!estilo) return `A roleta decide: ${nomesEstilos(state.config.estilos)}.`
+  if (estilo === "perguntas")
+    return equipes ? "Cada equipe escolhe quem vai adivinhar. Essas pessoas não veem a carta." : `${quem} adivinha fazendo perguntas. Os outros veem a carta.`
+  return equipes ? "Escolham quem vai representar. Só essa pessoa vê a carta." : `${quem} representa. Quem acertar anda junto.`
+}
+
+/** Vez: a trilha e a roleta; depois a roleta grande, o sorteio de casas e a carta. */
+export function Vez() {
+  const { state, dispatch, conduz } = useJogo()
+  const rodada = state.rodada!
+  const quem = lider(state)
+  const roleta = state.config.estilos.length > 1
+  const comecou = (roleta && !!rodada.estilo) || !!rodada.passos
+  const casa = casaDe(state, quem)
+  const chave = `${state.vez}-${state.usadas.length}-${quem.id}-${state.lados.map((l) => l.casa).join(".")}`
+  const [girou, setGirou] = useState(false)
+  const pronto = !roleta || girou
+  const fimRoleta = useCallback(() => setGirou(true), [])
+
+  const cabeca = (
+    <div className="flex items-center gap-3">
+      <Peao lado={quem} className="size-9 text-base" />
+      <div className="min-w-0 text-left">
+        <p className="text-xs uppercase tracking-[0.3em] text-mist">{rodada.todos ? "Todo o arraial · conduz" : "Vez de"}</p>
+        <p className="truncate font-display text-2xl leading-tight text-parchment">{quem.nome}</p>
+      </div>
+    </div>
+  )
+
+  if (!comecou)
+    return (
+      <div className="flex min-h-full flex-col gap-3">
+        <Placar state={state} />
+        <Trilha state={state} />
+        <section className="mt-auto space-y-3 rounded-3xl border border-gold/30 bg-night/80 p-4">
+          {cabeca}
+          {casa?.tipo === "categoria" ? (
+            <CategoriaTag id={casa.categoria} />
+          ) : (
+            <p className="rounded-2xl border border-border px-3 py-2 text-sm text-sand">{quem.casa === 0 ? "Na partida, a categoria é sorteada." : "Casa especial: a categoria é sorteada."}</p>
+          )}
+          <p className="text-sm text-mist">{instrucao(state, rodada.estilo)}</p>
+          {conduz ? (
+            <button
+              type="button"
+              onClick={() => dispatch(roleta ? { type: "girar", r: Math.random() } : { type: "rolar", r: Math.random() })}
+              className={cn(BIG, "bg-gold text-night")}
+            >
+              <Dices className="size-5" aria-hidden /> {roleta ? "Girar a roleta" : "Sortear as casas"}
+            </button>
+          ) : (
+            <Aguarde>
+              Aguardando {quem.nome} {roleta ? "girar a roleta" : "sortear as casas"}
+            </Aguarde>
+          )}
+        </section>
+      </div>
+    )
+
+  return (
+    <div className="flex min-h-full flex-col items-center gap-4 pt-2 text-center">
+      <div className="w-full">{cabeca}</div>
+      {roleta && rodada.estilo && <Roleta opcoes={state.config.estilos} resultado={rodada.estilo} chave={`r-${chave}`} onFim={fimRoleta} />}
+      {pronto && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex w-full flex-col items-center gap-3">
+          <Dado key={rodada.passos ?? "?"} valor={rodada.passos} chave={`d-${chave}`} />
+          <p className="max-w-sm text-sm text-mist">{instrucao(state, rodada.estilo)}</p>
+        </motion.div>
+      )}
+      <div className="mt-auto w-full max-w-md">
+        {!conduz ? (
+          <Aguarde>Aguardando {quem.nome}</Aguarde>
+        ) : !rodada.passos ? (
+          <button type="button" disabled={!pronto} onClick={() => dispatch({ type: "rolar", r: Math.random() })} className={cn(BIG, "bg-gold text-night")}>
+            <Dices className="size-5" aria-hidden /> Sortear as casas
+          </button>
+        ) : (
+          <button type="button" onClick={() => dispatch({ type: "sortear", r1: Math.random(), r2: Math.random() })} className={cn(BIG, "bg-gold text-night")}>
+            <Eye className="size-5" aria-hidden /> Ver a carta
+          </button>
+        )}
+      </div>
     </div>
   )
 }
 
-/** A carta: só quem representa vê, segurando o dedo. */
-export function CartaSecreta({ state, dispatch }: { state: ShowState; dispatch: Dispatch }) {
+/** A carta: só quem pode vê, segurando o dedo. */
+export function CartaSecreta() {
+  const { state, dispatch, agora, conduz, ve } = useJogo()
   const fx = useFx()
   const stinger = useStinger()
   const [aberta, setAberta] = useState(false)
@@ -77,12 +174,14 @@ export function CartaSecreta({ state, dispatch }: { state: ShowState; dispatch: 
   const estilo = ESTILO[state.carta!.estilo]
   const EstiloIcone = estilo.icone
   const perguntas = state.carta!.estilo === "perguntas"
-  const quemOlha = state.carta!.todos
-    ? `${TODOS.nome}: um representante de cada equipe olha junto.`
-    : perguntas
-      ? state.config.modo === "equipes"
-        ? "Quem vai adivinhar, de cada equipe, não olha. Todos os outros veem a carta."
-        : `${state.lados[state.vez].nome} vai adivinhar e não olha. Os outros veem a carta.`
+  const quem = lider(state)
+  const passos = (state.rodada?.passos ?? 1) + (carta.categoria === "desafio" ? 1 : 0)
+  const quemOlha = perguntas
+    ? state.config.modo === "equipes"
+      ? "Quem vai adivinhar, de cada equipe, não olha. Todos os outros veem a carta."
+      : `${tentando(state).nome} vai adivinhar e não olha. Os outros veem a carta.`
+    : state.carta!.todos
+      ? "Só quem vai representar para todos pode olhar."
       : "Só quem vai representar pode olhar."
   const mostrar = (v: boolean) => {
     setAberta(v)
@@ -96,76 +195,87 @@ export function CartaSecreta({ state, dispatch }: { state: ShowState; dispatch: 
       <p className="inline-flex items-center gap-2 rounded-full border border-gold/50 bg-gold/10 px-4 py-1.5 font-semibold text-gold-bright">
         <EstiloIcone className="size-4" aria-hidden /> {estilo.nome}
       </p>
-      <p className="text-sm text-mist">{quemOlha}</p>
-      <button
-        type="button"
-        onPointerDown={() => mostrar(true)}
-        onPointerUp={() => mostrar(false)}
-        onPointerLeave={() => mostrar(false)}
-        onPointerCancel={() => mostrar(false)}
-        onKeyDown={(e) => (e.key === " " || e.key === "Enter") && mostrar(true)}
-        onKeyUp={() => mostrar(false)}
-        onContextMenu={(e) => e.preventDefault()}
-        className="relative aspect-[3/4] w-full max-w-xs touch-none select-none [perspective:1200px] [-webkit-touch-callout:none]"
-        aria-label="Segure para ver a carta"
-      >
-        <motion.div className="absolute inset-0 [transform-style:preserve-3d]" animate={{ rotateY: aberta ? 180 : 0 }} transition={{ duration: fx.motion ? 0.35 : 0 }}>
-          {/* Verso */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-gold/50 bg-[radial-gradient(circle_at_50%_35%,rgba(216,169,72,0.3),transparent_60%),var(--night)] [backface-visibility:hidden]">
-            <p className="font-display text-4xl text-gold-bright">Bible Show</p>
-            <Hand className="size-10 text-gold" aria-hidden />
-            <p className="text-sm text-sand">Segure para ver · solte para esconder</p>
-          </div>
-          {/* Frente */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-between rounded-3xl border-2 p-5 [backface-visibility:hidden] [transform:rotateY(180deg)]"
-            style={{ borderColor: cor, background: `linear-gradient(170deg, ${cor}40, #0b0f19 55%)` }}
+      {ve ? (
+        <>
+          <p className="text-sm text-mist">{quemOlha}</p>
+          <button
+            type="button"
+            onPointerDown={() => mostrar(true)}
+            onPointerUp={() => mostrar(false)}
+            onPointerLeave={() => mostrar(false)}
+            onPointerCancel={() => mostrar(false)}
+            onKeyDown={(e) => (e.key === " " || e.key === "Enter") && mostrar(true)}
+            onKeyUp={() => mostrar(false)}
+            onContextMenu={(e) => e.preventDefault()}
+            className="relative aspect-[3/4] w-full max-w-xs touch-none select-none [-webkit-touch-callout:none] [perspective:1200px]"
+            aria-label="Segure para ver a carta"
           >
-            <CategoriaTag id={carta.categoria} className="bg-night/70" />
-            <p className="font-display text-4xl leading-tight text-parchment [overflow-wrap:anywhere]">{carta.palavra}</p>
-            <div className="space-y-2">
-              <p className="inline-flex items-center gap-2 rounded-full bg-night/80 px-3 py-1.5 text-sm font-semibold text-gold-bright">
-                <EstiloIcone className="size-4" aria-hidden /> {estilo.nome}
-              </p>
-              <p className="text-xs text-mist">{estilo.regra}</p>
-              <p className="text-xs text-sand">
-                {formatRef(carta.ref as RefArg, "long")}
-                {carta.categoria === "desafio" ? " · vale 2 casas" : ""}
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      </button>
+            <motion.div className="absolute inset-0 [transform-style:preserve-3d]" animate={{ rotateY: aberta ? 180 : 0 }} transition={{ duration: fx.motion ? 0.35 : 0 }}>
+              {/* Verso */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-gold/50 bg-[radial-gradient(circle_at_50%_35%,rgba(216,169,72,0.3),transparent_60%),var(--night)] [backface-visibility:hidden]">
+                <p className="font-display text-4xl text-gold-bright">Bible Show</p>
+                <Hand className="size-10 text-gold" aria-hidden />
+                <p className="text-sm text-sand">Segure para ver · solte para esconder</p>
+              </div>
+              {/* Frente */}
+              <div
+                className="absolute inset-0 flex flex-col items-center justify-between rounded-3xl border-2 p-5 [backface-visibility:hidden] [transform:rotateY(180deg)]"
+                style={{ borderColor: cor, background: `linear-gradient(170deg, ${cor}40, #0b0f19 55%)` }}
+              >
+                <CategoriaTag id={carta.categoria} className="bg-night/70" />
+                <p className="font-display text-4xl leading-tight text-parchment [overflow-wrap:anywhere]">{carta.palavra}</p>
+                <div className="space-y-2">
+                  <p className="text-xs text-mist">{estilo.regra}</p>
+                  <p className="text-xs text-sand">
+                    {formatRef(carta.ref as RefArg, "long")} · vale {passos} {passos === 1 ? "casa" : "casas"}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </button>
+        </>
+      ) : (
+        <div className="grid w-full max-w-xs flex-1 place-items-center rounded-3xl border-2 border-dashed border-gold/30 p-6">
+          <p className="text-sm text-sand">A carta está com {quem.nome}. Preparem-se!</p>
+        </div>
+      )}
       <div className="mt-auto grid w-full max-w-md gap-2">
-        <button
-          type="button"
-          disabled={!viu}
-          onClick={() => {
-            stinger("vote")
-            dispatch({ type: "valendo", agora: Date.now() })
-          }}
-          className={cn(BIG, "bg-gold text-night")}
-        >
-          <Play className="size-5 fill-current" aria-hidden /> Valendo! ({segundosDaVez(state)}s)
-        </button>
-        <button
-          type="button"
-          disabled={state.carta!.trocou}
-          onClick={() => {
-            setViu(false)
-            dispatch({ type: "trocar", r: Math.random() })
-          }}
-          className={cn(BIG, "h-12 border border-border text-base text-parchment")}
-        >
-          <Shuffle className="size-4" aria-hidden /> {state.carta!.trocou ? "Carta já trocada" : "Trocar a carta (1 vez)"}
-        </button>
+        {conduz ? (
+          <>
+            <button
+              type="button"
+              disabled={ve && !viu}
+              onClick={() => {
+                stinger("vote")
+                dispatch({ type: "valendo", agora: agora() })
+              }}
+              className={cn(BIG, "bg-gold text-night")}
+            >
+              <Play className="size-5 fill-current" aria-hidden /> Valendo! ({segundosDaVez(state)}s)
+            </button>
+            <button
+              type="button"
+              disabled={state.carta!.trocou}
+              onClick={() => {
+                setViu(false)
+                dispatch({ type: "trocar", r: Math.random() })
+              }}
+              className={cn(BIG, "h-12 border border-border text-base text-parchment")}
+            >
+              <Shuffle className="size-4" aria-hidden /> {state.carta!.trocou ? "Carta já trocada" : "Trocar a carta (1 vez)"}
+            </button>
+          </>
+        ) : (
+          <Aguarde>Aguardando {quem.nome} tocar em Valendo!</Aguarde>
+        )}
       </div>
     </div>
   )
 }
 
 /** Cronômetro grande: o grupo vê o tempo, nunca a palavra. */
-export function Cronometro({ state, dispatch }: { state: ShowState; dispatch: Dispatch }) {
+export function Cronometro() {
+  const { state, dispatch, agora, conduz, ve } = useJogo()
   const stinger = useStinger()
   const fx = useFx()
   const total = segundosDaVez(state) * 1000
@@ -177,23 +287,28 @@ export function Cronometro({ state, dispatch }: { state: ShowState; dispatch: Di
 
   useEffect(() => {
     const tick = () => {
-      const ms = relogio?.prazo ? Math.max(0, relogio.prazo - Date.now()) : (relogio?.restante ?? total)
+      const ms = relogio?.prazo ? Math.max(0, relogio.prazo - agora()) : (relogio?.restante ?? total)
       setRestante(ms)
       const seg = Math.ceil(ms / 1000)
       if (relogio?.prazo && seg !== ultimoSeg.current) {
         ultimoSeg.current = seg
-        if (seg <= 5 && seg > 0) stinger("tap", 1 - seg / 6)
+        // Alerta dos últimos 10 segundos: um bipe por segundo, mais forte no fim.
+        if (seg <= 10 && seg > 0) {
+          stinger("beep", 1 - seg / 10)
+          if (seg <= 3) vibrate(HAPTIC.tap)
+        }
       }
       if (relogio?.prazo && ms <= 0 && !fim.current && state.fase === "tempo") {
         fim.current = true
         stinger("buzzer")
         vibrate(HAPTIC.seal)
-        dispatch({ type: "errou" })
+        // Numa sala, só o celular que conduz encerra o tempo.
+        if (conduz) dispatch({ type: "errou" })
       }
     }
     const id = setInterval(tick, 100)
     return () => clearInterval(id)
-  }, [relogio, total, dispatch, stinger, state.fase])
+  }, [relogio, total, dispatch, stinger, state.fase, agora, conduz])
 
   const seg = Math.ceil(restante / 1000)
   const frac = restante / total
@@ -203,8 +318,9 @@ export function Cronometro({ state, dispatch }: { state: ShowState; dispatch: Di
   const estilo = ESTILO[state.carta!.estilo]
   const EstiloIcone = estilo.icone
   const perguntas = state.carta!.estilo === "perguntas"
+  const todos = state.carta!.todos
   const quem = tentando(state)
-  const passa = perguntas && state.config.modo === "equipes" && state.carta!.tentativa + 1 < state.lados.length
+  const passa = perguntas && !todos && state.config.modo === "equipes" && state.carta!.tentativa + 1 < state.lados.length
   const R = 46
   const C = 2 * Math.PI * R
 
@@ -216,8 +332,8 @@ export function Cronometro({ state, dispatch }: { state: ShowState; dispatch: Di
           <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 px-3 py-1 text-gold-bright">
             <EstiloIcone className="size-3.5" aria-hidden /> {estilo.nome}
           </span>
-          {state.carta!.todos && <span className="rounded-full border border-parchment/40 px-3 py-1 text-parchment">{TODOS.nome}</span>}
-          {perguntas && (
+          {todos && <span className="rounded-full border border-parchment/40 px-3 py-1 text-parchment">Todo o arraial</span>}
+          {perguntas && !todos && (
             <span className="inline-flex max-w-40 items-center gap-1.5 text-sand">
               <Peao lado={quem} className="size-4 text-[0.5rem]" />
               <span className="truncate">{quem.nome} pergunta</span>
@@ -255,53 +371,67 @@ export function Cronometro({ state, dispatch }: { state: ShowState; dispatch: Di
       </div>
 
       <div className="mt-auto grid w-full max-w-md gap-2">
-        <button
-          type="button"
-          onClick={() => {
-            stinger("reveal")
-            vibrate(HAPTIC.light)
-            dispatch({ type: "acertaram", agora: Date.now() })
-          }}
-          className={cn(BIG, "h-16 bg-[#6fbf73] text-xl text-night")}
-        >
-          <Check className="size-6" aria-hidden /> {perguntas ? "Acertou!" : "Acertaram!"}
-        </button>
-        <div className={cn("grid gap-2", perguntas ? "grid-cols-2" : "grid-cols-3")}>
-          <button
-            type="button"
-            onClick={() => dispatch(correndo ? { type: "pausar", agora: Date.now() } : { type: "continuar", agora: Date.now() })}
-            className={cn(BIG, "h-12 border border-border text-sm text-parchment")}
-          >
-            {correndo ? <Pause className="size-4" aria-hidden /> : <Play className="size-4" aria-hidden />} {correndo ? "Pausar" : "Seguir"}
-          </button>
-          {!perguntas && (
+        {conduz ? (
+          <>
             <button
               type="button"
-              onPointerDown={() => setEspiar(true)}
-              onPointerUp={() => setEspiar(false)}
-              onPointerLeave={() => setEspiar(false)}
-              onPointerCancel={() => setEspiar(false)}
-              onContextMenu={(e) => e.preventDefault()}
-              className={cn(BIG, "h-12 touch-none select-none border border-border text-sm text-parchment")}
-              aria-label="Segure para rever a palavra"
+              onClick={() => {
+                stinger("reveal")
+                vibrate(HAPTIC.light)
+                dispatch({ type: "acertaram", agora: agora() })
+              }}
+              className={cn(BIG, "h-16 bg-[#6fbf73] text-xl text-night")}
             >
-              <Eye className="size-4" aria-hidden /> {espiar ? carta.palavra : "Rever"}
+              <Check className="size-6" aria-hidden /> {perguntas && !todos ? "Acertou!" : "Acertaram!"}
             </button>
-          )}
-          <button type="button" onClick={() => dispatch({ type: "errou" })} className={cn(BIG, "h-12 border border-rose/40 text-sm text-rose")}>
-            <X className="size-4" aria-hidden /> {passa ? "Passar" : "Desistir"}
-          </button>
-        </div>
+            <div className={cn("grid gap-2", perguntas || !ve ? "grid-cols-2" : "grid-cols-3")}>
+              <button
+                type="button"
+                onClick={() => dispatch(correndo ? { type: "pausar", agora: agora() } : { type: "continuar", agora: agora() })}
+                className={cn(BIG, "h-12 border border-border text-sm text-parchment")}
+              >
+                {correndo ? <Pause className="size-4" aria-hidden /> : <Play className="size-4" aria-hidden />} {correndo ? "Pausar" : "Seguir"}
+              </button>
+              {!perguntas && ve && (
+                <button
+                  type="button"
+                  onPointerDown={() => setEspiar(true)}
+                  onPointerUp={() => setEspiar(false)}
+                  onPointerLeave={() => setEspiar(false)}
+                  onPointerCancel={() => setEspiar(false)}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className={cn(BIG, "h-12 touch-none select-none border border-border text-sm text-parchment")}
+                  aria-label="Segure para rever a palavra"
+                >
+                  <Eye className="size-4" aria-hidden /> {espiar ? carta.palavra : "Rever"}
+                </button>
+              )}
+              <button type="button" onClick={() => dispatch({ type: "errou" })} className={cn(BIG, "h-12 border border-rose/40 text-sm text-rose")}>
+                <X className="size-4" aria-hidden /> {passa ? "Passar" : "Desistir"}
+              </button>
+            </div>
+          </>
+        ) : (
+          <Aguarde>Quem conduz é {lider(state).nome}</Aguarde>
+        )}
       </div>
     </div>
   )
 }
 
-/** Quem acertou? (individual: a pessoa; rodada de todos: a equipe). */
-export function QuemAcertou({ state, dispatch }: { state: ShowState; dispatch: Dispatch }) {
-  const ator = state.lados[state.vez]
-  const individual = state.config.modo === "individual"
+/** Quem acertou? (individual: a pessoa; todo o arraial: a equipe). */
+export function QuemAcertou() {
+  const { state, dispatch, agora, conduz } = useJogo()
+  const ator = lider(state)
+  const individual = state.config.modo === "individual" && !state.carta?.todos
   const opcoes = individual ? state.lados.filter((l) => l.id !== ator.id) : state.lados
+  if (!conduz)
+    return (
+      <div className="flex min-h-full flex-col items-center justify-center gap-4">
+        <p className="font-display text-3xl text-parchment">Alguém acertou!</p>
+        <Aguarde>{ator.nome} está marcando quem foi</Aguarde>
+      </div>
+    )
   return (
     <div className="flex min-h-full flex-col gap-4">
       <div className="text-center">
@@ -327,7 +457,7 @@ export function QuemAcertou({ state, dispatch }: { state: ShowState; dispatch: D
             Ninguém acertou
           </button>
         )}
-        <button type="button" onClick={() => dispatch({ type: "voltar", agora: Date.now() })} className={cn(BIG, "h-12 text-base text-mist")}>
+        <button type="button" onClick={() => dispatch({ type: "voltar", agora: agora() })} className={cn(BIG, "h-12 text-base text-mist")}>
           <RotateCcw className="size-4" aria-hidden /> Voltar ao tempo
         </button>
       </div>
@@ -336,11 +466,13 @@ export function QuemAcertou({ state, dispatch }: { state: ShowState; dispatch: D
 }
 
 /** Perguntas em equipes: ninguém acertou ainda e a próxima equipe tenta com menos tempo. */
-export function Passa({ state, dispatch }: { state: ShowState; dispatch: Dispatch }) {
+export function Passa() {
+  const { state, dispatch, agora, conduz } = useJogo()
   const stinger = useStinger()
   const quem = tentando(state)
   const n = state.lados.length
-  const antes = state.lados[(state.vez + state.carta!.tentativa - 1 + n) % n]
+  const i = state.lados.indexOf(lider(state))
+  const antes = state.lados[(i + state.carta!.tentativa - 1 + n) % n]
   const carta = getCarta(state.carta!.id)!
   return (
     <div className="flex min-h-full flex-col items-center gap-4 text-center">
@@ -359,34 +491,41 @@ export function Passa({ state, dispatch }: { state: ShowState; dispatch: Dispatc
         </div>
         <p className="text-sm text-sand">Quem adivinha pela {quem.nome} pode usar as respostas que já ouviu. O tempo agora é menor.</p>
       </section>
-      <button
-        type="button"
-        onClick={() => {
-          stinger("vote")
-          dispatch({ type: "valendo", agora: Date.now() })
-        }}
-        className={cn(BIG, "mt-auto max-w-md bg-gold text-night")}
-      >
-        <Play className="size-5 fill-current" aria-hidden /> Valendo! ({segundosDaVez(state)}s)
-      </button>
+      <div className="mt-auto w-full max-w-md">
+        {conduz ? (
+          <button
+            type="button"
+            onClick={() => {
+              stinger("vote")
+              dispatch({ type: "valendo", agora: agora() })
+            }}
+            className={cn(BIG, "bg-gold text-night")}
+          >
+            <Play className="size-5 fill-current" aria-hidden /> Valendo! ({segundosDaVez(state)}s)
+          </button>
+        ) : (
+          <Aguarde>Aguardando {lider(state).nome} tocar em Valendo!</Aguarde>
+        )}
+      </div>
     </div>
   )
 }
 
 /** Resultado da vez: a palavra, quem andou e a trilha. */
-export function Resultado({ state, dispatch }: { state: ShowState; dispatch: Dispatch }) {
+export function Resultado() {
+  const { state, dispatch, conduz } = useJogo()
   const ultima = state.ultima!
   const carta = getCarta(ultima.cartaId)!
   const acertou = ultima.tipo === "acerto"
-  const proximo = state.lados[(state.vez + 1) % state.lados.length]
   const nome = (id: string) => state.lados.find((l) => l.id === id)?.nome ?? ""
   return (
     <div className="flex min-h-full flex-col gap-3">
-      <div className="text-center">
+      <div className="flex flex-col items-center text-center">
         <p className={cn("font-display text-4xl", acertou ? "text-[#8fdc93]" : "text-[#ff9f80]")}>{acertou ? "Acertou!" : "Tempo!"}</p>
         <p className="mt-1 text-sm text-mist">A palavra era</p>
         <p className="font-display text-3xl leading-tight text-parchment">{carta.palavra}</p>
         <p className="text-xs text-sand">{formatRef(carta.ref as RefArg, "long")}</p>
+        <Conferir refs={[carta.ref as RefArg]} titulo={carta.palavra} className="mt-2" />
         {acertou && (
           <ul className="mt-2 space-y-0.5 text-sm text-gold-bright">
             {ultima.moveu.map((m) => (
@@ -398,15 +537,87 @@ export function Resultado({ state, dispatch }: { state: ShowState; dispatch: Dis
         )}
       </div>
       <Trilha state={state} destaque="resultado" />
-      <button type="button" onClick={() => dispatch({ type: "proxima" })} className={cn(BIG, "mt-auto bg-gold text-night")}>
-        Vez de {proximo.nome} →
-      </button>
+      <div className="mt-auto">
+        {conduz ? (
+          <button type="button" onClick={() => dispatch({ type: "proxima" })} className={cn(BIG, "bg-gold text-night")}>
+            {state.pendentes.length ? "Casa especial! →" : "Próxima vez →"}
+          </button>
+        ) : (
+          <Aguarde>Aguardando {lider(state).nome} seguir</Aguarde>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** Casa especial: o fato bíblico, a regra e quem cumpre. */
+export function Situacao() {
+  const { state, dispatch, conduz } = useJogo()
+  const fx = useFx()
+  const stinger = useStinger()
+  const p = state.pendentes[0]
+  const s = getSituacao(p.situacao)
+  const info = casaInfo({ tipo: "situacao", situacao: s.id })
+  const Icone = info.icone
+  const quem = state.lados.find((l) => l.id === p.lado)!
+  const equipes = state.config.modo === "equipes"
+  const outros = state.lados.filter((l) => l.id !== quem.id)
+  useEffect(() => {
+    stinger("reveal")
+    vibrate(HAPTIC.seal)
+  }, [stinger, p.situacao, p.lado])
+  return (
+    <div className="flex min-h-full flex-col items-center gap-4 text-center">
+      <p className="flex items-center gap-2 text-sm text-mist">
+        <Peao lado={quem} /> {quem.nome} parou numa casa especial
+      </p>
+      <motion.section
+        initial={fx.motion ? { rotateY: 90, opacity: 0 } : false}
+        animate={{ rotateY: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="flex w-full max-w-sm flex-col items-center gap-3 rounded-3xl border-2 p-5"
+        style={{ borderColor: info.cor, background: `linear-gradient(170deg, ${info.cor}33, #0b0f19 60%)` }}
+      >
+        <Icone className="size-12" style={{ color: info.cor }} aria-hidden />
+        <p className="font-display text-3xl leading-tight text-parchment">{s.nome}</p>
+        <p className="text-sm text-sand">{s.texto}</p>
+        <p className="text-xs text-mist">{formatRef(s.ref as RefArg, "long")}</p>
+        <Conferir refs={[s.ref as RefArg]} titulo={s.nome} />
+        <p className="w-full rounded-2xl bg-night/70 px-3 py-2.5 text-base font-semibold" style={{ color: info.cor }}>
+          {regraDoEfeito(s.efeito, equipes)}
+        </p>
+      </motion.section>
+      <div className="mt-auto grid w-full max-w-md gap-2">
+        {!conduz ? (
+          <Aguarde>Aguardando {quem.nome}</Aguarde>
+        ) : escolheOutro(s.efeito) ? (
+          <div className="grid grid-cols-2 gap-2">
+            {outros.map((l) => (
+              <button
+                key={l.id}
+                type="button"
+                onClick={() => dispatch({ type: "cumprir", alvo: l.id })}
+                className="flex min-h-14 items-center gap-2 rounded-2xl border px-3 text-left text-parchment active:scale-[0.98]"
+                style={{ borderColor: `${COR_TOM.escolha}80` }}
+              >
+                <Peao lado={l} className="size-7 text-sm" />
+                <span className="min-w-0 truncate">{l.nome}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <button type="button" onClick={() => dispatch({ type: "cumprir" })} className={cn(BIG, "bg-gold text-night")}>
+            {s.efeito.tipo === "arraial" ? "Começar a rodada para todos" : "Cumprir"}
+          </button>
+        )}
+      </div>
     </div>
   )
 }
 
 /** Fim: quem chegou primeiro e a classificação. */
-export function Fim({ state, dispatch }: { state: ShowState; dispatch: Dispatch }) {
+export function Fim() {
+  const { state, dispatch, sala, anfitriao } = useJogo()
   const fx = useFx()
   const stinger = useStinger()
   const vencedor = state.lados.find((l) => l.id === state.vencedor)!
@@ -438,14 +649,231 @@ export function Fim({ state, dispatch }: { state: ShowState; dispatch: Dispatch 
           </li>
         ))}
       </ol>
-      <div className="mt-auto grid w-full max-w-md gap-2">
-        <button type="button" onClick={() => dispatch({ type: "revanche" })} className={cn(BIG, "bg-gold text-night")}>
-          <RotateCcw className="size-5" aria-hidden /> Revanche
+      {(!sala || anfitriao) && (
+        <div className="mt-auto grid w-full max-w-md gap-2">
+          <button type="button" onClick={() => dispatch({ type: "revanche" })} className={cn(BIG, "bg-gold text-night")}>
+            <RotateCcw className="size-5" aria-hidden /> Revanche
+          </button>
+          {!sala && (
+            <button type="button" onClick={() => dispatch({ type: "configurar" })} className={cn(BIG, "h-12 border border-border text-base text-parchment")}>
+              Nova configuração
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Pede para ligar o som: sem ele, ninguém ouve o alerta dos últimos 10 segundos. */
+export function AvisoSom() {
+  const sound = usePreferences((p) => p.sound)
+  const setSound = usePreferences((p) => p.setSound)
+  const motor = useSoundState()
+  const [fechado, setFechado] = useState(false)
+  const [ligou, setLigou] = useState(false)
+  if (fechado || (sound && !ligou)) return null
+  return (
+    <div role="status" className="relative z-20 mx-4 mb-2 flex items-center gap-3 rounded-2xl border border-gold/40 bg-gold/10 px-3 py-2 text-sm text-sand">
+      <Volume2 className="size-5 shrink-0 text-gold-bright" aria-hidden />
+      <p className="min-w-0 flex-1 leading-snug">
+        {ligou ? "Som ligado. Tire o celular do silencioso e aumente o volume." : "Ligue o som para ouvir o alerta dos últimos 10 segundos."}
+      </p>
+      {ligou ? (
+        <button type="button" onClick={() => setFechado(true)} className="grid size-9 shrink-0 place-items-center rounded-full text-mist" aria-label="Fechar">
+          <X className="size-4" />
         </button>
-        <button type="button" onClick={() => dispatch({ type: "configurar" })} className={cn(BIG, "h-12 border border-border text-base text-parchment")}>
-          Nova configuração
-        </button>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              setSound(true)
+              if (motor === "off") void soundEngine.start().then(() => soundEngine.stinger("beep", 1))
+              setLigou(true)
+              setTimeout(() => setFechado(true), 6000)
+            }}
+            className="h-9 shrink-0 rounded-full bg-gold px-3 text-xs font-semibold text-night"
+          >
+            Ligar o som
+          </button>
+          <button type="button" onClick={() => setFechado(true)} className="grid size-9 shrink-0 place-items-center rounded-full text-mist" aria-label="Agora não">
+            <X className="size-4" />
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
+
+const ALFABETO = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")
+
+/** Letras: a palavra escondida, o teclado e o tempo de cada jogada. */
+export function Letras() {
+  const { state, dispatch, agora, conduz } = useJogo()
+  const stinger = useStinger()
+  const carta = getCarta(state.carta!.id)!
+  const escolhidas = state.carta!.letras ?? []
+  const quem = tentando(state)
+  const relogio = state.relogio
+  const correndo = !!relogio?.prazo
+  const [restante, setRestante] = useState(relogio?.restante ?? LETRAS_MS)
+  const [chute, setChute] = useState<string | null>(null)
+  const ultimoSeg = useRef<number | null>(null)
+  const fim = useRef<number | null>(null)
+  const naPalavra = new Set(painel(carta.palavra, []).filter((x) => x.letra).map((x) => normalizar(x.c)))
+
+  useEffect(() => {
+    const tick = () => {
+      const ms = relogio?.prazo ? Math.max(0, relogio.prazo - agora()) : (relogio?.restante ?? LETRAS_MS)
+      setRestante(ms)
+      const seg = Math.ceil(ms / 1000)
+      if (relogio?.prazo && seg !== ultimoSeg.current) {
+        ultimoSeg.current = seg
+        if (seg <= 5 && seg > 0) stinger("beep", 1 - seg / 10)
+      }
+      // Acabou o tempo da jogada: a vez passa (numa sala, quem conduz avisa).
+      if (relogio?.prazo && ms <= 0 && fim.current !== relogio.prazo) {
+        fim.current = relogio.prazo
+        stinger("buzzer")
+        vibrate(HAPTIC.no)
+        if (conduz) dispatch({ type: "passar", agora: agora() })
+      }
+    }
+    const id = setInterval(tick, 100)
+    return () => clearInterval(id)
+  }, [relogio, agora, conduz, dispatch, stinger])
+
+  // A palavra em grupos (um por palavra), para quebrar a linha só entre palavras.
+  const grupos = painel(carta.palavra, escolhidas).reduce<ReturnType<typeof painel>[]>(
+    (acc, t) => {
+      if (t.c === " ") acc.push([])
+      else acc[acc.length - 1].push(t)
+      return acc
+    },
+    [[]],
+  )
+  const maior = Math.max(...grupos.map((g) => g.length))
+  const lado = Math.min(36, Math.floor((340 - (maior - 1) * 4) / maior))
+  const seg = Math.ceil(restante / 1000)
+
+  return (
+    <div className="flex min-h-full flex-col items-center gap-3 text-center">
+      <div className="flex w-full items-center justify-between gap-2">
+        <CategoriaTag id={carta.categoria} />
+        <div className="flex min-w-0 items-center gap-2 text-left">
+          <Peao lado={quem} className="size-8 text-sm" />
+          <div className="min-w-0">
+            <p className="text-[0.65rem] uppercase tracking-[0.25em] text-mist">Vez de</p>
+            <p className="truncate font-display text-xl leading-tight text-parchment">{quem.nome}</p>
+          </div>
+        </div>
       </div>
+
+      <div className="h-2 w-full overflow-hidden rounded-full bg-white/10" role="timer" aria-label={`${seg} segundos`}>
+        <div className={cn("h-full rounded-full transition-[width] duration-100 ease-linear", seg <= 5 ? "bg-[#e0736b]" : "bg-gold")} style={{ width: `${(restante / LETRAS_MS) * 100}%` }} />
+      </div>
+      <p className={cn("-mt-2 self-end text-xs tabular-nums", seg <= 5 ? "text-[#ff9f80]" : "text-mist")}>{correndo ? `${seg}s` : "Pausado"}</p>
+
+      <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 py-2" aria-label="Palavra escondida">
+        {grupos.map((g, w) => (
+          <div key={w} className="flex gap-1">
+            {g.map((t, i) => (
+              <span
+                key={i}
+                className={cn("grid place-items-center rounded-md border-b-4 font-display font-semibold", t.letra ? (t.aberta ? "border-gold bg-parchment text-night" : "border-gold/40 bg-night") : "border-transparent text-parchment")}
+                style={{ width: lado, height: lado * 1.25, fontSize: lado * 0.7 }}
+              >
+                {t.aberta ? t.c.toUpperCase() : ""}
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {conduz ? (
+        !correndo && escolhidas.length === 0 ? (
+          <button
+            type="button"
+            onClick={() => {
+              stinger("vote")
+              dispatch({ type: "valendo", agora: agora() })
+            }}
+            className={cn(BIG, "mt-auto max-w-md bg-gold text-night")}
+          >
+            <Play className="size-5 fill-current" aria-hidden /> Valendo! (20s por jogada)
+          </button>
+        ) : chute !== null ? (
+          <form
+            className="mt-auto grid w-full max-w-md gap-2"
+            onSubmit={(e) => {
+              e.preventDefault()
+              dispatch({ type: "chutar", palavra: chute, agora: agora() })
+              setChute(null)
+            }}
+          >
+            <input
+              autoFocus
+              value={chute}
+              onChange={(e) => setChute(e.target.value)}
+              placeholder="Digite a resposta"
+              maxLength={40}
+              autoComplete="off"
+              className="h-14 rounded-2xl border border-gold/50 bg-night/80 px-4 text-center text-lg text-parchment focus:border-gold"
+              aria-label="Resposta"
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setChute(null)} className={cn(BIG, "h-12 border border-border text-base text-parchment")}>
+                Voltar
+              </button>
+              <button type="submit" disabled={!chute.trim()} className={cn(BIG, "h-12 bg-gold text-base text-night")}>
+                <Send className="size-4" aria-hidden /> Arriscar
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="mt-auto grid w-full max-w-md gap-2">
+            <div className="grid grid-cols-7 gap-1.5" aria-label="Teclado">
+              {ALFABETO.map((l) => {
+                const usada = escolhidas.includes(l)
+                return (
+                  <button
+                    key={l}
+                    type="button"
+                    disabled={usada || !correndo}
+                    onClick={() => {
+                      vibrate(HAPTIC.tap)
+                      stinger(naPalavra.has(l) ? "reveal" : "tap")
+                      dispatch({ type: "letra", l, agora: agora() })
+                    }}
+                    className={cn(
+                      "h-11 rounded-xl border font-semibold transition active:scale-95",
+                      usada ? (naPalavra.has(l) ? "border-[#6fbf73]/50 bg-[#6fbf73]/20 text-[#8fdc93]" : "border-border bg-night/40 text-mist/40 line-through") : "border-gold/40 bg-night/80 text-parchment",
+                    )}
+                  >
+                    {l}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <button type="button" onClick={() => dispatch(correndo ? { type: "pausar", agora: agora() } : { type: "continuar", agora: agora() })} className={cn(BIG, "h-12 border border-border text-sm text-parchment")}>
+                {correndo ? <Pause className="size-4" aria-hidden /> : <Play className="size-4" aria-hidden />} {correndo ? "Pausar" : "Seguir"}
+              </button>
+              <button type="button" disabled={!correndo} onClick={() => dispatch({ type: "passar", agora: agora() })} className={cn(BIG, "h-12 border border-border text-sm text-parchment")}>
+                <SkipForward className="size-4" aria-hidden /> Passar
+              </button>
+              <button type="button" disabled={!correndo} onClick={() => setChute("")} className={cn(BIG, "h-12 bg-gold text-sm text-night")}>
+                Arriscar
+              </button>
+            </div>
+          </div>
+        )
+      ) : (
+        <div className="mt-auto w-full max-w-md">
+          <Aguarde>{correndo || escolhidas.length ? `${quem.nome} está escolhendo` : `Aguardando ${quem.nome} tocar em Valendo!`}</Aguarde>
+        </div>
+      )}
     </div>
   )
 }

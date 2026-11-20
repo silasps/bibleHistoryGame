@@ -1,7 +1,7 @@
 import { z } from "zod"
 import { ref } from "../refs"
 
-// Bible Show: jogo de mímica e desenho em grupo. Cada carta é algo que está
+// Bible Show: jogo de mímica, perguntas e letras em grupo. Cada carta é algo que está
 // no texto bíblico (com a referência NAA) e, sempre que possível, vem da
 // linha do tempo do autor ou dos minijogos que ele já aprovou.
 // STATUS: rascunho — aguarda a revisão do autor (palavras e categorias).
@@ -12,7 +12,7 @@ export const CATEGORIAS = [
   { id: "acontecimento", nome: "O que aconteceu?", sub: "Acontecimentos", cor: "#e0736b" },
   { id: "lugar", nome: "Onde fica?", sub: "Lugares", cor: "#8fbf6a" },
   { id: "bicho", nome: "Bichos da Bíblia", sub: "Animais", cor: "#e89a4f" },
-  { id: "desafio", nome: "Desafio", sub: "Vale 2 casas", cor: "#b18ad8" },
+  { id: "desafio", nome: "Desafio", sub: "Vale 1 casa a mais", cor: "#b18ad8" },
 ] as const
 
 export type CategoriaId = (typeof CATEGORIAS)[number]["id"]

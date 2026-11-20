@@ -36,7 +36,7 @@ type Scope = "stage" | "votes" | "people" | "lights" | "plays";
 let browserClient: SupabaseClient | null = null;
 
 /** Cliente anônimo, usado só para ouvir os avisos da sala (realtime). */
-function realtime(): SupabaseClient | null {
+export function realtime(): SupabaseClient | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null;

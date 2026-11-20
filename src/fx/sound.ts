@@ -12,7 +12,7 @@ export type AmbientMood = "night" | "garden" | "tension" | "warm" | "wonder" | "
 /** Trilhas de jogo: animadas, no estilo dos games, com melodia gerada aqui (não é cópia de nenhum jogo). */
 export type ArcadeMood = "play" | "play-tense" | "play-epic"
 export type Mood = AmbientMood | ArcadeMood
-export type Stinger = "reveal" | "seal" | "whoosh" | "heartbeat" | "train" | "vote" | "light" | "rewind" | "tap" | "buzzer"
+export type Stinger = "reveal" | "seal" | "whoosh" | "heartbeat" | "train" | "vote" | "light" | "rewind" | "tap" | "buzzer" | "beep"
 
 interface MoodDef {
   bpm: number
@@ -507,6 +507,14 @@ class SoundEngine {
         knock.triggerAttackRelease(T.Frequency("G2").transpose(Math.round(level * 12)).toNote(), 0.1, now)
         click.triggerAttackRelease(0.04, now + 0.005)
         later([knock, click, clickFilter], 1200)
+        break
+      }
+      case "beep": {
+        // Contagem regressiva: bipe curto e claro; nos últimos segundos (level alto), mais agudo e mais forte.
+        const beep = new T.Synth({ oscillator: { type: "triangle" }, envelope: { attack: 0.002, decay: 0.08, sustain: 0.3, release: 0.08 } }).connect(out)
+        beep.volume.value = -8 + level * 6
+        beep.triggerAttackRelease(level >= 0.7 ? "E6" : "A5", level >= 0.7 ? 0.16 : 0.09, now)
+        later([beep], 800)
         break
       }
       case "buzzer": {

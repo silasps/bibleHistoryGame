@@ -1,17 +1,18 @@
 "use client"
 
-import { Drama, Flag, Flame, Gem, MapPin, MessageCircleQuestion, PawPrint, Pencil, Sparkles, User, Users, type LucideIcon } from "lucide-react"
+import { BrickWall, Castle, CloudRain, Drama, Droplets, Fish, Flag, Flame, Gem, Handshake, HandHeart, HeartHandshake, Hourglass, Keyboard, Lock, MapPin, Megaphone, MessageCircleQuestion, PawPrint, Scissors, ScrollText, ShieldCheck, Sparkles, Sun, Swords, Target, Tent, TriangleAlert, User, Users, UserX, Waves, type LucideIcon } from "lucide-react"
 import { motion } from "motion/react"
 import { getCategoria, type CategoriaId } from "@/content/bible-show/cartas"
-import { montarTrilha, type Casa, type Estilo, type Lado, type ShowState } from "@/domain/bible-show"
+import { getSituacao, tomDoEfeito } from "@/content/bible-show/situacoes"
+import { lider, trilhaDe, type Casa, type Estilo, type Lado, type ShowState } from "@/domain/bible-show"
 import { cn } from "@/lib/utils"
 
 export const ICONE: Record<CategoriaId, LucideIcon> = { quem: User, objeto: Gem, acontecimento: Sparkles, lugar: MapPin, bicho: PawPrint, desafio: Flame }
 
 export const ESTILO: Record<Estilo, { icone: LucideIcon; nome: string; regra: string }> = {
   mimica: { icone: Drama, nome: "Mímica", regra: "Sem falar e sem fazer sons" },
-  desenho: { icone: Pencil, nome: "Desenho", regra: "No papel, sem letras e sem números" },
   perguntas: { icone: MessageCircleQuestion, nome: "Perguntas", regra: "Só vale responder sim ou não" },
+  letras: { icone: Keyboard, nome: "Letras", regra: "Escolham letras ou arrisquem a palavra" },
 }
 
 /** A classe da carta, no mesmo formato das categorias da configuração. */
@@ -29,12 +30,43 @@ export function CategoriaTag({ id, className }: { id: CategoriaId; className?: s
   )
 }
 
-export const TODOS = { nome: "Rodada de todos", cor: "#f3e9d2" }
+/** Ícone de cada casa especial. */
+const ICONE_SITUACAO: Record<string, LucideIcon> = {
+  arraial: Tent,
+  siquem: Users,
+  lei: ScrollText,
+  ezequias: HandHeart,
+  jordao: Droplets,
+  "mar-vermelho": Waves,
+  jerico: Megaphone,
+  golias: Target,
+  carmelo: Flame,
+  muralha: BrickWall,
+  daniel: ShieldCheck,
+  sol: Sun,
+  mana: CloudRain,
+  ai: Swords,
+  "quarenta-anos": Hourglass,
+  bezerro: TriangleAlert,
+  sansao: Scissors,
+  saul: UserX,
+  exilio: Lock,
+  jonas: Fish,
+  babel: Castle,
+  rute: HeartHandshake,
+  "davi-saul": Handshake,
+}
+
+/** Cor da casa especial pelo que ela faz. */
+export const COR_TOM = { bom: "#8fdc93", ruim: "#ff8a7a", todos: "#f3e9d2", escolha: "#f0c75e" } as const
 
 export function casaInfo(casa: Casa) {
-  if (casa.tipo === "todos") return { nome: TODOS.nome, sub: "Todas as equipes ao mesmo tempo", cor: TODOS.cor, icone: Users }
+  if (casa.tipo === "situacao") {
+    const s = getSituacao(casa.situacao)
+    return { nome: s.nome, sub: "Casa especial", cor: COR_TOM[tomDoEfeito(s.efeito)], icone: ICONE_SITUACAO[s.id] ?? Sparkles, especial: true }
+  }
   const c = getCategoria(casa.categoria)
-  return { nome: c.nome, sub: c.sub, cor: c.cor, icone: ICONE[casa.categoria] }
+  return { nome: c.nome, sub: c.sub, cor: c.cor, icone: ICONE[casa.categoria], especial: false }
 }
 
 const COLS = 5
@@ -58,15 +90,15 @@ export function Peao({ lado, className, naTrilha = false }: { lado: Lado; classN
 
 /** A trilha no lugar do tabuleiro: casas em zigue-zague, da partida à chegada. */
 export function Trilha({ state, destaque }: { state: ShowState; destaque?: string }) {
-  const trilha = montarTrilha(state.config)
+  const trilha = trilhaDe(state)
   const rows = Math.ceil(trilha.length / COLS)
-  const daVez = state.lados[state.vez]
-  const alvo = destaque ? undefined : daVez ? Math.min(daVez.casa + 1, trilha.length) : undefined
+  // Destaque: a casa de quem conduz (é dela que sai a categoria da carta).
+  const alvo = destaque || !state.lados.length ? undefined : lider(state).casa
   const naCasa = (n: number) => state.lados.filter((l) => l.casa === n)
 
   return (
     <div className="space-y-2">
-      <div className="flex min-h-9 items-center gap-2 rounded-xl border border-border bg-night/60 px-3 py-1.5">
+      <div className={cn("flex min-h-9 items-center gap-2 rounded-xl border border-border bg-night/60 px-3 py-1.5", alvo === 0 && "ring-2 ring-gold-bright")}>
         <span className="text-[0.65rem] uppercase tracking-[0.3em] text-mist">Partida</span>
         <div className="flex flex-wrap gap-1">
           {naCasa(0).map((l) => (
@@ -87,7 +119,7 @@ export function Trilha({ state, destaque }: { state: ShowState; destaque?: strin
             <li
               key={n}
               style={{ gridRow: row + 1, gridColumn: col + 1, borderColor: `${info.cor}66`, background: `linear-gradient(160deg, ${info.cor}33, ${info.cor}0d)` }}
-              className={cn("relative flex aspect-square flex-col items-center justify-center rounded-xl border", n === alvo && "ring-2 ring-gold-bright")}
+              className={cn("relative flex aspect-square flex-col items-center justify-center rounded-xl border", info.especial && "border-2 border-dashed", n === alvo && "ring-2 ring-gold-bright")}
               aria-label={`Casa ${n}: ${info.nome}${chegada ? " (chegada)" : ""}`}
             >
               {n === alvo && (
@@ -121,6 +153,7 @@ export function Placar({ state }: { state: ShowState }) {
         >
           <span className="size-2.5 rounded-full" style={{ background: l.cor }} aria-hidden />
           <span className="max-w-24 truncate">{l.nome}</span>
+          {l.exilio && <Lock className="size-3 text-[#ff8a7a]" aria-label="no exílio" />}
           <span className="tabular-nums text-gold">{l.casa}</span>
         </span>
       ))}
