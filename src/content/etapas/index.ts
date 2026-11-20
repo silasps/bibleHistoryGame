@@ -131,14 +131,16 @@ const ETAPAS = z.array(Etapa).parse([
     n: 6, id: "deus-no-meio-do-povo", title: "Deus no meio do povo", color: "dourado", status: "com_material",
     itemIds: ["peregrinacao", "arao", "alianca-sinai", "tabernaculo", "levitico-santidade", "espioes", "alianca-deuteronomica", "uncao-josue", "morte-moises"],
     intros: ["r02-intro", "r02-recapitulacao"],
-    prd: [{ week: 2, afterItemId: "levitico-santidade" }],
+    // Linha do tempo da escola (19/11/2026): Lv 20:7–8 junto da Aliança do Sinai.
+    prd: [{ week: 2, afterItemId: "alianca-sinai" }],
     beats: [{ id: "bezerro", afterItemId: "alianca-sinai", label: "O bezerro de ouro", momento: "bezerro", art: "alianca-sinai" }],
   },
   {
     n: 7, id: "a-terra", title: "A terra", color: "oliva", status: "com_material",
     itemIds: ["josue", "conquista-canaa", "periodo-juizes", "debora", "gideao", "rute-boaz", "sansao"],
     intros: ["r03-intro"],
-    prd: [{ week: 3, refIndex: 0, afterItemId: "josue" }],
+    // Linha do tempo da escola: Js 1:7 junto da Conquista de Canaã.
+    prd: [{ week: 3, refIndex: 0, afterItemId: "conquista-canaa" }],
   },
   {
     n: 8, id: "o-reino", title: "O reino", color: "violeta", status: "com_material",
@@ -160,7 +162,8 @@ const ETAPAS = z.array(Etapa).parse([
     n: 10, id: "os-profetas-avisam", title: "Os profetas avisam", color: "turquesa", status: "com_material",
     itemIds: ["isaias", "joel", "miqueias", "ezequias", "queda-samaria", "amos", "oseias", "jonas", "cerco-jerusalem", "manasses", "naum", "babilonia"],
     intros: ["r05-intro", "r05-alerta", "r05-servos"],
-    prd: [{ week: 5, afterItemId: "miqueias" }],
+    // Linha do tempo da escola: Mq 6:8 junto de Isaías.
+    prd: [{ week: 5, afterItemId: "isaias" }],
   },
   {
     n: 11, id: "exilio-e-esperanca", title: "Exílio e esperança", color: "coral", status: "com_material",

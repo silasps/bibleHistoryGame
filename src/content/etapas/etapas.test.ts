@@ -36,7 +36,7 @@ describe("etapas da história", () => {
     // Depois da Queda: Deus veste o homem (Gn 3:21), fora do jardim, e então o versículo.
     expect(ids.slice(ids.indexOf("item-queda"), ids.indexOf("item-queda") + 4)).toEqual(["item-queda", "jogo-vestes", "jogo-fora", "versiculo-01"])
     expect(ids.indexOf("pista-01")).toBe(ids.indexOf("versiculo-01") + 1)
-    expect(ids.indexOf("versiculo-03-1")).toBe(ids.indexOf("item-josue") + 1)
+    expect(ids.indexOf("versiculo-03-1")).toBe(ids.indexOf("item-conquista-canaa") + 1)
     expect(ids.indexOf("pista-03")).toBe(ids.indexOf("versiculo-03-2") + 1)
     expect(ids.indexOf("pista-03")).toBeGreaterThan(ids.indexOf("item-alianca-davidica"))
   })
@@ -90,10 +90,14 @@ describe("roteiro do briefing (16/11/2026)", () => {
     for (const id of school) expect(onSlide.has(id), id).toBe(true)
   })
 
-  it("o versículo do plano vem logo depois do item, antes dos momentos (Js 1:7 antes de Raabe/espiões)", () => {
-    expect(ids.indexOf("versiculo-03-1")).toBe(ids.indexOf("item-josue") + 1)
+  it("o versículo do plano vem logo depois do item da escola, antes dos momentos", () => {
+    // Linha do tempo da escola: Lv 20:7–8 com a Aliança do Sinai, Js 1:7 com a Conquista, Mq 6:8 com Isaías.
+    expect(ids.indexOf("versiculo-02")).toBe(ids.indexOf("item-alianca-sinai") + 1)
+    expect(ids.indexOf("versiculo-03-1")).toBe(ids.indexOf("item-conquista-canaa") + 1)
+    expect(ids.indexOf("versiculo-05")).toBe(ids.indexOf("item-isaias") + 1)
     expect(ids.indexOf("momento-daniel-cova")).toBe(ids.indexOf("item-ciro") + 1)
-    expect(ids.indexOf("momento-bezerro")).toBe(ids.indexOf("item-alianca-sinai") + 1)
+    // Depois da Aliança do Sinai: o versículo, a pista da semana e então o bezerro de ouro.
+    expect(ids.slice(ids.indexOf("item-alianca-sinai"), ids.indexOf("item-alianca-sinai") + 4)).toEqual(["item-alianca-sinai", "versiculo-02", "pista-02", "momento-bezerro"])
   })
 
   it("nenhum slide repete a frase de outro slide", () => {

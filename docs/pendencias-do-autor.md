@@ -84,8 +84,9 @@ Hoje, só com as semanas 1 a 6, a estimativa é de **45,5 minutos** sem os minij
 ## Minhas notas (no painel)
 
 - O quadro **“Minhas notas · só você vê”** fica no painel do apresentador, em cada cena. O que você digita é salvo no Supabase e aparece em qualquer computador (e na Área de preparação). Nunca vai ao telão nem ao celular.
-- [ ] **Proteja as notas:** defina `PRESENTER_ACCESS_CODE` na Vercel. Sem o código, quem abrir /presenter também consegue ler e escrever as notas.
-- [ ] **Troque a senha do banco no Supabase** (Settings → Database). Em 19/11 ela apareceu no log da sessão por causa de uma mensagem de erro do CLI. Depois, corrija a `.env.local`: `SUPABASE_PROJECT_REF` deve ter só o código do projeto (hoje tem a URL de conexão inteira, com a senha) e `SUPABASE_DB_PASSWORD` a senha nova.
+- As notas ficam abertas para quem estiver no painel: você decidiu que está bem, porque o painel só é usado durante a apresentação.
+- [x] **`.env.local` corrigido** (19/11): `SUPABASE_PROJECT_REF` tem só o código do projeto e `SUPABASE_DB_URL` aponta para o pooler (sem senha); o `scripts/db-push.sh` funciona sozinho.
+- [ ] **Troque a senha do banco no Supabase** (Settings → Database → Reset database password). A senha atual apareceu no log da sessão em 19/11. Depois de trocar, ponha a nova em `SUPABASE_DB_PASSWORD` no `.env.local` (só ela; as chaves do site não mudam).
 
 ## Opcional
 
