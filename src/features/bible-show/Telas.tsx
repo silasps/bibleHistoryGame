@@ -73,7 +73,7 @@ const nomesEstilos = (lista: Estilo[]) => {
 }
 
 /** O que fazer na rodada, conforme o jeito (se já se sabe) e o modo. */
-function instrucao(state: ShowState, estilo: Estilo | null): string {
+export function instrucao(state: ShowState, estilo: Estilo | null): string {
   const equipes = state.config.modo === "equipes"
   const quem = lider(state).nome
   if (estilo === "letras")
@@ -282,7 +282,7 @@ export function CartaSecreta() {
 }
 
 /** "52", "1:05", "3:00". */
-const relogioTexto = (seg: number) => (seg < 60 ? String(seg) : `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, "0")}`)
+export const relogioTexto = (seg: number) => (seg < 60 ? String(seg) : `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, "0")}`)
 
 /** Cronômetro grande: o grupo vê o tempo, nunca a palavra. */
 export function Cronometro() {
@@ -375,7 +375,7 @@ export function Cronometro() {
           transition={{ duration: 1, repeat: Infinity }}
         >
           <div>
-            <p className={cn("font-display leading-none tabular-nums", seg >= 60 ? "text-[min(22vw,15dvh)]" : "text-[min(30vw,20dvh)]", urgente ? "text-[#ff9f80]" : "text-parchment")}>{relogioTexto(seg)}</p>
+            <p className={cn("font-display leading-none lining-nums tabular-nums", seg >= 60 ? "text-[min(22vw,15dvh)]" : "text-[min(30vw,20dvh)]", urgente ? "text-[#ff9f80]" : "text-parchment")}>{relogioTexto(seg)}</p>
             {!correndo && state.fase === "tempo" && <p className="text-sm uppercase tracking-[0.3em] text-mist">Pausado</p>}
           </div>
         </motion.div>
@@ -715,7 +715,7 @@ export function AvisoSom() {
   )
 }
 
-const ALFABETO = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")
+export const ALFABETO = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")
 
 /** Letras: a palavra escondida, o teclado e o tempo da equipe. */
 export function Letras() {
@@ -806,7 +806,7 @@ export function Letras() {
             </motion.span>
           )}
           {!correndo && <span className="text-xs text-mist">{arriscando ? "Arriscando…" : comecou ? "Pausado" : ""}</span>}
-          <span className={cn("font-display text-3xl leading-none tabular-nums", urgente ? "text-[#ff9f80]" : "text-parchment")}>{relogioTexto(seg)}</span>
+          <span className={cn("font-display text-3xl leading-none lining-nums tabular-nums", urgente ? "text-[#ff9f80]" : "text-parchment")}>{relogioTexto(seg)}</span>
         </div>
       </div>
 

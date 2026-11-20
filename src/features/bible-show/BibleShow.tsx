@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, Plus, QrCode, Smartphone, Users, X } from "lucide-react"
+import { ArrowLeft, Plus, QrCode, Smartphone, Tv, Users, X } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMemo, useState, type ReactNode } from "react"
@@ -65,7 +65,7 @@ function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode
 }
 
 /** Opção grande, com ícone, para a escolha principal da tela. */
-function Opcao({ ativo, onClick, icone, titulo, sub }: { ativo: boolean; onClick: () => void; icone: ReactNode; titulo: string; sub: string }) {
+function Opcao({ ativo, onClick, icone, titulo, sub, className }: { ativo: boolean; onClick: () => void; icone: ReactNode; titulo: string; sub: string; className?: string }) {
   return (
     <button
       type="button"
@@ -74,6 +74,7 @@ function Opcao({ ativo, onClick, icone, titulo, sub }: { ativo: boolean; onClick
       className={cn(
         "flex min-h-28 flex-col items-center justify-center gap-1.5 rounded-3xl border-2 p-3 text-center transition active:scale-[0.98]",
         ativo ? "border-gold bg-gold/15 text-gold-bright" : "border-border bg-night/60 text-mist",
+        className,
       )}
     >
       {icone}
@@ -173,7 +174,8 @@ function EntrarNaSala() {
 function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config) => void }) {
   const router = useRouter()
   const [c, setC] = useState<Config>(inicial)
-  const [sala, setSala] = useState(false)
+  const [jeito, setJeito] = useState<"celular" | "sala" | "telao">("celular")
+  const sala = jeito !== "celular"
   const [criando, setCriando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const comecar = async () => {
@@ -188,6 +190,8 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
     }
     try {
       localStorage.setItem(`bph-show-anf-${r.code}`, "1")
+      // Com telão, este celular conduz tudo.
+      if (jeito === "telao") localStorage.setItem(`bph-show-eu-${r.code}`, "*")
     } catch {
       // sem armazenamento: este celular entra como os outros
     }
@@ -228,16 +232,23 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
           Como vão jogar?
         </h2>
         <div className="grid grid-cols-2 gap-2">
-          <Opcao ativo={!sala} onClick={() => setSala(false)} icone={<Smartphone className="size-7" aria-hidden />} titulo="Um celular só" sub="Passa de mão em mão" />
+          <Opcao ativo={jeito === "celular"} onClick={() => setJeito("celular")} icone={<Smartphone className="size-7" aria-hidden />} titulo="Um celular só" sub="Passa de mão em mão" />
           <Opcao
-            ativo={sala}
-            onClick={() => setSala(true)}
+            ativo={jeito === "sala"}
+            onClick={() => setJeito("sala")}
             icone={<QrCode className="size-7" aria-hidden />}
             titulo="Criar uma sala"
             sub={c.modo === "equipes" ? "Um celular por equipe" : "Um celular por pessoa"}
           />
         </div>
-        {sala && (
+        <Opcao ativo={jeito === "telao"} onClick={() => setJeito("telao")} icone={<Tv className="size-7" aria-hidden />} titulo="No telão" sub="Projetor ou TV, e este celular conduz" className="min-h-0 w-full py-3" />
+        {jeito === "telao" && (
+          <p className="rounded-2xl border border-gold/30 bg-gold/10 px-3 py-2 text-xs leading-relaxed text-sand">
+            Toquem em <b className="text-parchment">Criar a sala</b>. No computador ligado ao projetor, abram Bible Show, digitem o código e escolham <b className="text-parchment">Esta tela é o telão</b>. O jogo
+            aparece grande para todos, e este celular conduz (passem para quem vai representar ver a carta). Precisa de internet.
+          </p>
+        )}
+        {jeito === "sala" && (
           <p className="rounded-2xl border border-gold/30 bg-gold/10 px-3 py-2 text-xs leading-relaxed text-sand">
             Escolham as {c.modo === "equipes" ? "equipes" : "pessoas"} e as regras abaixo e toquem em <b className="text-parchment">Criar a sala</b>. Vai aparecer um código e um QR code para os outros
             celulares entrarem. Todos veem a trilha, a roleta e o tempo juntos. Precisa de internet.
