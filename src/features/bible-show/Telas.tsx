@@ -281,6 +281,35 @@ export function CartaSecreta() {
   )
 }
 
+/** Segure para ver a palavra de novo (quem conduz, quem representa e quem responde sim ou não). */
+function Rever({ palavra, rotulo }: { palavra: string; rotulo: string }) {
+  const [ver, setVer] = useState(false)
+  return (
+    <>
+      <button
+        type="button"
+        onPointerDown={() => setVer(true)}
+        onPointerUp={() => setVer(false)}
+        onPointerLeave={() => setVer(false)}
+        onPointerCancel={() => setVer(false)}
+        onKeyDown={(e) => (e.key === " " || e.key === "Enter") && setVer(true)}
+        onKeyUp={() => setVer(false)}
+        onContextMenu={(e) => e.preventDefault()}
+        className={cn(BIG, "h-12 touch-none select-none border border-border text-sm text-parchment [-webkit-touch-callout:none]")}
+        aria-label="Segure para ver a resposta"
+      >
+        <Eye className="size-4" aria-hidden /> {rotulo}
+      </button>
+      {ver && (
+        <div className="pointer-events-none fixed inset-x-4 top-1/4 z-50 mx-auto max-w-sm rounded-3xl border-2 border-gold bg-night p-6 text-center shadow-[0_20px_60px_rgba(0,0,0,0.7)]" role="status">
+          <p className="text-xs uppercase tracking-[0.3em] text-mist">A resposta</p>
+          <p className="mt-2 font-display text-5xl leading-tight text-parchment [overflow-wrap:anywhere]">{palavra}</p>
+        </div>
+      )}
+    </>
+  )
+}
+
 /** "52", "1:05", "3:00". */
 export const relogioTexto = (seg: number) => (seg < 60 ? String(seg) : `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, "0")}`)
 
@@ -294,7 +323,6 @@ export function Cronometro() {
   const [restante, setRestante] = useState(relogio?.restante ?? total)
   const fim = useRef(false)
   const ultimoSeg = useRef<number | null>(null)
-  const [espiar, setEspiar] = useState(false)
 
   useEffect(() => {
     const tick = () => {
@@ -395,7 +423,7 @@ export function Cronometro() {
             >
               <Check className="size-6" aria-hidden /> {perguntas && !todos ? "Acertou!" : "Acertaram!"}
             </button>
-            <div className={cn("grid gap-2", perguntas || !ve ? "grid-cols-2" : "grid-cols-3")}>
+            <div className={cn("grid gap-2", ve ? "grid-cols-3" : "grid-cols-2")}>
               <button
                 type="button"
                 onClick={() => dispatch(correndo ? { type: "pausar", agora: agora() } : { type: "continuar", agora: agora() })}
@@ -403,27 +431,17 @@ export function Cronometro() {
               >
                 {correndo ? <Pause className="size-4" aria-hidden /> : <Play className="size-4" aria-hidden />} {correndo ? "Pausar" : "Seguir"}
               </button>
-              {!perguntas && ve && (
-                <button
-                  type="button"
-                  onPointerDown={() => setEspiar(true)}
-                  onPointerUp={() => setEspiar(false)}
-                  onPointerLeave={() => setEspiar(false)}
-                  onPointerCancel={() => setEspiar(false)}
-                  onContextMenu={(e) => e.preventDefault()}
-                  className={cn(BIG, "h-12 touch-none select-none border border-border text-sm text-parchment")}
-                  aria-label="Segure para rever a palavra"
-                >
-                  <Eye className="size-4" aria-hidden /> {espiar ? carta.palavra : "Rever"}
-                </button>
-              )}
+              {ve && <Rever palavra={carta.palavra} rotulo="Rever" />}
               <button type="button" onClick={() => dispatch({ type: "errou" })} className={cn(BIG, "h-12 border border-rose/40 text-sm text-rose")}>
                 <X className="size-4" aria-hidden /> {passa ? "Passar" : "Desistir"}
               </button>
             </div>
           </>
         ) : (
-          <Aguarde>Quem conduz é {lider(state).nome}</Aguarde>
+          <>
+            <Aguarde>Quem conduz é {lider(state).nome}</Aguarde>
+            {ve && <Rever palavra={carta.palavra} rotulo={perguntas ? "Segure para ver a resposta" : "Segure para rever a palavra"} />}
+          </>
         )}
       </div>
     </div>
