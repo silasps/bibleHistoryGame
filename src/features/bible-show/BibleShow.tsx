@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, Plus, Smartphone, X } from "lucide-react"
+import { ArrowLeft, Plus, QrCode, Smartphone, X } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMemo, useState, type ReactNode } from "react"
@@ -60,6 +60,25 @@ function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode
   )
 }
 
+/** Opção grande, com ícone, para a escolha principal da tela. */
+function Opcao({ ativo, onClick, icone, titulo, sub }: { ativo: boolean; onClick: () => void; icone: ReactNode; titulo: string; sub: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={ativo}
+      className={cn(
+        "flex min-h-28 flex-col items-center justify-center gap-1.5 rounded-3xl border-2 p-3 text-center transition active:scale-[0.98]",
+        ativo ? "border-gold bg-gold/15 text-gold-bright" : "border-border bg-night/60 text-mist",
+      )}
+    >
+      {icone}
+      <span className={cn("text-base font-semibold leading-tight", ativo ? "text-parchment" : "text-sand")}>{titulo}</span>
+      <span className="text-xs leading-tight">{sub}</span>
+    </button>
+  )
+}
+
 /** Entrar na sala que outro celular criou. */
 function EntrarNaSala() {
   const router = useRouter()
@@ -73,8 +92,10 @@ function EntrarNaSala() {
       }}
       className="flex items-center gap-2 rounded-2xl border border-border bg-night/60 p-2 pl-4"
     >
-      <label htmlFor="codigo-sala" className="shrink-0 text-sm text-sand">
-        Entrar numa sala
+      <label htmlFor="codigo-sala" className="shrink-0 text-sm leading-tight text-sand">
+        Recebeu
+        <br />
+        um código?
       </label>
       <input
         id="codigo-sala"
@@ -146,6 +167,28 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
         </div>
       </header>
 
+      <section className="space-y-2" aria-labelledby="como-jogam">
+        <h2 id="como-jogam" className="text-xs uppercase tracking-[0.3em] text-gold">
+          Como vão jogar?
+        </h2>
+        <div className="grid grid-cols-2 gap-2">
+          <Opcao ativo={!sala} onClick={() => setSala(false)} icone={<Smartphone className="size-7" aria-hidden />} titulo="Um celular só" sub="Passa de mão em mão" />
+          <Opcao
+            ativo={sala}
+            onClick={() => setSala(true)}
+            icone={<QrCode className="size-7" aria-hidden />}
+            titulo="Criar uma sala"
+            sub={c.modo === "equipes" ? "Um celular por equipe" : "Um celular por pessoa"}
+          />
+        </div>
+        {sala && (
+          <p className="rounded-2xl border border-gold/30 bg-gold/10 px-3 py-2 text-xs leading-relaxed text-sand">
+            Escolham as {c.modo === "equipes" ? "equipes" : "pessoas"} e as regras abaixo e toquem em <b className="text-parchment">Criar a sala</b>. Vai aparecer um código e um QR code para os outros
+            celulares entrarem. Todos veem a trilha, a roleta e o tempo juntos. Precisa de internet.
+          </p>
+        )}
+      </section>
+
       <EntrarNaSala />
 
       <details className="rounded-2xl border border-border bg-night/60 p-4 text-sm text-sand open:space-y-2">
@@ -202,23 +245,6 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
         >
           <Plus className="size-4" /> Adicionar
         </button>
-      </Bloco>
-
-      <Bloco titulo="Como vão jogar">
-        <div className="grid grid-cols-2 gap-2">
-          <Chip ativo={!sala} onClick={() => setSala(false)}>
-            <Smartphone className="size-4" aria-hidden /> Um celular só
-          </Chip>
-          <Chip ativo={sala} onClick={() => setSala(true)}>
-            <Smartphone className="size-4" aria-hidden />
-            <Smartphone className="-ml-2.5 size-4" aria-hidden /> {c.modo === "equipes" ? "Um por equipe" : "Um por pessoa"}
-          </Chip>
-        </div>
-        <p className="text-xs text-mist">
-          {sala
-            ? `Cada ${c.modo === "equipes" ? "equipe" : "pessoa"} entra na sala pelo próprio celular, com um código. Todos veem a trilha, a roleta e o tempo juntos. Precisa de internet.`
-            : "O celular passa de mão em mão."}
-        </p>
       </Bloco>
 
       <Bloco titulo="Tempo por vez">

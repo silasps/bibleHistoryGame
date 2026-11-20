@@ -17,6 +17,8 @@ const body = Inter({ subsets: ["latin"], variable: "--font-inter" })
 export const metadata: Metadata = {
   title: { default: "Bíblia — Por trás da história", template: "%s · Bíblia — Por trás da história" },
   description: "Uma história. Muitas escolhas. Uma investigação interativa pela narrativa bíblica, para jogar sozinho ou apresentar ao vivo.",
+  // Salvo na tela inicial do iPhone: abre como app, com o nome curto.
+  appleWebApp: { capable: true, title: "Bíblia", statusBarStyle: "black" },
 }
 
 export const viewport: Viewport = {
