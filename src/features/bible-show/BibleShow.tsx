@@ -29,7 +29,7 @@ export function BibleShow() {
 const REGRAS = [
   "Na sua vez, girem a roleta: ela decide se a carta é de mímica, perguntas ou letras.",
   "Depois, joguem o dado: ele diz quantas casas a carta vale, de 1 a 6.",
-  "A categoria da carta é a da casa em que vocês estão. Na partida e nas casas especiais, ela é sorteada.",
+  "A categoria da carta é a da casa em que vocês estão. Na partida e nas casas especiais, ela é sorteada. Em Perguntas, ela é sorteada e fica em segredo (no nível Fácil, aparece como dica).",
   "Mímica: só quem representa vê a carta. Nada de falar nem fazer sons.",
   "Perguntas: todos veem a carta, menos quem adivinha. Essa pessoa faz perguntas e o grupo só responde sim ou não. Em equipes, se o tempo acabar, a equipe seguinte tenta com metade do tempo.",
   "Letras: a palavra aparece escondida para todos. Cada equipe começa a vez com o tempo do jogo e escolhe letras: se a letra estiver na palavra, aparece e o tempo ganha 10 s; se não estiver, perde 5 s. A vez só passa quando o tempo acaba ou quando a equipe arrisca e erra a palavra. Ao tocar em Arriscar, o tempo para e não tem volta. Quem abrir a última letra ou acertar a palavra anda.",

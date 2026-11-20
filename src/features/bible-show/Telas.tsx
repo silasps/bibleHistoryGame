@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { getCarta } from "@/content/bible-show/cartas"
 import { escolheOutro, getSituacao, regraDoEfeito } from "@/content/bible-show/situacoes"
 import { formatRef, linkNaa } from "@/content/refs"
-import { casaDe, classificacao, emJogo, LETRA_CERTA_MS, LETRA_ERRADA_MS, lider, normalizar, painel, segundosDaVez, tempoLetras, tentando, tentandoCom, textoTempo, type Estilo, type ShowState } from "@/domain/bible-show"
+import { casaDe, categoriaVisivel, classificacao, emJogo, LETRA_CERTA_MS, LETRA_ERRADA_MS, lider, normalizar, painel, segundosDaVez, tempoLetras, tentando, tentandoCom, textoTempo, type Estilo, type ShowState } from "@/domain/bible-show"
 import { PhoneSheet } from "@/features/presentation/PhoneDock"
 import { HAPTIC, vibrate } from "@/fx/haptics"
 import { useFx } from "@/fx/useFx"
@@ -366,7 +366,7 @@ export function Cronometro() {
   return (
     <div className="flex min-h-full flex-col items-center gap-4 text-center">
       <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
-        <CategoriaTag id={carta.categoria} />
+        {categoriaVisivel(state) && <CategoriaTag id={carta.categoria} />}
         <div className="flex flex-col items-start gap-1.5">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 px-3 py-1 text-gold-bright">
             <EstiloIcone className="size-3.5" aria-hidden /> {estilo.nome}
@@ -507,7 +507,7 @@ export function Passa() {
         <p className="font-display text-4xl text-[#ff9f80]">Tempo!</p>
         <p className="mt-1 text-sm text-mist">{antes.nome} não acertou. A carta continua em segredo.</p>
       </div>
-      <CategoriaTag id={carta.categoria} />
+      {categoriaVisivel(state) && <CategoriaTag id={carta.categoria} />}
       <section className="w-full max-w-md space-y-3 rounded-3xl border border-gold/30 bg-night/80 p-4 text-left">
         <div className="flex items-center gap-3">
           <Peao lado={quem} className="size-9 text-base" />

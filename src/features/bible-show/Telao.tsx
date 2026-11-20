@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } fro
 import { getCarta } from "@/content/bible-show/cartas"
 import { getSituacao, regraDoEfeito } from "@/content/bible-show/situacoes"
 import { formatRef } from "@/content/refs"
-import { classificacao, lider, normalizar, painel, segundosDaVez, tempoLetras, tentando, tentandoCom, type ShowAction, type ShowState } from "@/domain/bible-show"
+import { categoriaVisivel, classificacao, lider, normalizar, painel, segundosDaVez, tempoLetras, tentando, tentandoCom, type ShowAction, type ShowState } from "@/domain/bible-show"
 import { HAPTIC, vibrate } from "@/fx/haptics"
 import { useStinger } from "@/fx/useSound"
 import { cn } from "@/lib/utils"
@@ -103,7 +103,7 @@ function Carta({ state }: { state: ShowState }) {
     <Grande>
       <Estilo state={state} />
       <Quem lado={perguntas ? tentando(state) : lider(state)} rotulo={perguntas ? "Vai perguntar" : "Vai representar"} />
-      <CategoriaTag id={carta.categoria} className="scale-150" />
+      {categoriaVisivel(state) && <CategoriaTag id={carta.categoria} className="scale-150" />}
       <p className="mt-[2vh] text-[2vw] text-sand">{perguntas ? "Quem adivinha não olha a carta. Preparem as perguntas!" : "Só quem representa vê a carta. Preparem-se!"}</p>
       <p className="text-[1.4vw] text-mist">Vale {passos} {passos === 1 ? "casa" : "casas"}</p>
     </Grande>
@@ -120,7 +120,7 @@ function Tempo({ state, agora, dispatch }: { state: ShowState; agora: () => numb
     <Grande>
       <div className="flex items-center gap-[1.5vw]">
         <Estilo state={state} />
-        <CategoriaTag id={carta.categoria} />
+        {categoriaVisivel(state) && <CategoriaTag id={carta.categoria} />}
       </div>
       {!state.carta!.todos && <Quem lado={perguntas ? tentando(state) : lider(state)} rotulo={perguntas ? "Pergunta" : "Representa"} />}
       <motion.p

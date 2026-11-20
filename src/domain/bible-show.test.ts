@@ -4,6 +4,7 @@ import { SITUACOES } from "@/content/bible-show/situacoes"
 import { formatRef, linkNaa } from "@/content/refs"
 import {
   casaDe,
+  categoriaVisivel,
   configPadrao,
   controla,
   emJogo,
@@ -199,6 +200,18 @@ describe("perguntas", () => {
     const m = run(preparar(jogo({ estilos: ["mimica"], segundos: 45, perguntas: 300 })), { type: "valendo", agora: 0 })
     expect(m.relogio?.prazo).toBe(45_000)
     expect([textoTempo(45), textoTempo(180), textoTempo(90)]).toEqual(["45s", "3 min", "1:30"])
+  })
+
+  it("a categoria só vem da casa (e aparece) no nível Fácil; nos outros, é sorteada e fica em segredo", () => {
+    const carta = (s: ShowState) => CARTAS.find((c) => c.id === s.carta!.id)!.categoria
+    for (const facil of [false, true]) {
+      let s = jogo({ estilos: ["perguntas"], ...(facil ? { segundos: 90, perguntas: 300, letras: 90 } : {}) })
+      const i = trilhaDe(s).findIndex((c) => c.tipo === "categoria" && c.categoria !== s.config.categorias[0])
+      const casa = trilhaDe(s)[i] as { categoria: string }
+      s = preparar(naCasa(s, 0, i + 1))
+      expect(carta(s)).toBe(facil ? casa.categoria : s.config.categorias[0])
+      expect(categoriaVisivel(s)).toBe(facil)
+    }
   })
 
   it("individual: só quem adivinhou anda", () => {

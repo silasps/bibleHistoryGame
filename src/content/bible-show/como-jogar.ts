@@ -26,6 +26,7 @@ export function comoJogar(tipo: TipoDeCarta, equipes: boolean): ComoJogar {
           equipes ? "A equipe da vez escolhe quem vai adivinhar. Essa pessoa não olha a carta; os outros olham." : "Quem está na vez adivinha e não olha a carta; os outros olham.",
           "Ela faz perguntas como “Sou um profeta?” ou “Estou no Antigo Testamento?”.",
           "O grupo só pode responder sim ou não.",
+          "A categoria da carta fica em segredo. No nível Fácil, ela aparece como dica.",
           ...(equipes ? ["Se o tempo acabar, a equipe seguinte tenta, com metade do tempo."] : []),
         ],
       }

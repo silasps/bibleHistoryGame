@@ -285,6 +285,9 @@ export function nivelDe(config: Config) {
   return NIVEIS.find((n) => n.segundos === config.segundos && n.perguntas === (config.perguntas ?? 180) && n.letras === (config.letras ?? 60)) ?? null
 }
 
+/** A categoria da carta pode aparecer para todos? Em Perguntas, só no nível Fácil (senão é dica para quem adivinha). */
+export const categoriaVisivel = (state: ShowState) => state.carta?.estilo !== "perguntas" || nivelDe(state.config)?.id === "facil"
+
 /** Tempo para mostrar: "45s", "3 min", "1:30". */
 export function textoTempo(segundos: number): string {
   if (segundos < 60) return `${segundos}s`
@@ -463,7 +466,9 @@ export function reduceShow(state: ShowState, a: ShowAction): ShowState {
       // Categoria da casa em que o líder está; na partida e nas casas especiais, sorteada.
       const casa = casaDe(state, lider(state))
       const cats = state.config.categorias
-      const categoria = casa?.tipo === "categoria" ? casa.categoria : cats[Math.min(cats.length - 1, Math.floor(a.r2 * cats.length))]
+      // Perguntas (fora do Fácil): a categoria é sorteada e fica em segredo, para não dar dica a quem adivinha.
+      const daCasa = casa?.tipo === "categoria" && (rodada.estilo !== "perguntas" || nivelDe(state.config)?.id === "facil")
+      const categoria = daCasa && casa?.tipo === "categoria" ? casa.categoria : cats[Math.min(cats.length - 1, Math.floor(a.r2 * cats.length))]
       const { id, usadas } = sortearCarta(state, categoria, a.r1)
       // Letras: ninguém vê a carta; a palavra aparece escondida para todos.
       if (rodada.estilo === "letras")
