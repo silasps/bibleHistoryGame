@@ -32,7 +32,10 @@ describe("Visão Geral no telão", () => {
   })
 
   it("no telão, Jesus só é dito por extenso a partir do fecho do AT (a plenitude dos tempos), e Mt 1:5 nunca aparece", () => {
-    const fecho = scenes.findIndex((s) => s.id === "momento-plenitude")
+    // O fecho ("a plenitude dos tempos") é o Aprofundar do slide de Herodes, o último do Antigo Testamento.
+    const fecho = scenes.findIndex((s) => s.id === "item-herodes")
+    expect(fecho).toBeGreaterThan(0)
+    expect((scenes[fecho].steps ?? []).some((st) => /Então, Jesus nasce/.test(st.text))).toBe(true)
     for (const { state, scenes: sc } of everyState("visao-geral", true)) {
       const view = toProjectorView(state, { scenes: sc }, getEvidence)
       const text = JSON.stringify(view)

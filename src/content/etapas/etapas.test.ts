@@ -3,6 +3,7 @@ import { sequenceScenes } from "@/content"
 import { items, weeks } from "../overview"
 import { getBook } from "../books"
 import { PRESENTATION_MAX_MINUTES } from "../rubric"
+import { isSchoolItem } from "./escola"
 import { ROOM_GAMES } from "./jogos"
 import { ALL_RELICS } from "./relics"
 import { etapaBudgetSeconds, etapaOfItem, etapas, itemsOfEtapa, prdMoments, presentableEtapas, validateEtapas } from "."
@@ -90,14 +91,26 @@ describe("roteiro do briefing (16/11/2026)", () => {
     for (const id of school) expect(onSlide.has(id), id).toBe(true)
   })
 
-  it("o versículo do plano vem logo depois do item da escola, antes dos momentos", () => {
+  it("o versículo do plano vem logo depois do item da escola; os momentos viram linhas do Aprofundar do tópico", () => {
     // Linha do tempo da escola: Lv 20:7–8 com a Aliança do Sinai, Js 1:7 com a Conquista, Mq 6:8 com Isaías.
     expect(ids.indexOf("versiculo-02")).toBe(ids.indexOf("item-alianca-sinai") + 1)
     expect(ids.indexOf("versiculo-03-1")).toBe(ids.indexOf("item-conquista-canaa") + 1)
     expect(ids.indexOf("versiculo-05")).toBe(ids.indexOf("item-isaias") + 1)
-    expect(ids.indexOf("momento-daniel-cova")).toBe(ids.indexOf("item-ciro") + 1)
-    // Depois da Aliança do Sinai: o versículo, a pista da semana e então o bezerro de ouro.
-    expect(ids.slice(ids.indexOf("item-alianca-sinai"), ids.indexOf("item-alianca-sinai") + 4)).toEqual(["item-alianca-sinai", "versiculo-02", "pista-02", "momento-bezerro"])
+    // Roteiro de 45 min: nenhum momento vira slide próprio.
+    expect(ids.some((id) => id.startsWith("momento-"))).toBe(false)
+    const steps = (id: string) => (scenes.find((s) => s.id === id)?.steps ?? []).map((st) => st.text)
+    expect(steps("item-alianca-sinai").some((t) => /bezerro de ouro/.test(t))).toBe(true)
+    expect(steps("item-ciro").some((t) => /cova dos leões/.test(t))).toBe(true)
+    expect(steps("item-diluvio").some((t) => /arco-íris/.test(t))).toBe(true)
+  })
+
+  it("roteiro de 45 min: só os itens da escola viram slide; os outros entram no tópico ao lado", () => {
+    const slides = scenes.filter((s) => s.overview?.role === "item")
+    for (const s of slides) expect(isSchoolItem(s.overview!.itemId!), s.id).toBe(true)
+    const queda = scenes.find((s) => s.id === "item-queda-samaria")
+    expect(queda?.overview?.alsoItemIds).toEqual(expect.arrayContaining(["amos", "oseias", "jonas"]))
+    expect(queda?.game?.id).toBe("ninive")
+    expect(scenes.find((s) => s.id === "item-imperio-grego")?.overview?.alsoItemIds).toContain("alexandre")
   })
 
   it("nenhum slide repete a frase de outro slide", () => {

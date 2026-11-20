@@ -1,7 +1,7 @@
 "use client"
 
 import { BookOpenText, X } from "lucide-react"
-import { getBeat } from "@/content/etapas"
+import { etapas, getBeat } from "@/content/etapas"
 import { beatContent } from "@/content/etapas/beat-content"
 import { MOMENTOS } from "@/content/etapas/momentos"
 import { contextForItem, excerptsForItem, getItem } from "@/content/overview"
@@ -81,6 +81,21 @@ export function DeepDive({ scene, onClose }: { scene: Scene; onClose: () => void
               </section>
             )}
             <Lines title="Aprofundar (com a fonte)" lines={[...(ap?.principal ? [ap.principal] : []), ...(ap?.passos ?? [])]} />
+            {etapas
+              .flatMap((e) => e.beats)
+              .filter((b) => b.afterItemId === id)
+              .map((b) => {
+                const c = beatContent(b)
+                const m = b.momento ? MOMENTOS[b.momento] : undefined
+                return (
+                  <section key={b.id} className="space-y-2">
+                    <h3 className="text-xs uppercase tracking-[0.25em] text-gold">{c.origem === "fala" ? "Sua fala" : "Momento"} · {b.label}</h3>
+                    {c.origem === "fala" && c.text && <p className="rounded-xl border border-border bg-night/50 p-3 text-sm text-parchment/95">{c.text}</p>}
+                    {m && <Lines title="" lines={[...(m.principal ? [m.principal] : []), ...m.passos]} />}
+                    {m && !m.principal && <p className="text-sm text-mist">Aguardando o seu texto.</p>}
+                  </section>
+                )
+              })}
           </div>
         )
       })}

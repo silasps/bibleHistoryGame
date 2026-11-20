@@ -5,6 +5,7 @@ import { ItemColor } from "../overview/schema"
 import { weekBudgetMinutes } from "../rubric"
 import { FALAS, type FalaId } from "./falas"
 import { gameMax, ROOM_GAMES } from "./jogos"
+import { isSchoolItem, schoolHostOf } from "./escola"
 import { MOMENTOS } from "./momentos"
 
 // A história contada por ETAPAS (não por semanas). As semanas continuam nos
@@ -238,10 +239,18 @@ export function itemsOfEtapa(n: number): TimelineItem[] {
   return etapa?.ordemManual ? list : list.sort(compareItems)
 }
 
-/** Itens que viram slide (sem os que ficam só na faixa da linha do tempo). */
+/**
+ * Itens que viram slide: só os da linha do tempo da escola (roteiro de 45 min).
+ * Os outros entram no slide do tópico da escola ao lado (veja `guestsOf`).
+ */
 export function slideItemsOfEtapa(n: number): TimelineItem[] {
   const skip = new Set(getEtapa(n)?.semSlide ?? [])
-  return itemsOfEtapa(n).filter((i) => !skip.has(i.id))
+  return itemsOfEtapa(n).filter((i) => !skip.has(i.id) && isSchoolItem(i.id))
+}
+
+/** Itens do autor fora da lista da escola que entram no slide deste item. */
+export function guestsOf(etapaN: number, hostId: string): TimelineItem[] {
+  return itemsOfEtapa(etapaN).filter((i) => schoolHostOf(i.id) === hostId)
 }
 
 
@@ -297,6 +306,13 @@ export function validateEtapas(): string[] {
       if (b.momento && !MOMENTOS[b.momento]) issues.push(`momento ${b.id}: texto ${b.momento} não existe em momentos.ts`)
     }
     for (const id of e.semSlide) if (!e.itemIds.includes(id)) issues.push(`etapa ${e.n}: ${id} sem slide, mas fora da etapa`)
+    // Fora da lista da escola: precisa de um slide da escola na mesma etapa para entrar.
+    for (const id of e.itemIds.filter((id) => !isSchoolItem(id))) {
+      const host = schoolHostOf(id)
+      if (!host || !e.itemIds.includes(host) || !isSchoolItem(host)) issues.push(`etapa ${e.n}: ${id} está fora da lista da escola e sem slide da escola para entrar`)
+    }
+    for (const p of e.prd) if (!isSchoolItem(p.afterItemId)) issues.push(`etapa ${e.n}: versículo depois de ${p.afterItemId}, que não vira slide`)
+    for (const g of e.games) if (g.on === "depois" && !isSchoolItem(g.itemId)) issues.push(`etapa ${e.n}: jogo ${g.id} depois de ${g.itemId}, que não vira slide`)
     for (const g of e.games) if (!e.itemIds.includes(g.itemId)) issues.push(`etapa ${e.n}: jogo ${g.id} preso a ${g.itemId}, que não está na etapa`)
     for (const p of e.prd) {
       if (!e.itemIds.includes(p.afterItemId)) issues.push(`etapa ${e.n}: PRD depois de ${p.afterItemId}, que não está na etapa`)

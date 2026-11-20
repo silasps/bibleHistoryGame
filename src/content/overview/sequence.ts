@@ -1,4 +1,4 @@
-import { presentableEtapas, prdMoments, slideItemsOfEtapa, type Etapa } from "../etapas"
+import { guestsOf, presentableEtapas, prdMoments, slideItemsOfEtapa, type Etapa } from "../etapas"
 import { beatContent } from "../etapas/beat-content"
 import { FALAS } from "../etapas/falas"
 import { isFilled, reflectionSlots, type ReflectionSlot } from "../reflections"
@@ -17,11 +17,11 @@ export const OVERVIEW_EPISODE_ID = "visao-geral"
 const pad = (n: number) => String(n).padStart(2, "0")
 export const weekEvidenceId = (week: number) => `ev-semana-${pad(week)}`
 
-/** Linhas extras do resumo para o apresentador "aprofundar" (até 4). */
+/** Linhas extras do resumo para o apresentador "aprofundar" (até 8). */
 function depthSteps(lines: { id: string; stageLine?: string; pendingFact?: string }[]) {
   return lines
     .filter((e) => e.stageLine && !e.pendingFact)
-    .slice(0, 4)
+    .slice(0, 8)
     .map((e) => ({ id: e.id, label: "Do resumo", text: e.stageLine! }))
 }
 
@@ -84,6 +84,13 @@ export function slideLineFor(itemId: string): string | undefined {
   return LINES.picked.get(itemId)?.stageLine ?? aprofundarDe(itemId)?.principal?.text ?? stageLineForItem(itemId)?.stageLine
 }
 
+/** Momento (fala do autor ou rascunho) como linhas do "Aprofundar" do slide do tópico. */
+function beatSteps(b: Etapa["beats"][number]) {
+  const c = beatContent(b)
+  const lines = [c.stageLine, ...c.steps].filter((t): t is string => !!t)
+  return lines.map((text, i) => ({ id: `${b.id}-${i + 1}`, label: c.origem === "fala" ? `Da sua fala · ${b.label}` : `Aprofundar · ${b.label}`, text }))
+}
+
 function slotScene(slot: ReflectionSlot, week?: number, etapa?: number): SceneInput {
   const filled = isFilled(slot)
   const role = slot.position.kind === "abertura" ? "abertura" : slot.position.kind === "conclusao" ? "conclusao" : "reflexao"
@@ -123,7 +130,7 @@ function verseScene(week: number, refIndex: number, etapa: number, knot: number)
     audiencePrompt: "Guarde este versículo.",
     overview: { role: "versiculo", week, refIndex, etapa, knot },
     presenterCue: "conexao",
-    estimatedSeconds: 50,
+    estimatedSeconds: 35,
   }
 }
 
@@ -141,7 +148,7 @@ function clueScene(week: number, etapa: number): SceneInput {
     releases: weekEvidenceId(week),
     overview: { role: "pista", week, etapa },
     presenterCue: "conexao",
-    estimatedSeconds: 25,
+    estimatedSeconds: 20,
   }
 }
 
@@ -163,7 +170,8 @@ function etapaScenes(etapa: Etapa): SceneInput[] {
     overview: { role: "abertura", etapa: etapa.n, stageLine: lead?.stageLine },
     steps: depthSteps(intro.filter((e) => e !== lead)),
     presenterCue: "historia",
-    estimatedSeconds: 25,
+    // Roteiro de 45 min: a abertura é só a transição de etapa.
+    estimatedSeconds: 10,
   }
 
   const scenes: SceneInput[] = [opening]
@@ -174,7 +182,10 @@ function etapaScenes(etapa: Etapa): SceneInput[] {
     const host = LINES.mergeInto.get(item.id)
     const also = slideItems.filter((i) => LINES.mergeInto.get(i.id) === item.id).map((i) => i.id)
     if (!host) {
-      const group = [item.id, ...also]
+      // Roteiro de 45 min: os itens fora da lista da escola entram aqui (faixa da linha do tempo + "Aprofundar").
+      const guests = [...also, item.id].flatMap((id) => guestsOf(etapa.n, id).map((g) => g.id))
+      const group = [item.id, ...also, ...guests]
+      const beats = etapa.beats.filter((b) => group.includes(b.afterItemId))
       const mainLine = slideLineFor(item.id)
       const mainId = LINES.picked.get(item.id)?.id
       const others = group
@@ -185,12 +196,13 @@ function etapaScenes(etapa: Etapa): SceneInput[] {
       scenes.push({
         id: `item-${item.id}`,
         type: "historical_context",
-        title: [item, ...also.map((id) => getItem(id)!)].map((i) => i.label).join(" · "),
+        title: [item, ...[...also, ...guests].map((id) => getItem(id)!)].map((i) => i.label).join(" · "),
         perspective: "historical_observer",
         visual: "timeline",
         illumination: 0.55,
-        overview: { role: "item", week: item.week, etapa: etapa.n, itemId: item.id, alsoItemIds: also.length ? also : undefined, mapa, stageLine: mainLine },
-        steps: [...depthSteps(others), ...group.flatMap(extraSteps)],
+        overview: { role: "item", week: item.week, etapa: etapa.n, itemId: item.id, alsoItemIds: also.length + guests.length ? [...also, ...guests] : undefined, mapa, stageLine: mainLine },
+        // Os momentos (suas falas e os rascunhos) viram linhas do "Aprofundar" do tópico: você toca no assunto se quiser.
+        steps: [...depthSteps(others), ...group.flatMap(extraSteps), ...beats.flatMap(beatSteps)],
         game: game && { id: game.id, kind: game.kind, max: game.max, startable: game.aoVivo },
         presenterCue: "historia",
         // Jogo ao vivo: a estimativa só soma quando o apresentador marca "vou jogar ao vivo" (Área de preparação).
@@ -219,21 +231,6 @@ function etapaScenes(etapa: Etapa): SceneInput[] {
         scenes.push(clueScene(p.week, etapa.n))
         cluesHere.push(p.week)
       }
-    }
-    for (const b of etapa.beats.filter((b) => b.afterItemId === item.id)) {
-      const c = beatContent(b)
-      scenes.push({
-        id: `momento-${b.id}`,
-        type: b.pause ? "presenter_pause" : "historical_context",
-        title: b.label,
-        perspective: "historical_observer",
-        visual: "timeline",
-        illumination: b.pause ? 0.35 : 0.55,
-        overview: { role: "beat", week: item.week, etapa: etapa.n, beatId: b.id, stageLine: c.stageLine },
-        steps: c.steps.length ? c.steps.map((text, i) => ({ id: `${b.id}-${i + 1}`, label: c.origem === "fala" ? "Da sua fala" : "Aprofundar", text })) : undefined,
-        presenterCue: b.pause ? "pausa" : "historia",
-        estimatedSeconds: b.pause ? 45 : 15,
-      })
     }
   }
   // Espaços do autor (C&N e revelação pessoal) das semanas cuja pista abriu nesta etapa.
