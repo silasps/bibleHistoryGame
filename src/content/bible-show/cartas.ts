@@ -7,7 +7,7 @@ import { GERAIS } from "./cartas-gerais"
 // linha do tempo do autor ou dos minijogos que ele já aprovou.
 // STATUS: rascunho — aguarda a revisão do autor (palavras e categorias).
 
-/** `biblia`: a categoria tem cartas da Bíblia ("O que estou fazendo?" só tem cartas gerais). */
+/** `biblia`: a categoria tem cartas da Bíblia (ações, filmes e TV, comidas, festas e músicas só têm cartas gerais). */
 export const CATEGORIAS = [
   { id: "quem", nome: "Quem é?", sub: "Personagens", cor: "#d8a948", biblia: true },
   { id: "objeto", nome: "O que é?", sub: "Objetos", cor: "#5fb3c9", biblia: true },
@@ -15,6 +15,10 @@ export const CATEGORIAS = [
   { id: "lugar", nome: "Onde fica?", sub: "Lugares", cor: "#8fbf6a", biblia: true },
   { id: "bicho", nome: "Bichos", sub: "Animais", cor: "#e89a4f", biblia: true },
   { id: "acao", nome: "O que estou fazendo?", sub: "Ações", cor: "#f08fb5", biblia: false },
+  { id: "tela", nome: "Filmes e TV", sub: "Do Brasil", cor: "#9aa7ff", biblia: false },
+  { id: "comida", nome: "Comidas", sub: "Do Brasil", cor: "#c9d36b", biblia: false },
+  { id: "festa", nome: "Festas", sub: "Do Brasil", cor: "#6fd1b0", biblia: false },
+  { id: "musica", nome: "Músicas", sub: "Do Brasil", cor: "#e7c6a0", biblia: false },
   { id: "desafio", nome: "Desafio", sub: "Vale 1 casa a mais", cor: "#b18ad8", biblia: true },
 ] as const
 

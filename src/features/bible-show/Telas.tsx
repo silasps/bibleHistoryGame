@@ -3,7 +3,7 @@
 import { BookOpen, Check, Dices, ExternalLink, Eye, Hand, Hourglass, Pause, Play, RotateCcw, Send, Shuffle, Trophy, Volume2, X } from "lucide-react"
 import { motion } from "motion/react"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { getCarta } from "@/content/bible-show/cartas"
+import { getCarta, type CategoriaId } from "@/content/bible-show/cartas"
 import { escolheOutro, getSituacao, regraDoEfeito } from "@/content/bible-show/situacoes"
 import { formatRef, linkNaa } from "@/content/refs"
 import { casaDe, categoriaVisivel, classificacao, emJogo, LETRA_CERTA_MS, LETRA_ERRADA_MS, lider, normalizar, painel, segundosDaVez, tempoLetras, tentando, tentandoCom, textoTempo, type Estilo, type ShowState } from "@/domain/bible-show"
@@ -19,6 +19,9 @@ import { COR_ESTILO, Dado, Roleta } from "./Sorteio"
 import { casaInfo, CategoriaTag, COR_TOM, ESTILO, Peao, Placar, Trilha } from "./Trilha"
 
 type RefArg = Parameters<typeof formatRef>[0]
+
+/** Perguntas: a categoria só aparece na carta, para quem responde. */
+const DICA = "Categoria: deem como dica, se quiserem."
 
 const BIG = "flex h-14 w-full items-center justify-center gap-2 rounded-full text-lg font-semibold transition active:scale-[0.98] disabled:opacity-40"
 
@@ -291,6 +294,7 @@ export function CartaSecreta() {
                 <p className="font-display text-4xl leading-tight text-parchment [overflow-wrap:anywhere]">{carta.palavra}</p>
                 <div className="space-y-2">
                   <p className="text-xs text-mist">{estilo.regra}</p>
+                  {perguntas && <p className="text-xs text-mist">{DICA}</p>}
                   <p className="text-xs text-sand">{[carta.ref && formatRef(carta.ref as RefArg, "long"), !livre && `${carta.ref ? "vale" : "Vale"} ${passos} ${passos === 1 ? "casa" : "casas"}`].filter(Boolean).join(" · ")}</p>
                 </div>
               </div>
@@ -299,7 +303,11 @@ export function CartaSecreta() {
         </>
       ) : (
         <div className="grid w-full max-w-xs flex-1 place-items-center rounded-3xl border-2 border-dashed border-gold/30 p-6">
-          <p className="text-sm text-sand">A carta está com {quem.nome}. Preparem-se!</p>
+          <div className="flex flex-col items-center gap-3">
+            {/* Mímica: o público sabe a categoria; em Perguntas, quem não vê a carta é quem adivinha. */}
+            {!perguntas && <CategoriaTag id={carta.categoria} />}
+            <p className="text-sm text-sand">A carta está com {quem.nome}. Preparem-se!</p>
+          </div>
         </div>
       )}
       <div className="mt-auto grid w-full max-w-md gap-2">
@@ -337,7 +345,8 @@ export function CartaSecreta() {
 }
 
 /** Segure para ver a palavra de novo (quem conduz, quem representa e quem responde sim ou não). */
-function Rever({ palavra, rotulo }: { palavra: string; rotulo: string }) {
+/** `dica`: em Perguntas, a categoria (só quem responde vê; pode dar como dica). */
+function Rever({ palavra, rotulo, dica }: { palavra: string; rotulo: string; dica?: CategoriaId }) {
   const [ver, setVer] = useState(false)
   return (
     <>
@@ -359,6 +368,12 @@ function Rever({ palavra, rotulo }: { palavra: string; rotulo: string }) {
         <div className="pointer-events-none fixed inset-x-4 top-1/4 z-50 mx-auto max-w-sm rounded-3xl border-2 border-gold bg-night p-6 text-center shadow-[0_20px_60px_rgba(0,0,0,0.7)]" role="status">
           <p className="text-xs uppercase tracking-[0.3em] text-mist">A resposta</p>
           <p className="mt-2 font-display text-5xl leading-tight text-parchment [overflow-wrap:anywhere]">{palavra}</p>
+          {dica && (
+            <div className="mt-4 flex flex-col items-center gap-1.5">
+              <CategoriaTag id={dica} />
+              <p className="text-xs text-mist">{DICA}</p>
+            </div>
+          )}
         </div>
       )}
     </>
@@ -486,7 +501,7 @@ export function Cronometro() {
               >
                 {correndo ? <Pause className="size-4" aria-hidden /> : <Play className="size-4" aria-hidden />} {correndo ? "Pausar" : "Seguir"}
               </button>
-              {ve && <Rever palavra={carta.palavra} rotulo="Rever" />}
+              {ve && <Rever palavra={carta.palavra} rotulo="Rever" dica={perguntas ? carta.categoria : undefined} />}
               <button type="button" onClick={() => dispatch({ type: "errou" })} className={cn(BIG, "h-12 border border-rose/40 text-sm text-rose")}>
                 <X className="size-4" aria-hidden /> {passa ? "Passar" : "Desistir"}
               </button>
@@ -495,7 +510,7 @@ export function Cronometro() {
         ) : (
           <>
             <Aguarde>Quem conduz é {lider(state).nome}</Aguarde>
-            {ve && <Rever palavra={carta.palavra} rotulo={perguntas ? "Segure para ver a resposta" : "Segure para rever a palavra"} />}
+            {ve && <Rever palavra={carta.palavra} rotulo={perguntas ? "Segure para ver a resposta" : "Segure para rever a palavra"} dica={perguntas ? carta.categoria : undefined} />}
           </>
         )}
       </div>

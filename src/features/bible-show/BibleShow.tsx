@@ -30,7 +30,7 @@ export function BibleShow() {
 const REGRAS = [
   "Na sua vez, girem a roleta: ela decide se a carta é de mímica, perguntas ou letras.",
   "Depois, joguem o dado: ele diz quantas casas a carta vale, de 1 a 6.",
-  "A categoria da carta é a da casa em que vocês estão. Na partida e nas casas especiais, ela é sorteada. Em Perguntas, ela é sorteada e fica em segredo (no nível Fácil, aparece como dica).",
+  "A categoria da carta é a da casa em que vocês estão. Na partida e nas casas especiais, ela é sorteada. Em Perguntas, ela é sorteada e quem adivinha não a vê: ela aparece só na carta, e quem responde pode dá-la como dica.",
   "Mímica: só quem representa vê a carta. Nada de falar nem fazer sons.",
   "Perguntas: todos veem a carta, menos quem adivinha. Essa pessoa faz perguntas e o grupo só responde sim ou não. Em equipes, se o tempo acabar, a equipe seguinte tenta com metade do tempo.",
   "Letras: a palavra aparece escondida para todos. Cada equipe começa a vez com o tempo do jogo e escolhe letras: se a letra estiver na palavra, aparece e o tempo ganha 10 s; se não estiver, perde 5 s. A vez só passa quando o tempo acaba ou quando a equipe arrisca e erra a palavra. Ao tocar em Arriscar, o tempo para e não tem volta. Quem abrir a última letra ou acertar a palavra anda.",
@@ -44,7 +44,7 @@ const REGRAS_LIVRE = [
   "Só brincar: sem equipes, sem trilha e sem pontos. Acabou a carta, vem a próxima.",
   "Com mais de um jeito de jogar ligado, girem a roleta: ela decide se a carta é de mímica, perguntas ou letras.",
   "Mímica: alguém vai à frente e só essa pessoa vê a carta. Nada de falar nem fazer sons. O resto do grupo adivinha.",
-  "Perguntas: alguém vai à frente e não olha a carta. Essa pessoa faz perguntas e o grupo só responde sim ou não.",
+  "Perguntas: alguém vai à frente e não olha a carta. Essa pessoa faz perguntas e o grupo só responde sim ou não. A categoria aparece só na carta: o grupo pode dá-la como dica.",
   "Letras: a palavra aparece escondida e o grupo escolhe as letras junto. A certa dá 10 s; a errada tira 5 s. Ao tocar em Arriscar, o tempo para e não tem volta.",
   "O tempo de cada jogo é escolhido no começo: Fácil, Normal ou Difícil, ou ajustado um a um.",
 ]
@@ -433,7 +433,7 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
                 <Icone className="size-5 shrink-0" style={{ color: cat.cor }} aria-hidden />
                 <span className="min-w-0">
                   <span className="block text-sm font-semibold leading-tight">{cat.nome}</span>
-                  {!(livre && cat.id === "desafio") && <span className="block truncate text-[0.7rem] text-mist">{cat.sub}</span>}
+                  {!(livre && cat.id === "desafio") && <span className="block text-[0.7rem] leading-tight text-mist">{cat.sub}</span>}
                 </span>
               </button>
             )

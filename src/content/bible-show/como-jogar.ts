@@ -38,7 +38,7 @@ export function comoJogar(tipo: TipoDeCarta, modo: "equipes" | "individual" | "l
           equipes ? "A equipe da vez escolhe quem vai adivinhar. Essa pessoa não olha a carta; os outros olham." : "Quem está na vez adivinha e não olha a carta; os outros olham.",
           EXEMPLOS[tema],
           "O grupo só pode responder sim ou não.",
-          "A categoria da carta fica em segredo. No nível Fácil, ela aparece como dica.",
+          "Quem adivinha não vê a categoria. Ela aparece só na carta, e quem responde pode dá-la como dica.",
           ...(equipes ? ["Se o tempo acabar, a equipe seguinte tenta, com metade do tempo."] : []),
         ],
       }
@@ -71,7 +71,7 @@ function soBrincar(tipo: TipoDeCarta, tema: Tema): ComoJogar {
           "Alguém vai à frente e não olha a carta; o resto do grupo olha.",
           EXEMPLOS[tema],
           "O grupo só pode responder sim ou não.",
-          "A categoria da carta fica em segredo. No nível Fácil, ela aparece como dica.",
+          "Quem adivinha não vê a categoria. Ela aparece só na carta, e quem responde pode dá-la como dica.",
         ],
       }
     case "letras":

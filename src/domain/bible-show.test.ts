@@ -202,15 +202,19 @@ describe("perguntas", () => {
     expect([textoTempo(45), textoTempo(180), textoTempo(90)]).toEqual(["45s", "3 min", "1:30"])
   })
 
-  it("a categoria só vem da casa (e aparece) no nível Fácil; nos outros, é sorteada e fica em segredo", () => {
+  it("perguntas: a categoria é sorteada e não aparece para quem adivinha (em nenhum nível); mímica e letras: vem da casa e aparece", () => {
     const carta = (s: ShowState) => CARTAS.find((c) => c.id === s.carta!.id)!.categoria
     for (const facil of [false, true]) {
-      let s = jogo({ estilos: ["perguntas"], ...(facil ? { segundos: 90, perguntas: 300, letras: 90 } : {}) })
+      const nivel = facil ? { segundos: 90, perguntas: 300, letras: 90 } : {}
+      let s = jogo({ estilos: ["perguntas"], ...nivel })
       const i = trilhaDe(s).findIndex((c) => c.tipo === "categoria" && c.categoria !== s.config.categorias[0])
-      const casa = trilhaDe(s)[i] as { categoria: string }
       s = preparar(naCasa(s, 0, i + 1))
-      expect(carta(s)).toBe(facil ? casa.categoria : s.config.categorias[0])
-      expect(categoriaVisivel(s)).toBe(facil)
+      expect(carta(s)).toBe(s.config.categorias[0])
+      expect(categoriaVisivel(s)).toBe(false)
+      let m = jogo({ estilos: ["mimica"], ...nivel })
+      m = preparar(naCasa(m, 0, i + 1))
+      expect(carta(m)).toBe((trilhaDe(m)[i] as { categoria: string }).categoria)
+      expect(categoriaVisivel(m)).toBe(true)
     }
   })
 
