@@ -291,10 +291,7 @@ export function CartaSecreta() {
                 <p className="font-display text-4xl leading-tight text-parchment [overflow-wrap:anywhere]">{carta.palavra}</p>
                 <div className="space-y-2">
                   <p className="text-xs text-mist">{estilo.regra}</p>
-                  <p className="text-xs text-sand">
-                    {formatRef(carta.ref as RefArg, "long")}
-                    {!livre && ` · vale ${passos} ${passos === 1 ? "casa" : "casas"}`}
-                  </p>
+                  <p className="text-xs text-sand">{[carta.ref && formatRef(carta.ref as RefArg, "long"), !livre && `${carta.ref ? "vale" : "Vale"} ${passos} ${passos === 1 ? "casa" : "casas"}`].filter(Boolean).join(" · ")}</p>
                 </div>
               </div>
             </motion.div>
@@ -611,8 +608,12 @@ export function Resultado() {
         <p className={cn("font-display text-4xl", acertou ? "text-[#8fdc93]" : "text-[#ff9f80]")}>{titulo}</p>
         <p className="mt-1 text-sm text-mist">A palavra era</p>
         <p className="font-display text-3xl leading-tight text-parchment">{carta.palavra}</p>
-        <p className="text-xs text-sand">{formatRef(carta.ref as RefArg, "long")}</p>
-        <Conferir refs={[carta.ref as RefArg]} titulo={carta.palavra} className="mt-2" />
+        {carta.ref && (
+          <>
+            <p className="text-xs text-sand">{formatRef(carta.ref as RefArg, "long")}</p>
+            <Conferir refs={[carta.ref as RefArg]} titulo={carta.palavra} className="mt-2" />
+          </>
+        )}
         {acertou && (
           <ul className="mt-2 space-y-0.5 text-sm text-gold-bright">
             {ultima.moveu.map((m) => (

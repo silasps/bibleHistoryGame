@@ -1,4 +1,4 @@
-import { CARTAS, CATEGORIA_IDS, type CategoriaId } from "@/content/bible-show/cartas"
+import { CARTAS, categoriasDoTema, doTema, type CategoriaId, type Tema } from "@/content/bible-show/cartas"
 import { escolheOutro, getSituacao, SITUACOES, type SituacaoId } from "@/content/bible-show/situacoes"
 
 // Bible Show: mímica, perguntas e letras em grupo. Sem tabuleiro físico: a
@@ -39,6 +39,8 @@ export interface Config {
   /** Jeitos de jogar ligados; com mais de um, a roleta sorteia. */
   estilos: Estilo[]
   categorias: CategoriaId[]
+  /** Cartas da Bíblia, gerais ou as duas (padrão: Bíblia). */
+  tema?: Tema
 }
 
 /** Casa da trilha: uma categoria ou uma casa especial. */
@@ -156,7 +158,8 @@ export const configPadrao: Config = {
   letras: 60,
   casas: 25,
   estilos: ["mimica", "perguntas", "letras"],
-  categorias: [...CATEGORIA_IDS],
+  categorias: categoriasDoTema("biblia"),
+  tema: "biblia",
 }
 
 export const estadoInicial: ShowState = {
@@ -204,7 +207,7 @@ function embaralhar<T>(lista: T[], rnd: () => number): T[] {
  */
 export function montarTrilha(config: Pick<Config, "casas" | "categorias" | "modo">, semente = 1): Casa[] {
   const rnd = sorteador(semente)
-  const cats = config.categorias.length ? config.categorias : [...CATEGORIA_IDS]
+  const cats = config.categorias.length ? config.categorias : categoriasDoTema("biblia")
   const efeitos = embaralhar(
     SITUACOES.filter((s) => s.efeito.tipo !== "arraial"),
     rnd,
@@ -325,7 +328,9 @@ function limpar(config: Config): Config {
   const base = config.modo === "equipes" ? "Equipe" : config.modo === "livre" ? "Grupo" : "Jogador"
   const nomes = (config.modo === "livre" ? ["Grupo"] : config.nomes).slice(0, max).map((n, i) => n.trim().slice(0, 20) || `${base} ${i + 1}`)
   while (nomes.length < min) nomes.push(`${base} ${nomes.length + 1}`)
-  const categorias = config.categorias.filter((c) => CATEGORIA_IDS.includes(c))
+  const tema: Tema = config.tema === "geral" || config.tema === "ambos" ? config.tema : "biblia"
+  const doTemaIds = categoriasDoTema(tema)
+  const categorias = config.categorias.filter((c) => doTemaIds.includes(c))
   const estilos = ESTILOS.filter((e) => (config.estilos ?? []).includes(e))
   return {
     ...config,
@@ -334,7 +339,8 @@ function limpar(config: Config): Config {
     perguntas: SEGUNDOS_PERGUNTAS.includes(config.perguntas as (typeof SEGUNDOS_PERGUNTAS)[number]) ? config.perguntas : 180,
     letras: SEGUNDOS_LETRAS.includes(config.letras as (typeof SEGUNDOS_LETRAS)[number]) ? config.letras : 60,
     casas: TRILHAS.some((t) => t.casas === config.casas) ? config.casas : 25,
-    categorias: categorias.length ? categorias : [...CATEGORIA_IDS],
+    categorias: categorias.length ? categorias : doTemaIds,
+    tema,
     estilos: estilos.length ? estilos : ["mimica", "perguntas", "letras"],
   }
 }
@@ -345,7 +351,13 @@ function novaRodada(state: ShowState, liderId: string, todos: boolean): Rodada {
 }
 
 function sortearCarta(state: ShowState, categoria: CategoriaId, r: number, evitar?: string): { id: string; usadas: string[] } {
-  const doMonte = CARTAS.filter((c) => c.categoria === categoria && c.id !== evitar)
+  // No nível Fácil, as cartas difíceis ficam de fora.
+  const facil = nivelDe(state.config)?.id === "facil"
+  const tema = state.config.tema ?? "biblia"
+  const vale = (c: (typeof CARTAS)[number]) => c.id !== evitar && doTema(c, tema) && !(facil && c.dificil)
+  // A categoria sem cartas no tema (não deveria acontecer): qualquer carta do tema.
+  const daCategoria = CARTAS.filter((c) => c.categoria === categoria && vale(c))
+  const doMonte = daCategoria.length ? daCategoria : CARTAS.filter(vale)
   let livres = doMonte.filter((c) => !state.usadas.includes(c.id))
   let usadas = state.usadas
   // Acabou o monte da categoria: embaralha de novo (sem repetir a que acabou de sair).

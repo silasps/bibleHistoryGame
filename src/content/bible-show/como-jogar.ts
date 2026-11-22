@@ -1,6 +1,8 @@
 // Bible Show: como jogar cada tipo de carta, em passos curtos, para quem
 // nunca jogou. Aparece na configuração. (Regras do jogo, não texto bíblico.)
 
+import type { Tema } from "./cartas"
+
 export type TipoDeCarta = "mimica" | "perguntas" | "letras"
 
 export interface ComoJogar {
@@ -9,9 +11,16 @@ export interface ComoJogar {
 }
 
 /** `modo`: em equipes, cada um por si ou só brincar (sem disputa). */
-export function comoJogar(tipo: TipoDeCarta, modo: "equipes" | "individual" | "livre"): ComoJogar {
+/** Exemplos de perguntas de sim ou não, conforme as cartas da partida. */
+const EXEMPLOS: Record<Tema, string> = {
+  biblia: "Ela faz perguntas como “Sou um profeta?” ou “Estou no Antigo Testamento?”.",
+  geral: "Ela faz perguntas como “Sou uma pessoa?” ou “Existo até hoje?”.",
+  ambos: "Ela faz perguntas como “Sou da Bíblia?” ou “Sou uma pessoa?”.",
+}
+
+export function comoJogar(tipo: TipoDeCarta, modo: "equipes" | "individual" | "livre", tema: Tema = "biblia"): ComoJogar {
   const equipes = modo === "equipes"
-  if (modo === "livre") return soBrincar(tipo)
+  if (modo === "livre") return soBrincar(tipo, tema)
   switch (tipo) {
     case "mimica":
       return {
@@ -27,7 +36,7 @@ export function comoJogar(tipo: TipoDeCarta, modo: "equipes" | "individual" | "l
         resumo: "Uma pessoa descobre a carta fazendo perguntas de sim ou não.",
         passos: [
           equipes ? "A equipe da vez escolhe quem vai adivinhar. Essa pessoa não olha a carta; os outros olham." : "Quem está na vez adivinha e não olha a carta; os outros olham.",
-          "Ela faz perguntas como “Sou um profeta?” ou “Estou no Antigo Testamento?”.",
+          EXEMPLOS[tema],
           "O grupo só pode responder sim ou não.",
           "A categoria da carta fica em segredo. No nível Fácil, ela aparece como dica.",
           ...(equipes ? ["Se o tempo acabar, a equipe seguinte tenta, com metade do tempo."] : []),
@@ -48,7 +57,7 @@ export function comoJogar(tipo: TipoDeCarta, modo: "equipes" | "individual" | "l
 }
 
 /** Só brincar: alguém vai à frente e o resto do grupo joga junto; sem pontos. */
-function soBrincar(tipo: TipoDeCarta): ComoJogar {
+function soBrincar(tipo: TipoDeCarta, tema: Tema): ComoJogar {
   switch (tipo) {
     case "mimica":
       return {
@@ -60,7 +69,7 @@ function soBrincar(tipo: TipoDeCarta): ComoJogar {
         resumo: "Alguém vai à frente e descobre a carta com perguntas de sim ou não.",
         passos: [
           "Alguém vai à frente e não olha a carta; o resto do grupo olha.",
-          "Ela faz perguntas como “Sou um profeta?” ou “Estou no Antigo Testamento?”.",
+          EXEMPLOS[tema],
           "O grupo só pode responder sim ou não.",
           "A categoria da carta fica em segredo. No nível Fácil, ela aparece como dica.",
         ],

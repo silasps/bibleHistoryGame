@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { CARTAS, CATEGORIA_IDS } from "@/content/bible-show/cartas"
+import { CARTAS, CATEGORIA_IDS, categoriasDoTema } from "@/content/bible-show/cartas"
 import { SITUACOES } from "@/content/bible-show/situacoes"
 import { formatRef, linkNaa } from "@/content/refs"
 import {
@@ -36,7 +36,7 @@ describe("conteúdo", () => {
     for (const cat of CATEGORIA_IDS) expect(CARTAS.filter((c) => c.categoria === cat).length, cat).toBeGreaterThanOrEqual(12)
     expect(new Set(CARTAS.map((c) => c.id)).size).toBe(CARTAS.length)
     expect(new Set(SITUACOES.map((c) => c.id)).size).toBe(SITUACOES.length)
-    for (const c of [...CARTAS, ...SITUACOES]) expect(formatRef(c.ref as Parameters<typeof formatRef>[0]), c.id).toBeTruthy()
+    for (const c of [...CARTAS.filter((x) => x.tema !== "geral"), ...SITUACOES]) expect(formatRef(c.ref as Parameters<typeof formatRef>[0]), c.id).toBeTruthy()
     expect(linkNaa({ book: "Exod", chapter: 2, verseStart: 10 })).toBe("https://www.bible.com/bible/1840/EXO.2.10.NAA")
     expect(linkNaa({ book: "Josh", chapter: 7, verseStart: 1, verseEnd: 5 })).toBe("https://www.bible.com/bible/1840/JOS.7.1-5.NAA")
   })
@@ -380,5 +380,51 @@ describe("só brincar", () => {
     expect(run(s, { type: "arriscar", agora: 1000 }, { type: "chutar", palavra: "zzz", agora: 2000 })).toMatchObject({ fase: "resultado", ultima: { tipo: "errou" } })
     const palavra = CARTAS.find((c) => c.id === s.carta!.id)!.palavra
     expect(run(s, { type: "arriscar", agora: 1000 }, { type: "chutar", palavra, agora: 2000 })).toMatchObject({ fase: "resultado", ultima: { tipo: "acerto", moveu: [] } })
+  })
+})
+
+describe("cartas difíceis", () => {
+  it("não saem no nível Fácil; nos outros níveis, entram no monte", () => {
+    const tirar = (config: Partial<Config>) => {
+      let s = jogo({ estilos: ["mimica"], categorias: ["quem"], ...config })
+      const vistas = new Set<string>()
+      for (let i = 0; i < 40; i++) {
+        s = run(s, { type: "rolar", r: 0 }, { type: "sortear", r1: (i * 0.37) % 1, r2: 0 })
+        vistas.add(s.carta!.id)
+        s = run(s, { type: "valendo", agora: 0 }, { type: "errou" }, { type: "proxima" })
+      }
+      return [...vistas].map((id) => CARTAS.find((c) => c.id === id)!)
+    }
+    expect(tirar({ segundos: 90, perguntas: 300, letras: 90 }).some((c) => c.dificil)).toBe(false)
+    expect(tirar({}).some((c) => c.dificil)).toBe(true)
+    for (const cat of CATEGORIA_IDS) expect(CARTAS.filter((c) => c.categoria === cat && !c.dificil).length, cat).toBeGreaterThanOrEqual(12)
+  })
+})
+
+describe("cartas da Bíblia, gerais ou as duas", () => {
+  const tirar = (config: Partial<Config>, n = 60) => {
+    let s = jogo({ estilos: ["mimica"], ...config })
+    const vistas: (typeof CARTAS)[number][] = []
+    for (let i = 0; i < n; i++) {
+      s = run(s, { type: "rolar", r: 0 }, { type: "sortear", r1: (i * 0.37) % 1, r2: (i * 0.61) % 1 })
+      vistas.push(CARTAS.find((c) => c.id === s.carta!.id)!)
+      s = run(s, { type: "valendo", agora: 0 }, { type: "errou" }, { type: "proxima" })
+    }
+    return vistas
+  }
+
+  it("cada categoria tem cartas no tema; 'O que estou fazendo?' só nas gerais", () => {
+    for (const tema of ["biblia", "geral"] as const)
+      for (const cat of categoriasDoTema(tema)) expect(CARTAS.filter((c) => c.categoria === cat && (c.tema === "geral") === (tema === "geral")).length, `${tema} ${cat}`).toBeGreaterThanOrEqual(12)
+    expect(categoriasDoTema("biblia")).not.toContain("acao")
+    expect(jogo({ tema: "biblia", categorias: ["acao", "quem"] }).config.categorias).toEqual(["quem"])
+    expect(jogo({}).config.tema).toBe("biblia")
+  })
+
+  it("Bíblia só tira cartas da Bíblia; Gerais, só gerais; Os dois, as duas", () => {
+    expect(tirar({ tema: "biblia" }).every((c) => c.tema !== "geral")).toBe(true)
+    expect(tirar({ tema: "geral", categorias: categoriasDoTema("geral") }).every((c) => c.tema === "geral")).toBe(true)
+    const ambos = tirar({ tema: "ambos", categorias: categoriasDoTema("ambos") }, 80)
+    expect([ambos.some((c) => c.tema === "geral"), ambos.some((c) => c.tema !== "geral")]).toEqual([true, true])
   })
 })

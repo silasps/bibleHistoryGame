@@ -223,7 +223,7 @@ function Resultado({ state }: { state: ShowState }) {
       <p className={cn("font-display text-[6vw] leading-none", acertou ? "text-[#8fdc93]" : "text-[#ff9f80]")}>{acertou ? "Acertou!" : "Tempo!"}</p>
       <p className="text-[1.6vw] text-mist">A palavra era</p>
       <p className="font-display text-[7vw] leading-none text-parchment">{carta.palavra}</p>
-      <p className="text-[1.6vw] text-sand">{formatRef(carta.ref as RefArg, "long")}</p>
+      {carta.ref && <p className="text-[1.6vw] text-sand">{formatRef(carta.ref as RefArg, "long")}</p>}
       {acertou && (
         <ul className="text-[2vw] text-gold-bright">
           {u.moveu.map((m) => (

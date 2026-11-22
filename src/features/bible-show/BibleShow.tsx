@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { useMemo, useState, type ReactNode } from "react"
 import { criarSalaShow } from "@/app/actions/show"
 import { isRoomCode, normalizeRoomCode } from "@/data/room-code"
-import { CATEGORIAS, type CategoriaId } from "@/content/bible-show/cartas"
+import { CATEGORIAS, categoriasDoTema, TEMAS, type CategoriaId, type Tema } from "@/content/bible-show/cartas"
 import { comoJogar } from "@/content/bible-show/como-jogar"
 import { CORES, ESTILOS, LIMITES, nivelDe, NIVEIS, SEGUNDOS, SEGUNDOS_LETRAS, SEGUNDOS_PERGUNTAS, textoTempo, TRILHAS, type Config, type Estilo, type Modo } from "@/domain/bible-show"
 import { cn } from "@/lib/utils"
@@ -220,10 +220,17 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
     if (j === "livre") trocarModo("livre")
     else if (c.modo === "livre") trocarModo("equipes")
   }
+  const tema = c.tema ?? "biblia"
+  const visiveis = categoriasDoTema(tema)
   const toggleCat = (id: CategoriaId) => {
     const on = c.categorias.includes(id)
-    if (on && c.categorias.length === 1) return
+    if (on && c.categorias.filter((x) => visiveis.includes(x)).length === 1) return
     set({ categorias: on ? c.categorias.filter((x) => x !== id) : [...c.categorias, id] })
+  }
+  // Ao trocar de tema, as categorias que passam a aparecer já vêm ligadas.
+  const trocarTema = (t: Tema) => {
+    const novas = categoriasDoTema(t).filter((id) => !visiveis.includes(id) && !c.categorias.includes(id))
+    set({ tema: t, categorias: [...c.categorias, ...novas] })
   }
   const toggleEstilo = (e: Estilo) => {
     const on = c.estilos.includes(e)
@@ -292,6 +299,17 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
           ))}
         </ol>
       </details>
+
+      <Bloco titulo="Cartas">
+        <div className="grid grid-cols-3 gap-2">
+          {TEMAS.map((t) => (
+            <Chip key={t.id} ativo={tema === t.id} onClick={() => trocarTema(t.id)}>
+              {t.nome}
+            </Chip>
+          ))}
+        </div>
+        <p className="text-xs text-mist">{TEMAS.find((t) => t.id === tema)!.sub}</p>
+      </Bloco>
 
       {!livre && (
         <>
@@ -363,7 +381,7 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
             const Icone = ESTILO[e].icone
             const on = c.estilos.includes(e)
             const cor = COR_ESTILO[e]
-            const info = comoJogar(e, c.modo)
+            const info = comoJogar(e, c.modo, tema)
             return (
               <section key={e} className={cn("rounded-2xl border p-3 transition", on ? "bg-night/70" : "border-border opacity-60")} style={on ? { borderColor: `${cor}99` } : undefined}>
                 <button type="button" role="switch" aria-checked={on} aria-label={ESTILO[e].nome} onClick={() => toggleEstilo(e)} className="flex w-full items-center gap-3 text-left">
@@ -400,7 +418,7 @@ function Configurar({ inicial, onStart }: { inicial: Config; onStart: (c: Config
 
       <Bloco titulo="Categorias">
         <div className="grid grid-cols-2 gap-2">
-          {CATEGORIAS.map((cat) => {
+          {CATEGORIAS.filter((cat) => visiveis.includes(cat.id)).map((cat) => {
             const Icone = ICONE[cat.id]
             const on = c.categorias.includes(cat.id)
             return (

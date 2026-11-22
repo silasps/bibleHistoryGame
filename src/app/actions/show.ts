@@ -25,6 +25,7 @@ const ConfigSchema: z.ZodType<Config> = z.object({
   casas: z.number().int(),
   estilos: z.array(z.enum(ESTILOS as [string, ...string[]])).min(1) as z.ZodType<Config["estilos"]>,
   categorias: z.array(z.enum(CATEGORIA_IDS as [string, ...string[]])).min(1) as z.ZodType<Config["categorias"]>,
+  tema: z.enum(["biblia", "geral", "ambos"]).optional(),
 })
 
 const ActionSchema: z.ZodType<ShowAction> = z.discriminatedUnion("type", [

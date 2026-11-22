@@ -1,13 +1,13 @@
 "use client"
 
-import { BrickWall, Castle, CloudRain, Drama, Droplets, Fish, Flag, Flame, Gem, Handshake, HandHeart, HeartHandshake, Hourglass, Keyboard, Lock, MapPin, Megaphone, MessageCircleQuestion, PawPrint, Scissors, ScrollText, ShieldCheck, Sparkles, Sun, Swords, Target, Tent, TriangleAlert, User, Users, UserX, Waves, type LucideIcon } from "lucide-react"
+import { BrickWall, Castle, CloudRain, Drama, Droplets, Fish, Flag, Flame, Gem, Handshake, HandHeart, HeartHandshake, Hourglass, Keyboard, Lock, MapPin, Megaphone, MessageCircleQuestion, PawPrint, Scissors, ScrollText, ShieldCheck, Sparkles, Sun, Swords, PersonStanding, Target, Tent, TriangleAlert, User, Users, UserX, Waves, type LucideIcon } from "lucide-react"
 import { motion } from "motion/react"
 import { getCategoria, type CategoriaId } from "@/content/bible-show/cartas"
 import { getSituacao, tomDoEfeito } from "@/content/bible-show/situacoes"
 import { lider, trilhaDe, type Casa, type Estilo, type Lado, type ShowState } from "@/domain/bible-show"
 import { cn } from "@/lib/utils"
 
-export const ICONE: Record<CategoriaId, LucideIcon> = { quem: User, objeto: Gem, acontecimento: Sparkles, lugar: MapPin, bicho: PawPrint, desafio: Flame }
+export const ICONE: Record<CategoriaId, LucideIcon> = { quem: User, objeto: Gem, acontecimento: Sparkles, lugar: MapPin, bicho: PawPrint, acao: PersonStanding, desafio: Flame }
 
 export const ESTILO: Record<Estilo, { icone: LucideIcon; nome: string; regra: string }> = {
   mimica: { icone: Drama, nome: "Mímica", regra: "Sem falar e sem fazer sons" },
