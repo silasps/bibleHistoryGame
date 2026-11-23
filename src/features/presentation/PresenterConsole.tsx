@@ -49,6 +49,7 @@ import { SilentSound } from "@/fx/useSound"
 import { clickerAction } from "./clicker"
 import { DeepDive } from "./DeepDive"
 import { PresenterNotes } from "./PresenterNotes"
+import { PresenterTopics } from "./PresenterTopics"
 import { clock, useElapsed } from "../etapas/games/LiveGameCard"
 import { ProjectorStage } from "./ProjectorStage"
 import { RehearsalTimer } from "./RehearsalTimer"
@@ -270,6 +271,8 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
                   </Button>
                 </div>
               </div>
+
+              <PresenterTopics scene={scene} />
 
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {liveGame?.startable && liveGame.phase === "parado" && (

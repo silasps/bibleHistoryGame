@@ -190,6 +190,7 @@ const ETAPAS = z.array(Etapa).parse([
   // esperam o resumo do autor; por enquanto o slide mostra nome, data e referência bíblica.
   {
     n: 14, id: "jesus", title: "Jesus", color: "dourado", status: "com_material",
+    intros: ["r08-chegou"],
     itemIds: ["augusto", "nascimento-jesus", "jesus", "herodes-antipas", "pilatos", "ministerio-jesus", "morte-ressurreicao", "ascensao"],
     ordemManual: true,
     prd: [{ week: 8, afterItemId: "morte-ressurreicao" }],

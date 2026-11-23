@@ -161,4 +161,32 @@ export const contexto: ContextNoteInput[] = [
     itemIds: ["ezequiel"],
     pendingFact: "f20",
   },
+  // Semana 8 (Task 4, baixada em 23/11/2026). Fonte citada pelo autor: Bible Hub.
+  {
+    id: "x08-joao-batista",
+    week: 8,
+    title: "As roupas de João Batista",
+    text: "No Antigo Testamento, o cinto de couro é notavelmente associado ao profeta Elias: em 2 Reis 1:8, Elias é descrito como “um homem peludo com um cinto de couro na cintura”. Essa descrição destaca o estilo de vida austero de Elias e seu papel como profeta que vivia fora das normas da sociedade, muitas vezes no deserto. A vestimenta de pelo de camelo mostra o papel profético de João e sua conexão com os profetas do Antigo Testamento, particularmente Elias. Para o povo judeu que recebia a mensagem de João Batista, isso provavelmente lembraria a profecia de Malaquias 4:5, sobre a vinda de Elias, que se referia ao espírito profético.",
+    refs: [ref("Mark", 1, 6), ref("2Kgs", 1, 8), ref("Mal", 4, 5)],
+    itemIds: ["ministerio-jesus"],
+    source: "Bible Hub",
+  },
+  {
+    id: "x08-erva",
+    week: 8,
+    title: "A erva lançada no fogo",
+    text: "A grama e as flores silvestres floresciam brevemente nos campos da Judeia antes que o calor as ressecasse. A vegetação seca servia comumente como combustível para os fornos domésticos, onde a lenha era escassa. Eu sempre via a expressão “lançada no fogo” como inferno, acredito que por causa do contexto de igreja pentecostal de onde eu vim, onde o foco no inferno era muito grande. Agora eu consigo ler com clareza esse texto e entender que o público entendia muito bem que Jesus estava falando do cuidado de Deus com a sua criação, e ainda mais com o homem, mesmo sendo eles de pequena fé.",
+    refs: [ref("Matt", 6, 30)],
+    itemIds: ["ministerio-jesus"],
+    source: "Bible Hub",
+  },
+  {
+    id: "x08-galo",
+    week: 8,
+    title: "E o galo cantou",
+    text: "No contexto cultural da Bíblia, o canto do galo era um som familiar, associado às primeiras horas da manhã, um marcador de tempo natural para os povos do antigo Oriente Próximo. O público entenderia a menção como um horário específico, provavelmente por volta da terceira vigília da noite, que ia mais ou menos das 3h às 6h da manhã. Isso ajuda a situar a hora, madrugada adentro, e o tamanho do sofrimento de Jesus nas suas últimas horas de vida, privado até de sono.",
+    refs: [ref("Mark", 14, 68)],
+    itemIds: ["morte-ressurreicao"],
+    source: "Bible Hub",
+  },
 ]

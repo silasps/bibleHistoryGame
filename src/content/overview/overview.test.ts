@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { allWeekConnections } from "../released/overview"
+import { sequenceScenes } from "@/content"
+import { topicosDaCena, validateTopicos } from "./topicos"
 import {
   excerpts,
   formatSpan,
@@ -76,5 +78,35 @@ describe("visão geral (material do autor)", () => {
     const connections = allWeekConnections()
     expect(connections.map((c) => c.week)).toEqual([1, 2, 3, 4, 5, 6])
     for (const c of connections) for (const b of c.blocks) for (const e of excerpts) expect(e.text).not.toContain(b)
+  })
+})
+
+describe("tópicos para falar (só no painel)", () => {
+  const scenes = sequenceScenes("visao-geral")
+  const openingIds = new Set(scenes.filter((s) => s.overview?.role === "abertura").map((s) => s.id))
+
+  it("cada tópico aponta um trecho do resumo, cabe no quadro e não fala do PRD", () => {
+    expect(validateTopicos(new Set(items.map((i) => i.id)), openingIds)).toEqual([])
+  })
+
+  it("semana 8: o resumo entra no painel, mas o telão continua só com nome, data e referência", () => {
+    const week8 = excerpts.filter((e) => e.week === 8)
+    expect(week8.length).toBeGreaterThan(10)
+    for (const e of week8) expect(e.stageLine, e.id).toBeUndefined()
+    const jesus = scenes.find((s) => s.id === "item-jesus")!
+    const t = topicosDaCena(jesus)
+    expect(t.proprios).toBe(true)
+    expect(t.linhas.some((l) => l.includes("Mc 10:45"))).toBe(true)
+    expect(topicosDaCena(scenes.find((s) => s.id === "etapa-14")!).linhas[0]).toContain("Ele chegou")
+  })
+
+  it("slides sem tópicos próprios usam as frases do resumo; versículo e pista não têm tópicos", () => {
+    const criacao = scenes.find((s) => s.id === "item-criacao")!
+    const t = topicosDaCena(criacao)
+    expect(t.proprios).toBe(false)
+    expect(t.linhas).toContain(stageLineForItem("criacao")!.stageLine)
+    for (const s of scenes.filter((s) => s.overview?.role === "versiculo" || s.overview?.role === "pista")) {
+      expect(topicosDaCena(s).linhas).toEqual([])
+    }
   })
 })

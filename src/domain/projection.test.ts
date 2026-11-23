@@ -4,6 +4,7 @@ import { getEvidence, sequences } from "@/content"
 import type { ReleasedSynthesis } from "@/content/schema"
 import { toAudienceView, toProjectorView } from "./projection"
 import { everyState, secretTexts } from "@/test/session-states"
+import { TOPICOS } from "@/content/overview/topicos"
 
 const allSyntheses: Record<string, ReleasedSynthesis> = Object.fromEntries(
   allReleasedSyntheses().map((s) => [s.evidenceId, s]),
@@ -18,6 +19,14 @@ describe("telão (ProjectorView)", () => {
       }
     })
   }
+
+  it("nunca mostra os tópicos para falar do apresentador", () => {
+    const topicos = Object.values(TOPICOS).flat().map((t) => t.text)
+    for (const { state, scenes } of everyState("visao-geral", true)) {
+      const json = JSON.stringify(toProjectorView(state, { scenes }, getEvidence))
+      for (const t of topicos) expect(json).not.toContain(t)
+    }
+  })
 
   it("no momento de conexão mostra só a imagem", () => {
     for (const { state, scenes } of everyState("genesis")) {

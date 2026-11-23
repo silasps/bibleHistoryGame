@@ -1,6 +1,6 @@
 # O que falta você fazer
 
-Lista para lembrar, atualizada em 19 de novembro de 2026. O estado ao vivo de cada item fica na **Área de preparação** (`/presenter/prep`), na folha de notas.
+Lista para lembrar, atualizada em 23 de novembro de 2026. O estado ao vivo de cada item fica na **Área de preparação** (`/presenter/prep`), na folha de notas.
 
 ## Para a nota (folha de notas do Manual, p. 14 e 18)
 
@@ -20,7 +20,10 @@ Lista para lembrar, atualizada em 19 de novembro de 2026. O estado ao vivo de ca
 - [ ] **PRD da semana 6:** o resumo da semana 6 não tem o parágrafo “PRD -” (as outras semanas têm). Sem ele, a pista 6 abre só com o versículo (Ez 36:26). Os trechos sobre a nova aliança (Jr 31:31–33) e o coração novo (Ez 36:26) parecem ser o seu PRD; se for isso, escreva o parágrafo e eu coloco.
 - [x] **Semana 7** entrou (16/11/2026): Etapas 12 e 13, com Ed 1:3. Sem parágrafo “PRD -”: a pista 7 fica só com o versículo.
 - [x] **Linha do tempo da escola** (19/11/2026): todos os itens das 12 semanas da escola têm slide. O Novo Testamento entrou como Etapas 14 a 17 (Jesus, A Igreja, Paulo, Apocalipse), com nome, data e referência, e os versículos do plano conferidos na NAA. Harã-Síria voltou como slide curto, com mapa.
-- [ ] **Semanas 8 a 11 (Novo Testamento):** falta o seu resumo. Até lá, os slides mostram só nome, data e referência bíblica (ou a fonte, quando não há passagem). Quando chegar, eu ponho as frases como nas outras semanas.
+- [x] **Semana 8 (Jesus)** entrou (23/11/2026): o seu resumo virou **“Tópicos para falar”** no painel do apresentador, slide por slide da Etapa 14, só para você. O resumo completo e o contexto (Task 4) ficam no “Aprofundar mais”. O versículo do plano é Mt 28:5–6, o mesmo que está em vermelho no resumo.
+- [ ] **Semana 8 no telão:** os slides continuam só com nome, data e referência. Diga se quer também uma frase do resumo no telão, como nas semanas 1 a 7. Se quiser, as frases vão primeiro para a página de revisão.
+- [ ] **Tópicos das semanas 1 a 7:** hoje o painel mostra as frases do telão. Se gostar do formato da semana 8, eu escrevo os tópicos das outras semanas, também a partir do seu resumo.
+- [ ] **Semanas 9 a 11 (Novo Testamento):** falta o seu resumo. Até lá, os slides mostram só nome, data e referência bíblica (ou a fonte, quando não há passagem). Quando chegar, eu ponho as frases como nas outras semanas.
 - [ ] **Tempo (45 min):** o roteiro enxuto (19/11/2026) está em cerca de 54 min. Falta você ensaiar e dizer onde gastar mais e onde cortar (ver “Tempo” abaixo).
 - [ ] **Jó:** mandar o seu material. O momento já está no fim da Etapa 3 (entre Abraão e Moisés), só com a imagem.
 - [ ] **2 convidados de fora da escola** (20 pontos).
