@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "motion/react"
 import { useRouter } from "next/navigation"
 import { QRCodeSVG } from "qrcode.react"
-import { Volume2 } from "lucide-react"
+import { Maximize, Minimize, Volume2 } from "lucide-react"
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react"
 import {
   BARREIRAS,
@@ -627,7 +627,7 @@ function QrCondutor({ code, chave, fechar }: { code: string; chave: string; fech
 export function TelaoJanela({ code }: { code: string }) {
   const [chave] = useChaveJanela(code)
   const { state, agir, agora, erro } = useJanela(code, chave)
-  const { toggle } = useFullscreen()
+  const { toggle, active: telaCheia, supported: podeTelaCheia } = useFullscreen()
   const [qr, setQr] = useState(false)
   const router = useRouter()
   const stinger = useStinger()
@@ -697,6 +697,18 @@ export function TelaoJanela({ code }: { code: string }) {
           </div>
           <div className="flex items-center gap-[1vw]">
             <LigarSom />
+            {podeTelaCheia && (
+              <button
+                type="button"
+                onClick={toggle}
+                aria-pressed={telaCheia}
+                title="Tela cheia (tecla F)"
+                className="inline-flex items-center gap-[0.4vw] rounded-full border border-gold/50 bg-night/70 px-[0.9vw] py-[0.35vw] text-[0.9vw] text-gold-bright hover:bg-gold/15"
+              >
+                {telaCheia ? <Minimize className="size-[1vw]" aria-hidden /> : <Maximize className="size-[1vw]" aria-hidden />}
+                {telaCheia ? "Sair da tela cheia" : "Tela cheia"}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => window.confirm("Sair do telão? A sala continua; dá para voltar pelo mesmo link.") && router.push("/janela-verde")}
