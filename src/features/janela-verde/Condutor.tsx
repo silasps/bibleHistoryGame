@@ -600,7 +600,7 @@ export function CondutorJanela({ code }: { code: string }) {
       {aba === "palavras" && <Palavras state={state} agir={agir} />}
       <div className="px-3 pb-3">
         <button type="button" onClick={() => setParear((x) => !x)} className="text-xs text-mist underline">
-          {parear ? "Esconder" : "Parear o outro condutor"}
+          {parear ? "Esconder o QR" : "Passar o controle para outro celular (QR)"}
         </button>
         {parear && url && (
           <div className="mt-2 inline-block rounded-2xl bg-parchment p-3">

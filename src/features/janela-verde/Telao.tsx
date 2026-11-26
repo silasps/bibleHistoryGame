@@ -634,12 +634,26 @@ export function TelaoJanela({ code }: { code: string }) {
             >
               Sair
             </button>
-            {e.tela.tipo !== "grupos" && e.tela.tipo !== "compromisso" && o && (
-              <div className="flex items-center gap-[0.6vw] rounded-[0.8vw] bg-night/70 p-[0.4vw]">
+            {chave && (
+              <button
+                type="button"
+                onClick={() => setQr(true)}
+                title="Parear o celular de um condutor (tecla C)"
+                className="rounded-full border border-border/60 px-[0.8vw] py-[0.3vw] text-[0.85vw] text-mist/70 hover:text-parchment"
+              >
+                Condutor
+              </button>
+            )}
+            {e.tela.tipo !== "grupos" && o && (
+              <div className="flex items-center gap-[0.7vw] rounded-[0.8vw] border border-border bg-night/80 p-[0.45vw] pr-[0.9vw]">
                 <div className="rounded-[0.4vw] bg-parchment p-[0.25vw]">
-                  <QRCodeSVG value={`${o}/janela-verde/sala/${code}`} size={80} bgColor="#f1e8d6" fgColor="#05070d" className="size-[3.6vw]" />
+                  <QRCodeSVG value={`${o}/janela-verde/sala/${code}`} size={96} bgColor="#f1e8d6" fgColor="#05070d" className="size-[4.6vw]" />
                 </div>
-                <span className="font-display text-[1.3vw] tracking-[0.15em]">{code}</span>
+                <div className="leading-tight">
+                  <p className="text-[0.85vw] text-mist">Celular do grupo saiu?</p>
+                  <p className="text-[0.95vw] font-semibold text-sand">Leia para voltar</p>
+                  <p className="font-display text-[1.3vw] tracking-[0.15em] text-parchment">{code}</p>
+                </div>
               </div>
             )}
           </div>
@@ -656,11 +670,7 @@ export function TelaoJanela({ code }: { code: string }) {
       <PalavraNoTelao state={state} />
       <Transicao etapa={e} />
       {qr && chave && <QrCondutor code={code} chave={chave} fechar={() => setQr(false)} />}
-      {!state.inicio && chave && !qr && (
-        <button type="button" onClick={() => setQr(true)} className="absolute bottom-[1vw] right-[1vw] z-20 rounded-full border border-border bg-night/80 px-[1vw] py-[0.4vw] text-[0.9vw] text-mist">
-          Parear condutor (C)
-        </button>
-      )}
+
     </div>
   )
 }
