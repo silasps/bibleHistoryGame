@@ -10,7 +10,7 @@ import { useMood, useStinger } from "@/fx/useSound"
 import { useFx } from "@/fx/useFx"
 import { cn } from "@/lib/utils"
 import { StageBackground } from "../solo/StageBackground"
-import { HajaLuzStage, LightsSky } from "./Moments"
+import { HajaLuzStage, LightsSky, useHajaLuzSound } from "./Moments"
 import { OverviewStage } from "./OverviewStage"
 import { LiveGameCard } from "../etapas/games/LiveGameCard"
 import { Counting, LivePodium, ResultsStage, useFreshResults } from "./Podium"
@@ -22,19 +22,23 @@ interface Props {
   view: ProjectorView | null
   joinUrl: string
   className?: string
-  /** Prévia pequena no painel do apresentador: sem som nem momentos em tela cheia. */
+  /** Prévia pequena no painel do apresentador: sem momentos em tela cheia. */
   preview?: boolean
+  /** A prévia do painel toca a trilha e os efeitos (o som sai do computador do apresentador). */
+  audible?: boolean
 }
 
 /**
  * Telão 16:9. Recebe apenas o ProjectorView: não tem acesso a notas do
  * apresentador nem a sínteses. Textos escalam com o tamanho do palco (cqw).
  */
-export function ProjectorStage({ view, joinUrl, className, preview = false }: Props) {
+export function ProjectorStage({ view, joinUrl, className, preview = false, audible = false }: Props) {
   const scene = view?.scene ?? null
   const stinger = useStinger()
   const fx = useFx()
-  useMood(preview ? null : moodForScene(view?.status === "running" ? scene : null, scene?.game?.phase === "on"))
+  const playsSound = !preview || audible
+  useMood(playsSound ? moodForScene(view?.status === "running" ? scene : null, scene?.game?.phase === "on") : null)
+  useHajaLuzSound(playsSound && view?.moment?.kind === "haja-luz" ? view.moment.startedAt : undefined)
   const [results, , counting] = useFreshResults(view?.results)
 
   // Estado visual derivado dos comandos do apresentador.
@@ -51,10 +55,10 @@ export function ProjectorStage({ view, joinUrl, className, preview = false }: Pr
 
   const lastTrain = useRef<number | undefined>(undefined)
   useEffect(() => {
-    if (preview || !visual.trainKey || visual.trainKey === lastTrain.current) return
+    if (!playsSound || !visual.trainKey || visual.trainKey === lastTrain.current) return
     lastTrain.current = visual.trainKey
     stinger("train")
-  }, [visual.trainKey, preview, stinger])
+  }, [visual.trainKey, playsSound, stinger])
 
   return (
     <div className={cn("relative aspect-video w-full overflow-hidden bg-night [container-type:size]", className)} data-surface="projector">
@@ -160,7 +164,7 @@ export function ProjectorStage({ view, joinUrl, className, preview = false }: Pr
             </div>
           </motion.div>
         )}
-        {view?.moment?.kind === "haja-luz" && !preview && <HajaLuzStage key={view.moment.startedAt} startedAt={view.moment.startedAt} />}
+        {view?.moment?.kind === "haja-luz" && !preview && <HajaLuzStage key={view.moment.startedAt} />}
       </AnimatePresence>
       {view?.moment?.kind === "luzes" && (
         <div className="pointer-events-none absolute inset-x-0 top-[3cqh] z-10 text-center">

@@ -45,10 +45,10 @@ import { tally } from "@/domain/poll"
 import { toProjectorView } from "@/domain/projection"
 import type { HostCommand } from "@/domain/session"
 import { cn } from "@/lib/utils"
-import { SilentSound } from "@/fx/useSound"
 import { clickerAction } from "./clicker"
 import { DeepDive } from "./DeepDive"
 import { PresenterNotes } from "./PresenterNotes"
+import { PresenterSound } from "./PresenterSound"
 import { PresenterTopics } from "./PresenterTopics"
 import { clock, useElapsed } from "../etapas/games/LiveGameCard"
 import { ProjectorStage } from "./ProjectorStage"
@@ -184,6 +184,7 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
         </div>
         <RehearsalTimer state={state} scenes={scenes} compact />
         <div className="flex flex-wrap gap-2">
+          <PresenterSound />
           <FullscreenButton className="h-11 border border-border bg-transparent text-parchment hover:bg-navy-2" />
           <Button variant="outline" size="lg" onClick={() => window.open(projectorUrl, `bph-projector-${code}`)}>
             <MonitorPlay /> Abrir telão
@@ -232,9 +233,8 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
       <div className="grid grid-cols-1 gap-6 p-4 md:p-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-5">
           <div className="overflow-hidden rounded-2xl border border-border">
-            <SilentSound.Provider value>
-              <ProjectorStage view={preview} joinUrl={joinUrl} preview />
-            </SilentSound.Provider>
+            {/* O som da apresentação toca aqui, no computador do apresentador (o telão é mudo). */}
+            <ProjectorStage view={preview} joinUrl={joinUrl} preview audible />
           </div>
 
           {state.status === "lobby" && (

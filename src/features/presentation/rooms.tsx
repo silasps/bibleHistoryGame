@@ -1,15 +1,12 @@
 "use client"
 
-import { Volume2, VolumeX } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { deleteLiveRoom } from "@/app/actions/live"
 import { FullscreenButton } from "@/components/app/FullscreenButton"
 import { useFullscreen } from "@/components/app/useFullscreen"
 import { DemoBadge } from "@/components/story/DemoBadge"
-import { soundEngine } from "@/fx/sound"
-import { useSoundState } from "@/fx/useSound"
-import { usePreferences } from "@/stores/preferences-store"
+import { SilentSound } from "@/fx/useSound"
 import { useLocalAudience, useLocalProjector } from "@/data/local/clients"
 import { useLocalHost } from "@/data/local/host"
 import { joinUrlFor, siteOrigin, type ProjectorRoomApi, type RoomMode } from "@/data/ports"
@@ -49,10 +46,6 @@ export function LivePresenter({ code }: { code: string }) {
 
 function ProjectorScreen({ room, mode }: { room: ProjectorRoomApi & { error?: string | null }; mode: RoomMode }) {
   const [chrome, setChrome] = useState(true)
-  const sound = usePreferences((s) => s.sound)
-  const setSound = usePreferences((s) => s.setSound)
-  const engine = useSoundState()
-  const waitingGesture = sound && engine !== "ready"
   const { toggle: toggleFullscreen } = useFullscreen()
   const [notice, setNotice] = useState<string | null>(null)
 
@@ -86,25 +79,17 @@ function ProjectorScreen({ room, mode }: { room: ProjectorRoomApi & { error?: st
   return (
     <div className="grid h-dvh w-dvw place-items-center overflow-hidden bg-black">
       <div className="relative aspect-video max-h-dvh w-full max-w-[calc(100dvh*16/9)]">
-        <ProjectorStage view={room.view} joinUrl={room.joinUrl} />
+        {/* O som (trilha e efeitos) toca no painel do apresentador, onde fica o controle. */}
+        <SilentSound.Provider value>
+          <ProjectorStage view={room.view} joinUrl={room.joinUrl} />
+        </SilentSound.Provider>
         {mode === "demo" && <DemoBadge className="absolute bottom-3 right-3 opacity-80" />}
         {room.error && !room.view && <p className="absolute inset-x-0 bottom-6 text-center text-rose">{room.error}</p>}
       </div>
       {notice && <p className="fixed inset-x-0 bottom-6 mx-auto w-fit rounded-full bg-navy/90 px-4 py-2 text-sm text-parchment" role="status">{notice}</p>}
-      {(chrome || waitingGesture) && (
+      {chrome && (
         <div className="fixed right-4 top-4 flex gap-2">
-          <button
-            onClick={async () => {
-              if (sound && engine === "ready") return setSound(false)
-              setSound(true)
-              await soundEngine.start()
-            }}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm backdrop-blur ${waitingGesture ? "animate-pulse bg-gold text-primary-foreground" : "bg-navy/80 text-parchment"}`}
-          >
-            {sound && engine === "ready" ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
-            {waitingGesture ? "Clique para ativar o som" : sound ? "Som ligado" : "Ligar som"}
-          </button>
-          {chrome && <FullscreenButton className="bg-navy/80 text-parchment" />}
+          <FullscreenButton className="bg-navy/80 text-parchment" />
         </div>
       )}
     </div>

@@ -34,14 +34,19 @@ export function LightsSky({ count, className = "absolute inset-0" }: { count: nu
   )
 }
 
-/** "Haja luz" no telão: escurece e surge um ponto dourado que se expande. */
-export function HajaLuzStage({ startedAt }: { startedAt: number }) {
-  const fx = useFx()
+/** Som do "Haja luz": o brilho chega 1,8 s depois de a tela escurecer. */
+export function useHajaLuzSound(startedAt: number | undefined) {
   const stinger = useStinger()
   useEffect(() => {
+    if (startedAt === undefined) return
     const t = setTimeout(() => stinger("reveal"), 1800)
     return () => clearTimeout(t)
   }, [startedAt, stinger])
+}
+
+/** "Haja luz" no telão: escurece e surge um ponto dourado que se expande (o som vem de `useHajaLuzSound`). */
+export function HajaLuzStage() {
+  const fx = useFx()
   return (
     <motion.div className="absolute inset-0 z-30 bg-black" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.2 }}>
       <motion.div

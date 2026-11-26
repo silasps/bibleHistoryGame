@@ -44,7 +44,7 @@ export function SoundBootstrap() {
   const state = useSoundState()
 
   useEffect(() => {
-    if (!sound || state !== "off") return
+    if (!sound || state === "ready") return
     const kick = () => void soundEngine.start()
     window.addEventListener("pointerdown", kick, { once: true })
     window.addEventListener("keydown", kick, { once: true })

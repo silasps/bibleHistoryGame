@@ -212,8 +212,10 @@ class SoundEngine {
   private state: EngineState = "off"
   private listeners = new Set<() => void>()
   private starting: Promise<void> | null = null
+  private preloading: Promise<unknown> | null = null
 
-  getState = () => this.state
+  /** "ready" só quando o áudio está tocando de verdade (o navegador pode suspender o contexto). */
+  getState = (): EngineState => (this.state === "ready" && this.tone?.getContext().state !== "running" ? "loading" : this.state)
   subscribe = (l: () => void) => {
     this.listeners.add(l)
     return () => this.listeners.delete(l)
@@ -223,8 +225,26 @@ class SoundEngine {
     this.listeners.forEach((l) => l())
   }
 
+  private notify() {
+    this.listeners.forEach((l) => l())
+  }
+
+  /** Carrega o Tone.js antes do primeiro clique: no Safari o áudio só destrava dentro do próprio gesto. */
+  preload(): void {
+    if (this.tone || typeof window === "undefined") return
+    this.preloading ??= import("tone")
+      .then((T) => {
+        this.tone ??= T
+      })
+      .catch(() => {
+        this.preloading = null
+      })
+  }
+
   /** Precisa ser chamado dentro de um gesto do usuário (clique/tecla). */
   start(): Promise<void> {
+    // Ainda dentro do gesto: destrava (ou retoma) o áudio agora, se o Tone já carregou.
+    if (this.tone) void this.tone.start().catch(() => {})
     if (this.state === "ready") return Promise.resolve()
     this.starting ??= this.boot().catch((e) => {
       console.error("Som indisponível", e)
@@ -236,9 +256,10 @@ class SoundEngine {
 
   private async boot() {
     this.setState("loading")
-    const T = (this.tone = await import("tone"))
+    const T = (this.tone ??= await import("tone"))
     await T.start()
     T.getContext().lookAhead = 0.08
+    T.getContext().on("statechange", () => this.notify())
     const limiter = new T.Limiter(-1).toDestination()
     const comp = new T.Compressor({ threshold: -20, ratio: 3, attack: 0.03, release: 0.3 }).connect(limiter)
     this.master = new T.Volume(-60).connect(comp)

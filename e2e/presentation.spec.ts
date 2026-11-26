@@ -31,6 +31,11 @@ test("demonstração local: a linha do tempo conduz e a pista da semana só abre
   await phone.getByRole("button", { name: "Entrar" }).click()
   await expect(projector.getByText("1 pessoa conectada")).toBeVisible()
 
+  // O som da apresentação se controla no painel; o telão é mudo e não tem botão de som.
+  await expect(projector.getByRole("button", { name: /som/i })).toHaveCount(0)
+  await host.getByRole("button", { name: "Ligar som" }).click()
+  await expect(host.getByRole("button", { name: "Som ligado: desligar" })).toBeVisible()
+
   await host.getByRole("button", { name: /Começar a apresentação/ }).click()
   // Passador de slides: Page Down no painel e também com o foco na janela do telão.
   await expect(host.getByText(/^Cena 1 de/)).toBeVisible()
