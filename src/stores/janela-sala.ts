@@ -28,12 +28,33 @@ export function useJanela(code: string, chave?: string | null) {
     }
   }, [])
 
-  const refetch = useCallback(async () => {
-    const t0 = Date.now()
-    const r = await lerJanela(code)
-    if ("error" in r) setErro(r.error)
-    else aceitar(r, t0, true)
-  }, [code, aceitar])
+  const refetch = useCallback(
+    async (forcar = true) => {
+      const t0 = Date.now()
+      const r = await lerJanela(code)
+      if ("error" in r) setErro(r.error)
+      else aceitar(r, t0, forcar)
+    },
+    [code, aceitar],
+  )
+
+  // Atalho: o condutor manda o toque direto pelo realtime e os outros aparelhos
+  // já aplicam; o servidor confirma depois (versão maior substitui a prévia).
+  const canal = useRef<ReturnType<NonNullable<ReturnType<typeof realtime>>["channel"]> | null>(null)
+  const conferir = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const previa = useCallback(
+    (p: { a: JanelaAction; v: number }) => {
+      // A trava "de onde estou" do reducer impede avanço duplicado; aceita versões vizinhas.
+      if (!p?.a || !ACOES_DE_PALCO.has(p.a.type) || p.v < versao.current - 2) return
+      setSnap((s) => (s ? { ...s, state: reduceJanela(s.state, p.a) } : s))
+      clearTimeout(conferir.current)
+      // Se a confirmação do servidor não chegar, busca o estado oficial.
+      conferir.current = setTimeout(() => {
+        if (versao.current <= p.v) void refetch(true)
+      }, 6000)
+    },
+    [refetch],
+  )
 
   useEffect(() => {
     const client = realtime()
@@ -42,6 +63,7 @@ export function useJanela(code: string, chave?: string | null) {
     const channel = client
       ?.channel(`janela:${code}`)
       .on("broadcast", { event: "estado" }, ({ payload }) => aceitar(payload as Resposta))
+      .on("broadcast", { event: "acao" }, ({ payload }) => previa(payload as { a: JanelaAction; v: number }))
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
           setOnline(true)
@@ -53,18 +75,24 @@ export function useJanela(code: string, chave?: string | null) {
           poll ??= setInterval(() => void refetch(), 3000)
         }
       })
+    canal.current = channel ?? null
     if (!channel) poll = setInterval(() => void refetch(), 3000)
+    // Mantém o servidor acordado (e confere o estado) a cada 20 s.
+    const acordado = setInterval(() => void refetch(false), 20_000)
     const acordar = () => document.visibilityState === "visible" && void refetch()
     document.addEventListener("visibilitychange", acordar)
     window.addEventListener("online", acordar)
     return () => {
       clearTimeout(t)
+      clearInterval(acordado)
+      clearTimeout(conferir.current)
+      canal.current = null
       if (poll) clearInterval(poll)
       document.removeEventListener("visibilitychange", acordar)
       window.removeEventListener("online", acordar)
       if (channel) void client?.removeChannel(channel)
     }
-  }, [code, refetch, aceitar])
+  }, [code, refetch, aceitar, previa])
 
   const agora = useCallback(() => Date.now() + offset.current, [])
 
@@ -72,6 +100,7 @@ export function useJanela(code: string, chave?: string | null) {
     (a: JanelaAction) => {
       // Mostra na hora (só o que este aparelho pode fazer); o servidor confirma ou corrige.
       if (!ACOES_DE_PALCO.has(a.type) || chave) setSnap((s) => (s ? { ...s, state: reduceJanela(s.state, a) } : s))
+      if (ACOES_DE_PALCO.has(a.type) && chave) void canal.current?.send({ type: "broadcast", event: "acao", payload: { a, v: versao.current } })
       const t0 = Date.now()
       void agirJanela(code, a, chave ?? null).then((r) => {
         if ("error" in r) {

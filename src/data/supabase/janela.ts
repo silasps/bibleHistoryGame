@@ -33,10 +33,16 @@ export async function createJanela(): Promise<{ code: string; chave: string }> {
   throw new Error("Não foi possível criar a sala")
 }
 
-export async function applyJanela(code: string, action: JanelaAction): Promise<(JanelaSnapshot & { mudou: boolean }) | null> {
+/** `autoriza`: conferência no mesmo estado carregado (ex.: a chave do condutor), sem outra ida ao banco. */
+export async function applyJanela(
+  code: string,
+  action: JanelaAction,
+  autoriza?: (state: JanelaState) => boolean,
+): Promise<(JanelaSnapshot & { mudou: boolean }) | null | "negado"> {
   for (let i = 0; i < 8; i++) {
     const snap = await loadJanela(code)
     if (!snap) return null
+    if (autoriza && !autoriza(snap.state)) return "negado"
     const next = reduceJanela(snap.state, action)
     if (next === snap.state) return { ...snap, mudou: false }
     const { data, error } = await admin()

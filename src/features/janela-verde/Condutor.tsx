@@ -1,6 +1,7 @@
 "use client"
 
 import { ChevronLeft, ChevronRight, Copy, Minus, Pause, Play, Plus, Square, Volume2, VolumeX } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { QRCodeSVG } from "qrcode.react"
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import {
@@ -291,6 +292,7 @@ function Palco({ state, agir, agora }: { state: JanelaState; agir: (a: JanelaAct
       {e.tela.tipo === "compromisso" && <p className="rounded-2xl border border-border bg-ink p-3 text-sm text-sand">{pessoasComprometidas(state)} compromissos marcados.</p>}
 
       <Som state={state} agir={agir} />
+      <Sala state={state} agir={agir} agora={agora} />
       <p className="text-center text-xs text-mist">
         Grupos: {(["auren", "nair"] as const).map((g) => `${CULTURAS[g].nome} ${state.conectados[g] ? "✓" : "—"}`).join(" · ")} · {state.palavras.length} palavras recebidas
       </p>
@@ -320,6 +322,40 @@ function Recebe({ state, agir, visita }: { state: JanelaState; agir: (a: JanelaA
         </label>
       ))}
       <p className="text-sm text-sand">Resposta do outro grupo: {resposta ? RESPOSTAS.find((r) => r.id === resposta)?.rotulo : "—"}</p>
+    </section>
+  )
+}
+
+function Sala({ state, agir, agora }: { state: JanelaState; agir: (a: JanelaAction) => void; agora: () => number }) {
+  const router = useRouter()
+  const fim = ROTEIRO.findIndex((e) => e.id === "fim")
+  return (
+    <section className="space-y-2 rounded-2xl border border-border bg-ink p-3">
+      <p className="text-xs uppercase tracking-[0.2em] text-gold">Sala</p>
+      <div className="grid grid-cols-2 gap-2">
+        <Botao
+          onClick={() => {
+            if (!window.confirm("Encerrar agora? O telão vai para o encerramento e o relógio geral para.")) return
+            if (state.etapa !== fim) agir({ type: "ir", etapa: fim, agora: agora() })
+            agir({ type: "encerrar", agora: agora() })
+          }}
+        >
+          <Square className="size-4" /> Encerrar agora
+        </Botao>
+        <Botao
+          onClick={() => {
+            if (!window.confirm("Reiniciar do começo? Apaga as orações marcadas, as palavras recebidas e os compromissos desta sala. Copie as palavras antes, se quiser guardar.")) return
+            agir({ type: "reiniciar", agora: agora() })
+          }}
+          className="border-rose/50 text-rose"
+        >
+          Reiniciar do começo
+        </Botao>
+      </div>
+      <Botao onClick={() => router.push("/janela-verde")} className="w-full">
+        Sair deste celular
+      </Botao>
+      <p className="text-xs text-mist">Sair não apaga nada: o telão continua onde está.</p>
     </section>
   )
 }

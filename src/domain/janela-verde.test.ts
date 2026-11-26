@@ -134,6 +134,12 @@ describe("palco", () => {
     expect(ACOES_DE_PALCO.has("mostrarPalavra")).toBe(true)
   })
 
+  it("reiniciar volta ao começo, apaga o andamento e mantém a chave e o volume", () => {
+    let s = run(ate("oracao-lingua"), { type: "comecar", agora: 0 }, { type: "som", volume: 0.3 }, { type: "palavra", id: "p", grupo: "auren", texto: "x", agora: 0 })
+    s = run(s, { type: "reiniciar", agora: 9 })
+    expect(s).toEqual({ ...estadoInicial("h"), som: { volume: 0.3, mudo: false } })
+  })
+
   it("o estado público não leva o hash da chave", () => {
     expect(publico(estadoInicial("segredo")).chaveHash).toBe("")
   })

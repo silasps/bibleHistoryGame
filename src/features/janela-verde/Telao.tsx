@@ -1,6 +1,7 @@
 "use client"
 
 import { AnimatePresence, motion } from "motion/react"
+import { useRouter } from "next/navigation"
 import { QRCodeSVG } from "qrcode.react"
 import { Volume2 } from "lucide-react"
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react"
@@ -558,6 +559,7 @@ export function TelaoJanela({ code }: { code: string }) {
   const { state, agir, agora, erro } = useJanela(code, chave)
   const { toggle } = useFullscreen()
   const [qr, setQr] = useState(false)
+  const router = useRouter()
   const stinger = useStinger()
   const fx = useFx()
   const e = state ? etapaAtual(state) : null
@@ -625,6 +627,13 @@ export function TelaoJanela({ code }: { code: string }) {
           </div>
           <div className="flex items-center gap-[1vw]">
             <LigarSom />
+            <button
+              type="button"
+              onClick={() => window.confirm("Sair do telão? A sala continua; dá para voltar pelo mesmo link.") && router.push("/janela-verde")}
+              className="rounded-full border border-border/60 px-[0.8vw] py-[0.3vw] text-[0.85vw] text-mist/70 hover:text-parchment"
+            >
+              Sair
+            </button>
             {e.tela.tipo !== "grupos" && e.tela.tipo !== "compromisso" && o && (
               <div className="flex items-center gap-[0.6vw] rounded-[0.8vw] bg-night/70 p-[0.4vw]">
                 <div className="rounded-[0.4vw] bg-parchment p-[0.25vw]">
@@ -637,7 +646,7 @@ export function TelaoJanela({ code }: { code: string }) {
         </header>
         <main className="min-h-0 flex-1 py-[1.5vw]">
           <AnimatePresence mode="wait">
-            <motion.div key={`${e.id}`} className="h-full" initial={fx.motion ? { opacity: 0 } : false} animate={{ opacity: 1 }} exit={fx.motion ? { opacity: 0 } : undefined} transition={{ duration: 0.5 }}>
+            <motion.div key={`${e.id}`} className="h-full" initial={fx.motion ? { opacity: 0 } : false} animate={{ opacity: 1 }} exit={fx.motion ? { opacity: 0 } : undefined} transition={{ duration: 0.18 }}>
               <Conteudo state={state} e={e} agora={agora} agir={agir} code={code} />
             </motion.div>
           </AnimatePresence>

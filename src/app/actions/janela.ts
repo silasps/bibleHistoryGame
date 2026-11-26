@@ -24,6 +24,7 @@ const ActionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("voltar"), de: De, agora: T }),
   z.object({ type: z.literal("ir"), etapa: z.number().int(), agora: T }),
   z.object({ type: z.literal("encerrar"), agora: T }),
+  z.object({ type: z.literal("reiniciar"), agora: T }),
   z.object({ type: z.literal("relogio"), minutos: T, agora: T }),
   z.object({ type: z.literal("pausar"), agora: T }),
   z.object({ type: z.literal("continuar"), agora: T }),
@@ -75,12 +76,9 @@ export async function agirJanela(rawCode: string, rawAction: unknown, chave?: st
   const data = parsed.data as JanelaAction
   const action = "agora" in data ? ({ ...data, agora: Date.now() } as JanelaAction) : data
   try {
-    if (ACOES_DE_PALCO.has(action.type)) {
-      const atual = await loadJanela(code.data)
-      if (!atual) return { error: "Sala não encontrada ou expirada" }
-      if (!secretMatches(chave ?? undefined, atual.state.chaveHash)) return { error: "Só o condutor pode fazer isso." }
-    }
-    const result = await applyJanela(code.data, action)
+    const palco = ACOES_DE_PALCO.has(action.type)
+    const result = await applyJanela(code.data, action, palco ? (s) => secretMatches(chave ?? undefined, s.chaveHash) : undefined)
+    if (result === "negado") return { error: "Só o condutor pode fazer isso." }
     if (!result) return { error: "Sala não encontrada ou expirada" }
     const { mudou, ...snap } = result
     if (mudou) await broadcastJanela(code.data, snap)

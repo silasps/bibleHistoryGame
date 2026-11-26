@@ -58,6 +58,7 @@ export type PalcoAction =
   | { type: "voltar"; de: Posicao; agora: number }
   | { type: "ir"; etapa: number; agora: number }
   | { type: "encerrar"; agora: number }
+  | { type: "reiniciar"; agora: number }
   | { type: "relogio"; minutos: number; agora: number }
   | { type: "pausar"; agora: number }
   | { type: "continuar"; agora: number }
@@ -82,7 +83,7 @@ export type PublicoAction =
 export type JanelaAction = PalcoAction | PublicoAction
 
 export const ACOES_DE_PALCO = new Set<JanelaAction["type"]>([
-  "comecar", "avancar", "voltar", "ir", "encerrar", "relogio", "pausar", "continuar", "parar",
+  "comecar", "avancar", "voltar", "ir", "encerrar", "reiniciar", "relogio", "pausar", "continuar", "parar",
   "som", "pular", "corte", "perguntas", "recebe", "pista", "mostrarPalavra",
 ])
 
@@ -220,6 +221,10 @@ export function reduceJanela(s: JanelaState, a: JanelaAction): JanelaState {
     case "ir":
       if (a.etapa === s.etapa) return s
       return irPara(s, a.etapa, a.agora)
+
+    case "reiniciar":
+      // Volta ao começo e apaga o andamento (mantém a chave e o volume).
+      return { ...estadoInicial(s.chaveHash), som: s.som }
 
     case "encerrar":
       if (s.fimEm !== null) return s
