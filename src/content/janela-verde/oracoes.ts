@@ -17,9 +17,10 @@ export interface CardOracao {
 
 export type OracaoId = "isolamento" | "lingua" | "cultura" | "discipulado"
 
-export const ORACOES: Record<OracaoId, { titulo: string; cards: CardOracao[]; quebra: string }> = {
+export const ORACOES: Record<OracaoId, { titulo: string; povos: string; cards: CardOracao[]; quebra: string }> = {
   isolamento: {
     titulo: "Oração: isolamento",
+    povos: "Yanomami e Vale do Javari",
     cards: [
       { id: "criancas", regiao: "amazonia", declaracao: "hekurari-criancas", pedido: "Ore pela saúde das crianças Yanomami." },
       { id: "ficar", regiao: "amazonia", declaracao: "dario", pedido: "Ore por pessoas que cheguem e fiquem, com remédio, cuidado e a Palavra." },
@@ -30,6 +31,7 @@ export const ORACOES: Record<OracaoId, { titulo: string; cards: CardOracao[]; qu
   },
   lingua: {
     titulo: "Oração: língua",
+    povos: "Baka e as línguas que esperam a Bíblia",
     cards: [
       { id: "ler", regiao: "africa", declaracao: "hekurari-ler", fato: "baka-leitura", pedido: "Ore pela alfabetização na língua materna." },
       { id: "traduzir", regiao: "africa", fato: "baka-biblia", pedido: "Ore pelos tradutores e pelos cristãos Baka que traduzem a Bíblia." },
@@ -39,6 +41,7 @@ export const ORACOES: Record<OracaoId, { titulo: string; cards: CardOracao[]; qu
   },
   cultura: {
     titulo: "Oração: cultura",
+    povos: "Sawi",
     cards: [
       { id: "pontes", regiao: "asia", declaracao: "steve-paz", pedido: "Ore por missionários que observem antes de falar e encontrem as pontes de cada cultura." },
       {
@@ -52,6 +55,7 @@ export const ORACOES: Record<OracaoId, { titulo: string; cards: CardOracao[]; qu
   },
   discipulado: {
     titulo: "Oração: discipulado",
+    povos: "Todos os povos da Janela Verde",
     cards: [
       { id: "ficar-anos", regiao: "asia", fato: "sawi-50", pedido: "Ore por missionários que fiquem por anos, até a igreja andar sozinha." },
       { id: "ensinar", regiao: "amazonia", declaracao: "terena", pedido: "Ore por quem ensine a Palavra e forme discípulos." },

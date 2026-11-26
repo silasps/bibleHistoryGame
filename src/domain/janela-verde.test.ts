@@ -138,10 +138,18 @@ describe("palco", () => {
     expect(ACOES_DE_PALCO.has("mostrarPalavra")).toBe(true)
   })
 
-  it("reiniciar volta ao começo, apaga o andamento e mantém a chave e o volume", () => {
+  it("reiniciar volta ao começo e apaga o andamento, mas guarda as palavras, a chave e o volume", () => {
     let s = run(ate("oracao-lingua"), { type: "comecar", agora: 0 }, { type: "som", volume: 0.3 }, { type: "palavra", id: "p", grupo: "auren", texto: "x", agora: 0 })
+    const palavras = s.palavras
     s = run(s, { type: "reiniciar", agora: 9 })
-    expect(s).toEqual({ ...estadoInicial("h"), som: { volume: 0.3, mudo: false } })
+    expect(s).toEqual({ ...estadoInicial("h"), som: { volume: 0.3, mudo: false }, palavras })
+  })
+
+  it("apagar uma palavra também a tira do telão", () => {
+    let s = run(ate("oracao-lingua"), { type: "palavra", id: "p", grupo: "auren", texto: "x", agora: 0 }, { type: "mostrarPalavra", id: "p" })
+    s = run(s, { type: "apagarPalavra", id: "p" })
+    expect(s.palavras).toHaveLength(0)
+    expect(s.noTelao).toBeNull()
   })
 
   it("o estado público não leva o hash da chave", () => {

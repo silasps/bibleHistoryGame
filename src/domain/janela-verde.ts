@@ -70,6 +70,7 @@ export type PalcoAction =
   | { type: "recebe"; visita: VisitaId; quem: string }
   | { type: "pista"; visita: VisitaId; id: string; usada: boolean }
   | { type: "mostrarPalavra"; id: string | null }
+  | { type: "apagarPalavra"; id: string }
 
 export type PublicoAction =
   | { type: "entrar"; grupo: GrupoId; agora: number }
@@ -84,7 +85,7 @@ export type JanelaAction = PalcoAction | PublicoAction
 
 export const ACOES_DE_PALCO = new Set<JanelaAction["type"]>([
   "comecar", "avancar", "voltar", "ir", "encerrar", "reiniciar", "relogio", "pausar", "continuar", "parar",
-  "som", "pular", "corte", "perguntas", "recebe", "pista", "mostrarPalavra",
+  "som", "pular", "corte", "perguntas", "recebe", "pista", "mostrarPalavra", "apagarPalavra",
 ])
 
 export function estadoInicial(chaveHash: string): JanelaState {
@@ -223,8 +224,8 @@ export function reduceJanela(s: JanelaState, a: JanelaAction): JanelaState {
       return irPara(s, a.etapa, a.agora)
 
     case "reiniciar":
-      // Volta ao começo e apaga o andamento (mantém a chave e o volume).
-      return { ...estadoInicial(s.chaveHash), som: s.som }
+      // Volta ao começo e apaga o andamento. As palavras recebidas ficam guardadas.
+      return { ...estadoInicial(s.chaveHash), som: s.som, palavras: s.palavras }
 
     case "encerrar":
       if (s.fimEm !== null) return s
@@ -297,6 +298,10 @@ export function reduceJanela(s: JanelaState, a: JanelaAction): JanelaState {
       const lista = a.usada ? [...atuais, a.id] : atuais.filter((x) => x !== a.id)
       return { ...s, pistas: { ...s.pistas, [a.visita]: lista } }
     }
+
+    case "apagarPalavra":
+      if (!s.palavras.some((p) => p.id === a.id)) return s
+      return { ...s, palavras: s.palavras.filter((p) => p.id !== a.id), noTelao: s.noTelao === a.id ? null : s.noTelao }
 
     case "mostrarPalavra":
       if (a.id !== null && !s.palavras.some((p) => p.id === a.id)) return s

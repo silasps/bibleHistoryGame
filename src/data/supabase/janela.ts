@@ -8,6 +8,10 @@ import { hashSecret, newSecret } from "./secrets"
 // Salas da Janela Verde: reaproveitam a tabela show_rooms. Muitos celulares
 // agem ao mesmo tempo, então o laço de versão tenta mais vezes, com espera.
 
+/** A sala (e as palavras recebidas) fica guardada por 30 dias desde o último uso. */
+const DIAS_GUARDADA = 30
+const validade = () => new Date(Date.now() + DIAS_GUARDADA * 86_400_000).toISOString()
+
 export interface JanelaSnapshot {
   state: JanelaState
   version: number
@@ -26,7 +30,7 @@ export async function createJanela(): Promise<{ code: string; chave: string }> {
   const state = estadoInicial(hashSecret(chave))
   for (let i = 0; i < 5; i++) {
     const code = generateRoomCode()
-    const { error } = await admin().from("show_rooms").insert({ code, state })
+    const { error } = await admin().from("show_rooms").insert({ code, state, expires_at: validade() })
     if (!error) return { code, chave }
     if (error.code !== "23505") throw error
   }
@@ -47,7 +51,7 @@ export async function applyJanela(
     if (next === snap.state) return { ...snap, mudou: false }
     const { data, error } = await admin()
       .from("show_rooms")
-      .update({ state: next, version: snap.version + 1, updated_at: new Date().toISOString() })
+      .update({ state: next, version: snap.version + 1, updated_at: new Date().toISOString(), expires_at: validade() })
       .eq("code", code)
       .eq("version", snap.version)
       .select("version")

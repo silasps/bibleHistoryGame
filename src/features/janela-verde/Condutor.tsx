@@ -344,7 +344,7 @@ function Sala({ state, agir, agora }: { state: JanelaState; agir: (a: JanelaActi
         </Botao>
         <Botao
           onClick={() => {
-            if (!window.confirm("Reiniciar do começo? Apaga as orações marcadas, as palavras recebidas e os compromissos desta sala. Copie as palavras antes, se quiser guardar.")) return
+            if (!window.confirm("Reiniciar do começo? Apaga as orações marcadas, os relógios e os compromissos desta sala. As palavras recebidas ficam guardadas.")) return
             agir({ type: "reiniciar", agora: agora() })
           }}
           className="border-rose/50 text-rose"
@@ -493,59 +493,132 @@ function Ficha({ state, agir }: { state: JanelaState; agir: (a: JanelaAction) =>
   )
 }
 
-function textoDasPalavras(state: JanelaState): string {
-  const linhas = ["Janela Verde · Palavras recebidas", ""]
-  for (const e of ROTEIRO) {
-    const lista = state.palavras.filter((p) => p.etapa === e.id)
-    if (!lista.length) continue
-    linhas.push(`## ${e.titulo}`)
-    for (const p of lista) {
-      const card = e.tela.tipo === "oracao" ? ORACOES[e.tela.oracao].cards.find((c) => c.id === p.card)?.pedido : undefined
-      linhas.push(`- (${CULTURAS[p.grupo].nome}, ${hora(p.em)}${card ? ` · ${card}` : ""}) ${p.texto}`)
-    }
-    linhas.push("")
-  }
-  return linhas.join("\n")
+type Palavra = JanelaState["palavras"][number]
+
+/** Para quem a palavra foi recebida: pela oração do momento (ou "outros momentos"). */
+function temaDaPalavra(p: Palavra): { id: string; titulo: string } {
+  const e = ROTEIRO.find((x) => x.id === p.etapa)
+  if (e?.tela.tipo === "oracao") return { id: e.id, titulo: `${ORACOES[e.tela.oracao].titulo} · ${ORACOES[e.tela.oracao].povos}` }
+  return { id: "outros", titulo: "Outros momentos" }
 }
 
+function porTema(palavras: Palavra[]) {
+  const grupos = new Map<string, { titulo: string; lista: Palavra[] }>()
+  for (const p of palavras) {
+    const t = temaDaPalavra(p)
+    const g = grupos.get(t.id) ?? { titulo: t.titulo, lista: [] }
+    g.lista.push(p)
+    grupos.set(t.id, g)
+  }
+  return [...grupos.entries()].map(([id, g]) => ({ id, ...g }))
+}
+
+const dia = (ms: number) => new Date(ms).toLocaleDateString("pt-BR")
+
+/** Texto pronto para o WhatsApp (negrito com *), de um tema ou de todos. */
+function textoWhats(palavras: Palavra[]): string {
+  const linhas = ["*Janela Verde · Palavras recebidas em oração*", palavras.length ? dia(palavras[0].em) : "", ""]
+  for (const t of porTema(palavras)) {
+    linhas.push(`*${t.titulo}*`)
+    for (const p of t.lista) linhas.push(`• ${p.texto} _(Grupo ${CULTURAS[p.grupo].nome}, ${hora(p.em)})_`)
+    linhas.push("")
+  }
+  return linhas.join("\n").trim()
+}
+
+const linkWhats = (texto: string) => `https://wa.me/?text=${encodeURIComponent(texto)}`
+
 function Palavras({ state, agir }: { state: JanelaState; agir: (a: JanelaAction) => void }) {
-  const [copiou, setCopiou] = useState(false)
-  const copiar = async () => {
-    const texto = textoDasPalavras(state)
+  const [copiou, setCopiou] = useState<string | null>(null)
+  const temas = porTema(state.palavras)
+  const copiar = async (id: string, texto: string) => {
     try {
-      if (navigator.share) await navigator.share({ title: "Palavras recebidas", text: texto })
-      else {
-        await navigator.clipboard.writeText(texto)
-        setCopiou(true)
-        setTimeout(() => setCopiou(false), 2500)
-      }
+      await navigator.clipboard.writeText(texto)
+      setCopiou(id)
+      setTimeout(() => setCopiou(null), 2500)
     } catch {
-      // cancelado
+      // sem acesso à área de transferência
     }
   }
-  const lista = [...state.palavras].reverse()
+  const baixar = () => {
+    const blob = new Blob([textoWhats(state.palavras).replace(/[*_]/g, "")], { type: "text/plain;charset=utf-8" })
+    const a = document.createElement("a")
+    a.href = URL.createObjectURL(blob)
+    a.download = `janela-verde-palavras-${dia(Date.now()).replace(/\//g, "-")}.txt`
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000)
+  }
+  const tudo = textoWhats(state.palavras)
   return (
     <div className="space-y-3 p-3">
-      <Botao onClick={() => void copiar()} className="w-full border-gold/50 text-gold-bright" disabled={!lista.length}>
-        <Copy className="size-4" /> {copiou ? "Copiado" : "Copiar / compartilhar todas"}
-      </Botao>
-      <p className="text-xs text-mist">A sala apaga em 24 h: copiem hoje.</p>
-      {!lista.length && <p className="text-sm text-mist">Nenhuma palavra ainda.</p>}
-      {lista.map((p) => {
-        const e = ROTEIRO.find((x) => x.id === p.etapa)
-        const card = e?.tela.tipo === "oracao" ? ORACOES[e.tela.oracao].cards.find((c) => c.id === p.card)?.pedido : undefined
-        const noTelao = state.noTelao === p.id
+      <section className="rounded-2xl border border-gold/40 bg-ink p-3">
+        <p className="font-display text-xl text-parchment">Palavras recebidas ({state.palavras.length})</p>
+        <p className="mt-1 text-xs leading-snug text-mist">
+          Ficam guardadas nesta sala por 30 dias depois do último uso, e Reiniciar não apaga. Para voltar aqui depois, abram este mesmo link neste celular.
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <a
+            href={linkWhats(tudo)}
+            target="_blank"
+            rel="noreferrer"
+            aria-disabled={!state.palavras.length}
+            className={cn("inline-flex min-h-11 items-center justify-center rounded-2xl bg-[#25d366] px-3 text-sm font-semibold text-night", !state.palavras.length && "pointer-events-none opacity-40")}
+          >
+            Enviar tudo no WhatsApp
+          </a>
+          <Botao onClick={() => void copiar("tudo", tudo)} disabled={!state.palavras.length}>
+            <Copy className="size-4" /> {copiou === "tudo" ? "Copiado" : "Copiar tudo"}
+          </Botao>
+        </div>
+        <Botao onClick={baixar} disabled={!state.palavras.length} className="mt-2 w-full">
+          Baixar arquivo (.txt)
+        </Botao>
+        {tudo.length > 3500 && <p className="mt-2 text-xs text-[#f0a25a]">Texto longo: se o WhatsApp cortar, envie por povo (abaixo).</p>}
+      </section>
+
+      {!state.palavras.length && <p className="text-sm text-mist">Nenhuma palavra ainda. Elas chegam pelo botão “Palavra recebida” do celular dos grupos.</p>}
+
+      {temas.map((t) => {
+        const texto = textoWhats(t.lista)
         return (
-          <article key={p.id} className={cn("rounded-2xl border bg-ink p-3", noTelao ? "border-gold" : "border-border")}>
-            <p className="text-xs text-mist">
-              Grupo {CULTURAS[p.grupo].nome} · {hora(p.em)} · {e?.titulo}
-              {card ? ` · ${card}` : ""}
-            </p>
-            <p className="mt-1 whitespace-pre-wrap text-sm text-parchment">{p.texto}</p>
-            <button type="button" onClick={() => agir({ type: "mostrarPalavra", id: noTelao ? null : p.id })} className={cn("mt-2 rounded-full border px-3 py-1 text-xs", noTelao ? "border-gold text-gold-bright" : "border-border text-sand")}>
-              {noTelao ? "Tirar do telão" : "Mostrar no telão"}
-            </button>
-          </article>
+          <section key={t.id} className="rounded-2xl border border-border bg-ink">
+            <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2">
+              <p className="min-w-0 flex-1 text-sm font-semibold text-gold-bright">
+                {t.titulo} ({t.lista.length})
+              </p>
+              <a href={linkWhats(texto)} target="_blank" rel="noreferrer" className="rounded-full bg-[#25d366] px-3 py-1 text-xs font-semibold text-night">
+                WhatsApp
+              </a>
+              <button type="button" onClick={() => void copiar(t.id, texto)} className="rounded-full border border-border px-3 py-1 text-xs text-sand">
+                {copiou === t.id ? "Copiado" : "Copiar"}
+              </button>
+            </div>
+            <ul>
+              {[...t.lista].reverse().map((p) => {
+                const noTelao = state.noTelao === p.id
+                return (
+                  <li key={p.id} className={cn("border-b border-border/60 px-3 py-2 last:border-0", noTelao && "bg-gold/10")}>
+                    <p className="text-xs text-mist">
+                      Grupo {CULTURAS[p.grupo].nome} · {dia(p.em)} {hora(p.em)}
+                    </p>
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-parchment">{p.texto}</p>
+                    <div className="mt-2 flex gap-2">
+                      <button type="button" onClick={() => agir({ type: "mostrarPalavra", id: noTelao ? null : p.id })} className={cn("rounded-full border px-3 py-1 text-xs", noTelao ? "border-gold text-gold-bright" : "border-border text-sand")}>
+                        {noTelao ? "Tirar do telão" : "Mostrar no telão"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => window.confirm("Apagar esta palavra? Não dá para desfazer.") && agir({ type: "apagarPalavra", id: p.id })}
+                        className="rounded-full border border-border px-3 py-1 text-xs text-mist"
+                      >
+                        Apagar
+                      </button>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
         )
       })}
     </div>

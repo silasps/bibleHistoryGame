@@ -36,6 +36,7 @@ const ActionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("recebe"), visita: Visita, quem: z.string().max(30) }),
   z.object({ type: z.literal("pista"), visita: Visita, id: Id, usada: z.boolean() }),
   z.object({ type: z.literal("mostrarPalavra"), id: Id.nullable() }),
+  z.object({ type: z.literal("apagarPalavra"), id: z.string().max(64) }),
   z.object({ type: z.literal("entrar"), grupo: Grupo, agora: T }),
   z.object({ type: z.literal("orou"), grupo: Grupo, etapa: Id, card: Id }),
   z.object({ type: z.literal("compartilhou"), grupo: Grupo }),
