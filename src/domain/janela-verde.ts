@@ -155,11 +155,11 @@ export function relogioDe(s: JanelaState, etapa: Etapa): number | undefined {
   return cortesDe(s, etapa).find((c) => c.relogio)?.relogio ?? etapa.relogio
 }
 
-/** Cards de oração visíveis na etapa (com o corte "só 2 cards"). */
+/** Cards de oração da etapa, todos juntos (com o corte "só 2 pedidos"). */
 export function cardsDaOracao(s: JanelaState, etapa: Etapa) {
   if (etapa.tela.tipo !== "oracao") return []
   const cards = ORACOES[etapa.tela.oracao].cards
-  return cards.slice(0, itensDe(s, etapa) - 1)
+  return cortesDe(s, etapa).some((c) => c.id.endsWith("-2cards")) ? cards.slice(0, 2) : cards
 }
 
 /** A oração está no último item: a barreira caiu. */
@@ -167,10 +167,10 @@ export function barreiraCaiu(s: JanelaState, etapa = etapaAtual(s)): boolean {
   return etapa.tela.tipo === "oracao" && s.passo >= itensDe(s, etapa) - 1
 }
 
-/** Card de oração em foco (o item atual), para marcar as palavras. */
+/** Com os pedidos juntos, a palavra fica marcada só com o momento. */
 export function cardAtual(s: JanelaState): string | undefined {
-  const etapa = etapaAtual(s)
-  return cardsDaOracao(s, etapa)[s.passo]?.id
+  void s
+  return undefined
 }
 
 function proxima(s: JanelaState, de: number, passo: 1 | -1): number {

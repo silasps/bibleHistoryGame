@@ -22,6 +22,7 @@ import {
   SAWI_REAL,
   SEARA,
   VISITAS,
+  getDeclaracao,
   getFato,
   type Etapa,
 } from "@/content/janela-verde"
@@ -158,45 +159,29 @@ function Conteudo({ state, e, agora, agir, code }: { state: JanelaState; e: Etap
     }
     case "oracao": {
       const cards = cardsDaOracao(state, e)
-      const card = cards[p]
       const barreira = BARREIRAS[e.bloco - 1]
       const caiu = barreiraCaiu(state, e)
-      return (
-        <div className="grid h-full grid-cols-[1.5fr_1fr] items-center gap-[3vw]">
-          <div className="flex flex-col gap-[1.6vh]">
-            {caiu ? (
-              <motion.p initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2 }} className="font-display text-[4.8vw] leading-[1.05] text-gold-bright">
-                {ORACOES[t.oracao].quebra}
-              </motion.p>
-            ) : (
-              card && (
-                <>
-                  <p className="text-[1.2vw] uppercase tracking-[0.3em] text-gold">
-                    Pedido {p + 1} de {cards.length}
-                  </p>
-                  {card.declaracao && <CardDeclaracao id={card.declaracao} grande />}
-                  {card.fato && <CardFato id={card.fato} grande />}
-                  {card.texto && (
-                    <p className="rounded-[1.2vw] border border-gold/30 bg-night/75 p-[1.4vw] font-display text-[2.4vw] leading-tight text-parchment">
-                      {card.texto.texto}
-                      {card.texto.ref && <span className="block font-sans text-[1vw] text-mist">{formatRef(card.texto.ref)} · NAA</span>}
-                    </p>
-                  )}
-                  <p className="font-display text-[3vw] leading-tight text-gold-bright">{card.pedido}</p>
-                  <p className="text-[1.3vw] text-sand">
-                    Oramos:{" "}
-                    {(["auren", "nair"] as const).map((g) => (
-                      <span key={g} className="mr-[1vw]" style={{ color: state.oracoes[e.id]?.[card.id]?.includes(g) ? COR_GRUPO[g] : "#5b6478" }}>
-                        {state.oracoes[e.id]?.[card.id]?.includes(g) ? "✓" : "○"} {CULTURAS[g].nome}
-                      </span>
-                    ))}
-                  </p>
-                </>
-              )
-            )}
+      if (caiu)
+        return (
+          <div className="grid h-full grid-cols-[1.3fr_1fr] items-center gap-[3vw]">
+            <motion.p initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2 }} className="font-display text-[4.8vw] leading-[1.05] text-gold-bright">
+              {ORACOES[t.oracao].quebra}
+            </motion.p>
+            <div className="flex flex-col gap-[1.5vh]">
+              <Barreira arte={barreira.arte} rachadura={1} aberta className="aspect-[4/3] w-full" />
+              <JanelaMapa state={state} todas={e.bloco === 4} />
+            </div>
           </div>
-          <div className="flex flex-col gap-[1.5vh]">
-            <Barreira arte={barreira.arte} rachadura={rachadura(state, e)} aberta={caiu} className="aspect-[4/3] w-full" />
+        )
+      return (
+        <div className="grid h-full grid-cols-[minmax(0,1fr)_21vw] gap-[2vw]">
+          <div className={cn("grid min-h-0 content-center gap-[1.2vw]", cards.length > 1 ? "grid-cols-2" : "grid-cols-1")}>
+            {cards.map((card) => (
+              <PedidoTelao key={card.id} card={card} grupos={state.oracoes[e.id]?.[card.id] ?? []} />
+            ))}
+          </div>
+          <div className="flex min-h-0 flex-col justify-center gap-[1.5vh]">
+            <Barreira arte={barreira.arte} rachadura={rachadura(state, e)} aberta={false} className="aspect-[4/3] w-full" />
             <JanelaMapa state={state} todas={e.bloco === 4} />
           </div>
         </div>
@@ -462,6 +447,45 @@ function Conteudo({ state, e, agora, agir, code }: { state: JanelaState; e: Etap
         </Centro>
       )
   }
+}
+
+type CardDeOracao = (typeof ORACOES)[keyof typeof ORACOES]["cards"][number]
+
+/** Um pedido de oração, compacto, para caber junto com os outros. */
+function PedidoTelao({ card, grupos }: { card: CardDeOracao; grupos: string[] }) {
+  const d = card.declaracao ? getDeclaracao(card.declaracao) : null
+  const f = card.fato ? getFato(card.fato) : null
+  return (
+    <section className="flex min-w-0 flex-col gap-[0.6vw] rounded-[1.2vw] border border-gold/25 bg-night/80 p-[1.2vw]">
+      {d && (
+        <figure>
+          <blockquote className="font-display text-[1.5vw] leading-[1.2] text-parchment">{d.kind === "citacao" ? `\u201c${d.texto}\u201d` : d.texto}</blockquote>
+          <figcaption className="mt-[0.3vw] text-[0.85vw] leading-snug text-sand">
+            <b className="text-gold-bright">{d.quem}</b> · {d.papel} · <span className="text-mist/80">Fonte: {d.fonte.nome}</span>
+          </figcaption>
+        </figure>
+      )}
+      {f && (
+        <p className="text-[1.15vw] leading-snug text-sand">
+          {f.texto} <span className="text-[0.8vw] text-mist/80">Fonte: {f.fonte.nome}</span>
+        </p>
+      )}
+      {card.texto && (
+        <p className="font-display text-[1.5vw] leading-[1.2] text-parchment">
+          {card.texto.texto}
+          {card.texto.ref && <span className="ml-[0.5vw] font-sans text-[0.85vw] text-mist">{formatRef(card.texto.ref)} · NAA</span>}
+        </p>
+      )}
+      <p className="mt-auto font-display text-[1.75vw] leading-tight text-gold-bright">{card.pedido}</p>
+      <p className="text-[0.95vw] text-sand">
+        {(["auren", "nair"] as const).map((g) => (
+          <span key={g} className="mr-[1vw]" style={{ color: grupos.includes(g) ? COR_GRUPO[g] : "#5b6478" }}>
+            {grupos.includes(g) ? "✓" : "○"} {CULTURAS[g].nome} orou
+          </span>
+        ))}
+      </p>
+    </section>
+  )
 }
 
 /** Palavra recebida que os condutores escolheram mostrar. */

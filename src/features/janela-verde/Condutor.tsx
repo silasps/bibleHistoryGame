@@ -126,7 +126,7 @@ function resumoItem(state: JanelaState, e: Etapa): string {
   switch (t.tipo) {
     case "oracao": {
       const cards = cardsDaOracao(state, e)
-      return barreiraCaiu(state, e) ? `A barreira cai: “${ORACOES[t.oracao].quebra}”` : (cards[p]?.pedido ?? "")
+      return barreiraCaiu(state, e) ? `A barreira cai: ${ORACOES[t.oracao].quebra}` : `${cards.length} pedidos juntos na tela. Próximo toque: a barreira cai.`
     }
     case "lingua":
       return p === 0 ? BARREIRAS[1].antes : LINGUA_INTRO[p - 1]
@@ -247,8 +247,8 @@ function Palco({ state, agir, agora }: { state: JanelaState; agir: (a: JanelaAct
       {oracao && (
         <section className="rounded-2xl border border-border bg-ink p-3 text-sm">
           <p className="mb-1 text-xs uppercase tracking-[0.2em] text-gold">Oramos</p>
-          {cardsDaOracao(state, oracao).map((c, i) => (
-            <p key={c.id} className={cn("flex justify-between gap-2", i === state.passo ? "text-parchment" : "text-mist")}>
+          {cardsDaOracao(state, oracao).map((c) => (
+            <p key={c.id} className="flex justify-between gap-2 text-parchment">
               <span className="truncate">{c.pedido}</span>
               <span className="shrink-0">
                 {(["auren", "nair"] as const).map((g) => (state.oracoes[oracao.id]?.[c.id]?.includes(g) ? `✓${CULTURAS[g].nome[0]} ` : "· "))}

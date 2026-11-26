@@ -414,38 +414,44 @@ function Conteudo({ state, agir, agora, grupo, etapa }: Props & { etapa: Etapa }
 
 function Oracao({ state, agir, grupo, etapa, oracao }: { state: JanelaState; agir: Agir; grupo: GrupoId; etapa: Etapa; oracao: keyof typeof ORACOES }) {
   const cards = cardsDaOracao(state, etapa)
-  const card = cards[state.passo]
   const caiu = barreiraCaiu(state, etapa)
   const arte = BARREIRAS[etapa.bloco - 1]?.arte ?? "barreira-rio"
-  const orou = !!card && !!state.oracoes[etapa.id]?.[card.id]?.includes(grupo)
   return (
     <>
-      <Barreira arte={arte} rachadura={caiu ? 1 : rachadura(state)} aberta={caiu} celular className="h-28" />
-      {caiu || !card ? (
+      <Barreira arte={arte} rachadura={caiu ? 1 : rachadura(state)} aberta={caiu} celular className="h-24" />
+      {caiu ? (
         <Grande>{ORACOES[oracao].quebra}</Grande>
       ) : (
-        <>
-          {card.declaracao && <CardDeclaracao id={card.declaracao} />}
-          {card.fato && <CardFato id={card.fato} />}
-          {card.texto && (
-            <div className="rounded-2xl border border-gold/30 bg-night/75 p-4">
-              <p className="text-base italic leading-snug text-parchment">{card.texto.texto}</p>
-              {card.texto.ref && <p className="mt-2 text-sm text-gold">{formatRef(card.texto.ref)}</p>}
-            </div>
-          )}
-          <Grande>{card.pedido}</Grande>
-          <button
-            type="button"
-            disabled={orou}
-            onClick={() => {
-              vibrate(HAPTIC.tap)
-              agir({ type: "orou", grupo, etapa: etapa.id, card: card.id })
-            }}
-            className={cn("min-h-16 rounded-full px-4 text-xl font-semibold", orou ? "border border-sage/60 bg-sage/20 text-[#bfe3c7]" : "bg-gold text-night")}
-          >
-            {orou ? "✓ Oramos" : "Oramos"}
-          </button>
-        </>
+        cards.map((card, i) => {
+          const orou = !!state.oracoes[etapa.id]?.[card.id]?.includes(grupo)
+          return (
+            <section key={card.id} className="flex flex-col gap-3 rounded-3xl border border-border bg-ink/60 p-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-gold">
+                Pedido {i + 1} de {cards.length}
+              </p>
+              {card.declaracao && <CardDeclaracao id={card.declaracao} />}
+              {card.fato && <CardFato id={card.fato} />}
+              {card.texto && (
+                <div className="rounded-2xl border border-gold/30 bg-night/75 p-4">
+                  <p className="text-base italic leading-snug text-parchment">{card.texto.texto}</p>
+                  {card.texto.ref && <p className="mt-2 text-sm text-gold">{formatRef(card.texto.ref)}</p>}
+                </div>
+              )}
+              <p className="font-display text-2xl leading-tight text-gold-bright">{card.pedido}</p>
+              <button
+                type="button"
+                disabled={orou}
+                onClick={() => {
+                  vibrate(HAPTIC.tap)
+                  agir({ type: "orou", grupo, etapa: etapa.id, card: card.id })
+                }}
+                className={cn("min-h-14 rounded-full px-4 text-lg font-semibold", orou ? "border border-sage/60 bg-sage/20 text-[#bfe3c7]" : "bg-gold text-night")}
+              >
+                {orou ? "✓ Oramos" : "Oramos"}
+              </button>
+            </section>
+          )
+        })
       )}
     </>
   )

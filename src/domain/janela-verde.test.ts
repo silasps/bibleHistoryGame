@@ -3,6 +3,7 @@ import { BARREIRAS, DECLARACOES, FATOS, ORACOES, ORCAMENTO_MIN, LIMITE_MIN, ROTE
 import {
   ACOES_DE_PALCO,
   barreiraCaiu,
+  cardsDaOracao,
   contarCompromissos,
   estadoInicial,
   itensDe,
@@ -98,13 +99,16 @@ describe("palco", () => {
     expect(run(s, { type: "pular", etapa: "reflexao", on: true })).toBe(s)
   })
 
-  it("corte de 2 cards encolhe a oração e o item atual não passa do fim", () => {
+  it("a oração mostra os pedidos juntos e o próximo toque abre a barreira; o corte deixa 2", () => {
     let s = ate("oracao-isolamento")
-    s = { ...s, passo: 3 }
-    s = run(s, { type: "corte", id: "oracao-isolamento-2cards", on: true })
-    expect(itensDe(s, ROTEIRO[s.etapa])).toBe(3)
-    expect(s.passo).toBe(2)
+    const etapa = ROTEIRO[s.etapa]
+    expect(itensDe(s, etapa)).toBe(2)
+    expect(cardsDaOracao(s, etapa)).toHaveLength(ORACOES.isolamento.cards.length)
+    expect(barreiraCaiu(s)).toBe(false)
+    s = run(s, av(s))
     expect(barreiraCaiu(s)).toBe(true)
+    s = run(s, { type: "corte", id: "oracao-isolamento-2cards", on: true })
+    expect(cardsDaOracao(s, etapa)).toHaveLength(2)
   })
 
   it("a reflexão usa as perguntas escolhidas", () => {
@@ -156,11 +160,10 @@ describe("grupos", () => {
     expect(luzes(s).amazonia).toBe(2)
   })
 
-  it("palavra recebida leva o momento e o card, e só aparece no telão quando mostrada", () => {
+  it("palavra recebida leva o momento, e só aparece no telão quando mostrada", () => {
     let s = ate("oracao-lingua")
-    s = { ...s, passo: 1 }
     s = run(s, { type: "palavra", id: "w1", grupo: "nair", texto: "  Uma   palavra para os Baka  ", agora: 5 })
-    expect(s.palavras[0]).toMatchObject({ etapa: "oracao-lingua", card: ORACOES.lingua.cards[1].id, texto: "Uma palavra para os Baka", grupo: "nair" })
+    expect(s.palavras[0]).toMatchObject({ etapa: "oracao-lingua", texto: "Uma palavra para os Baka", grupo: "nair" })
     expect(s.noTelao).toBeNull()
     s = run(s, { type: "mostrarPalavra", id: "w1" })
     expect(s.noTelao).toBe("w1")

@@ -87,10 +87,11 @@ const oracao = (id: string, bloco: Etapa["bloco"], o: OracaoId, minutos: number)
   titulo: ORACOES[o].titulo,
   minutos,
   tela: { tipo: "oracao", oracao: o },
-  itens: cardsDe(o) + 1,
+  // Todos os pedidos aparecem juntos; o próximo toque abre a barreira.
+  itens: 2,
   arte: "oracao",
-  nota: "Cada card: leiam a declaração, orem e o grupo toca “Oramos”. O último toque em Avançar abre a barreira.",
-  cortes: cardsDe(o) > 2 ? [{ id: `${id}-2cards`, texto: "Só 2 cards", economiza: 1, itens: 3 }] : undefined,
+  nota: "Os pedidos aparecem juntos. Leiam as declarações, orem, e o grupo toca “Oramos” em cada um. O próximo toque em Avançar abre a barreira.",
+  cortes: cardsDe(o) > 2 ? [{ id: `${id}-2cards`, texto: "Só 2 pedidos", economiza: 1 }] : undefined,
 })
 
 export const ROTEIRO: Etapa[] = [
