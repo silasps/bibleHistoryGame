@@ -22,10 +22,10 @@ export const ORACOES: Record<OracaoId, { titulo: string; povos: string; cards: C
     titulo: "Oração: isolamento",
     povos: "Yanomami e Vale do Javari",
     cards: [
-      { id: "criancas", regiao: "amazonia", declaracao: "hekurari-criancas", pedido: "Ore pela saúde das crianças Yanomami." },
+      { id: "criancas", regiao: "amazonia", declaracao: "hekurari-criancas", pedido: "Ore pela saúde das crianças Yanomami e pela proteção da terra e dos rios contra o garimpo." },
       { id: "ficar", regiao: "amazonia", declaracao: "dario", pedido: "Ore por pessoas que cheguem e fiquem, com remédio, cuidado e a Palavra." },
-      { id: "javari", regiao: "amazonia", declaracao: "beto-marubo", pedido: "Ore pelos povos isolados do Vale do Javari: proteção da vida e do território." },
-      { id: "terra", regiao: "amazonia", fato: "yan-garimpo", pedido: "Ore pela proteção da terra e dos rios Yanomami." },
+      { id: "portas", regiao: "amazonia", fato: "yan-censo", pedido: "Ore pelos que protegem esses povos e lugares: que Deus abra portas, e que os missionários tenham sabedoria para chegar até eles." },
+      { id: "javari", regiao: "amazonia", declaracao: "beto-marubo", pedido: "Ore pelos povos isolados do Vale do Javari: proteção da vida e do território, e que o Senhor, em sua soberania, se revele a eles." },
     ],
     quebra: "Oramos, e Deus abriu o caminho.",
   },
@@ -33,8 +33,14 @@ export const ORACOES: Record<OracaoId, { titulo: string; povos: string; cards: C
     titulo: "Oração: língua",
     povos: "Baka e as línguas que esperam a Bíblia",
     cards: [
-      { id: "ler", regiao: "africa", declaracao: "hekurari-ler", fato: "baka-leitura", pedido: "Ore pela alfabetização na língua materna." },
+      {
+        id: "missionarios-lingua",
+        regiao: "todas",
+        texto: { texto: "Se foi difícil compreender pessoas que falavam português, como seria chegar a um povo cuja língua não conhecemos?", kind: "narracao" },
+        pedido: "Ore pelos missionários que estão aprendendo essas línguas e enfrentam dificuldade: perseverança e amizade com o povo.",
+      },
       { id: "traduzir", regiao: "africa", fato: "baka-biblia", pedido: "Ore pelos tradutores e pelos cristãos Baka que traduzem a Bíblia." },
+      { id: "ler", regiao: "africa", declaracao: "hekurari-ler", fato: "baka-leitura", pedido: "Ore pela alfabetização na língua materna." },
       { id: "linguas", regiao: "asia", fato: "png-linguas", pedido: "Ore pelas línguas que ainda esperam a Bíblia." },
     ],
     quebra: "Oramos, e de forma milagrosa aprendi a língua.",
@@ -43,7 +49,9 @@ export const ORACOES: Record<OracaoId, { titulo: string; povos: string; cards: C
     titulo: "Oração: cultura",
     povos: "Sawi",
     cards: [
+      { id: "chegando", regiao: "amazonia", fato: "yan-visita", pedido: "Ore pelos missionários que estão chegando: sabedoria para se aproximar dos líderes e do povo do jeito certo." },
       { id: "pontes", regiao: "asia", declaracao: "steve-paz", pedido: "Ore por missionários que observem antes de falar e encontrem as pontes de cada cultura." },
+      { id: "coracao", regiao: "todas", pedido: "Ore para que Deus aja no coração de cada povo e abra o coração deles para receber a mensagem." },
       {
         id: "respeito",
         regiao: "todas",

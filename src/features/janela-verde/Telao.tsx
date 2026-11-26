@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react"
 import { useRouter } from "next/navigation"
 import { QRCodeSVG } from "qrcode.react"
 import { Volume2 } from "lucide-react"
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react"
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react"
 import {
   BARREIRAS,
   COMPARACAO,
@@ -174,16 +174,13 @@ function Conteudo({ state, e, agora, agir, code }: { state: JanelaState; e: Etap
           </div>
         )
       return (
-        <div className="grid h-full grid-cols-[minmax(0,1fr)_21vw] gap-[2vw]">
-          <div className={cn("grid min-h-0 content-center gap-[1.2vw]", cards.length > 1 ? "grid-cols-2" : "grid-cols-1")}>
-            {cards.map((card) => (
-              <PedidoTelao key={card.id} card={card} grupos={state.oracoes[e.id]?.[card.id] ?? []} />
+        <div className="relative h-full">
+          <Barreira arte={barreira.arte} rachadura={rachadura(state, e)} aberta={false} className="pointer-events-none absolute inset-0 rounded-[1.4vw] opacity-30" />
+          <PedidosAjustados chave={cards.map((c) => c.id).join("|")} linhas={cards.length}>
+            {cards.map((card, i) => (
+              <PedidoTelao key={card.id} n={i + 1} card={card} grupos={state.oracoes[e.id]?.[card.id] ?? []} />
             ))}
-          </div>
-          <div className="flex min-h-0 flex-col justify-center gap-[1.5vh]">
-            <Barreira arte={barreira.arte} rachadura={rachadura(state, e)} aberta={false} className="aspect-[4/3] w-full" />
-            <JanelaMapa state={state} todas={e.bloco === 4} />
-          </div>
+          </PedidosAjustados>
         </div>
       )
     }
@@ -451,39 +448,88 @@ function Conteudo({ state, e, agora, agir, code }: { state: JanelaState; e: Etap
 
 type CardDeOracao = (typeof ORACOES)[keyof typeof ORACOES]["cards"][number]
 
-/** Um pedido de oração, compacto, para caber junto com os outros. */
-function PedidoTelao({ card, grupos }: { card: CardDeOracao; grupos: string[] }) {
+/**
+ * Coluna dos pedidos com ajuste automático: o texto começa grande e diminui
+ * (variável --k) só até tudo caber nas linhas, em 4:3, 16:9 ou qualquer tela.
+ */
+function PedidosAjustados({ chave, linhas, children }: { chave: string; linhas: number; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const ajustar = () => {
+      const transborda = () =>
+        [...el.children].some((sec) => {
+          const caixa = sec.getBoundingClientRect()
+          return sec.scrollHeight > sec.clientHeight + 1 || [...sec.querySelectorAll("p,blockquote,figcaption")].some((t) => t.getBoundingClientRect().bottom > caixa.bottom + 1)
+        })
+      let k = 1
+      el.style.setProperty("--k", String(k))
+      while (k > 0.5 && transborda()) {
+        k = Math.round((k - 0.04) * 100) / 100
+        el.style.setProperty("--k", String(k))
+      }
+    }
+    ajustar()
+    const fontes = document.fonts
+    void fontes?.ready.then(ajustar)
+    window.addEventListener("resize", ajustar)
+    return () => window.removeEventListener("resize", ajustar)
+  }, [chave, linhas])
+  return (
+    <div ref={ref} className="relative z-10 grid h-full gap-[min(1.1vw,1.8vh)] p-[min(1.2vw,2vh)]" style={{ gridTemplateRows: `repeat(${linhas}, minmax(0, 1fr))`, ["--k" as string]: 1 }}>
+      {children}
+    </div>
+  )
+}
+
+/** Um pedido de oração em linha: o pedido grande à esquerda e a base (declaração, fato ou pergunta) à direita. */
+function PedidoTelao({ n, card, grupos }: { n: number; card: CardDeOracao; grupos: string[] }) {
   const d = card.declaracao ? getDeclaracao(card.declaracao) : null
   const f = card.fato ? getFato(card.fato) : null
+  const temBase = !!(d || f || card.texto)
+  const fontes = [d?.fonte.nome, f?.fonte.nome].filter(Boolean) as string[]
+  if (card.texto && !card.texto.ref) fontes.push("perguntas do documento da equipe")
   return (
-    <section className="flex min-w-0 flex-col gap-[0.6vw] rounded-[1.2vw] border border-gold/25 bg-night/80 p-[1.2vw]">
-      {d && (
-        <figure>
-          <blockquote className="font-display text-[1.5vw] leading-[1.2] text-parchment">{d.kind === "citacao" ? `\u201c${d.texto}\u201d` : d.texto}</blockquote>
-          <figcaption className="mt-[0.3vw] text-[0.85vw] leading-snug text-sand">
-            <b className="text-gold-bright">{d.quem}</b> · {d.papel} · <span className="text-mist/80">Fonte: {d.fonte.nome}</span>
-          </figcaption>
-        </figure>
+    <section
+      className={cn(
+        "grid min-h-0 items-center gap-[min(2vw,3vh)] overflow-hidden rounded-[1.2vw] border border-gold/30 bg-night/85 px-[min(2vw,3vh)] py-[min(1vw,1.6vh)]",
+        temBase ? "grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]" : "grid-cols-1",
       )}
-      {f && (
-        <p className="text-[1.15vw] leading-snug text-sand">
-          {f.texto} <span className="text-[0.8vw] text-mist/80">Fonte: {f.fonte.nome}</span>
-        </p>
+    >
+      <div className="flex min-w-0 items-center gap-[min(1.4vw,2.2vh)]">
+        <span className="grid size-[min(3.6vw,5.6vh)] shrink-0 place-items-center rounded-full border-2 border-gold/60 font-display text-[min(2.2vw,3.4vh)] text-gold-bright">{n}</span>
+        <div className="min-w-0">
+          <p className="font-display text-[length:calc(var(--k)*min(2.6vw,4.2vh))] leading-[1.12] text-gold-bright">{card.pedido}</p>
+          <p className="mt-[min(0.5vw,0.8vh)] text-[length:calc(var(--k)*min(1.1vw,1.8vh))] font-semibold">
+            {(["auren", "nair"] as const).map((g) => (
+              <span key={g} className="mr-[1.2vw]" style={{ color: grupos.includes(g) ? COR_GRUPO[g] : "#6b7489" }}>
+                {grupos.includes(g) ? "✓" : "○"} {CULTURAS[g].nome}
+              </span>
+            ))}
+          </p>
+        </div>
+      </div>
+      {temBase && (
+        <div className="min-w-0 border-l border-gold/20 pl-[min(2vw,3vh)]">
+          {d && (
+            <figure>
+              <blockquote className="font-display text-[length:calc(var(--k)*min(1.75vw,2.8vh))] leading-[1.2] text-parchment">{d.kind === "citacao" ? `\u201c${d.texto}\u201d` : d.texto}</blockquote>
+              <figcaption className="mt-[min(0.4vw,0.7vh)] text-[length:calc(var(--k)*min(1vw,1.6vh))] leading-snug text-sand">
+                <b className="text-gold-bright">{d.quem}</b> · {d.papel}
+              </figcaption>
+            </figure>
+          )}
+          {f && <p className={cn("leading-snug", d ? "mt-[min(0.6vw,1vh)] text-[length:calc(var(--k)*min(1.15vw,1.85vh))] text-sand" : "text-[length:calc(var(--k)*min(1.55vw,2.5vh))] text-parchment")}>{f.texto}</p>}
+          {card.texto && (
+            <p className="font-display text-[length:calc(var(--k)*min(1.75vw,2.8vh))] leading-[1.2] text-parchment">
+              {card.texto.texto}
+              {card.texto.ref && <span className="ml-[0.5vw] font-sans text-[length:calc(var(--k)*min(0.95vw,1.5vh))] text-mist">{formatRef(card.texto.ref)} · NAA</span>}
+            </p>
+          )}
+          {fontes.length > 0 && <p className="mt-[min(0.4vw,0.7vh)] text-[length:calc(var(--k)*min(0.85vw,1.4vh))] text-mist/80">Fonte: {fontes.join(" · ")}</p>}
+        </div>
       )}
-      {card.texto && (
-        <p className="font-display text-[1.5vw] leading-[1.2] text-parchment">
-          {card.texto.texto}
-          {card.texto.ref && <span className="ml-[0.5vw] font-sans text-[0.85vw] text-mist">{formatRef(card.texto.ref)} · NAA</span>}
-        </p>
-      )}
-      <p className="mt-auto font-display text-[1.75vw] leading-tight text-gold-bright">{card.pedido}</p>
-      <p className="text-[0.95vw] text-sand">
-        {(["auren", "nair"] as const).map((g) => (
-          <span key={g} className="mr-[1vw]" style={{ color: grupos.includes(g) ? COR_GRUPO[g] : "#5b6478" }}>
-            {grupos.includes(g) ? "✓" : "○"} {CULTURAS[g].nome} orou
-          </span>
-        ))}
-      </p>
     </section>
   )
 }

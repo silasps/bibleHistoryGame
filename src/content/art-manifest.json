@@ -36,5 +36,18 @@
     "semente": "/art/reliquias/semente.webp",
     "vestes": "/art/reliquias/vestes.webp"
   },
-  "janela-verde": {}
+  "janela-verde": {
+    "baka-mongulu": "/art/janela-verde/baka-mongulu.webp",
+    "barreira-cultura": "/art/janela-verde/barreira-cultura.webp",
+    "barreira-lingua": "/art/janela-verde/barreira-lingua.webp",
+    "barreira-rio": "/art/janela-verde/barreira-rio.webp",
+    "barreira-semente": "/art/janela-verde/barreira-semente.webp",
+    "capa": "/art/janela-verde/capa.webp",
+    "chefe-sawi": "/art/janela-verde/chefe-sawi.webp",
+    "chefe-yanomami": "/art/janela-verde/chefe-yanomami.webp",
+    "discipulado": "/art/janela-verde/discipulado.webp",
+    "missionarios": "/art/janela-verde/missionarios.webp",
+    "sawi-pantano": "/art/janela-verde/sawi-pantano.webp",
+    "yanomami-xapono": "/art/janela-verde/yanomami-xapono.webp"
+  }
 }
