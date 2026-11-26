@@ -1,0 +1,5 @@
+export * from "./fontes"
+export * from "./simulacao"
+export * from "./cultura"
+export * from "./oracoes"
+export * from "./roteiro"

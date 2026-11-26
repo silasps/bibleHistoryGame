@@ -21,7 +21,7 @@ function scan(dir) {
   )
 }
 
-const FOLDERS = ["items", "cenas", "personagens", "objetos", "reliquias"]
+const FOLDERS = ["items", "cenas", "personagens", "objetos", "reliquias", "janela-verde"]
 const manifest = Object.fromEntries(FOLDERS.map((dir) => [dir, scan(dir)]))
 writeFileSync(join(root, "src/content/art-manifest.json"), JSON.stringify(manifest, null, 2) + "\n")
 const total = Object.values(manifest).reduce((n, files) => n + Object.keys(files).length, 0)
