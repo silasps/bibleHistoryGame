@@ -228,6 +228,8 @@ class SoundEngine {
   private state: EngineState = "off"
   private listeners = new Set<() => void>()
   private starting: Promise<void> | null = null
+  private preloading: Promise<void> | null = null
+  private preloaded: ToneModule | null = null
 
   getState = () => this.state
   subscribe = (l: () => void) => {
@@ -240,8 +242,21 @@ class SoundEngine {
   }
 
   /** Precisa ser chamado dentro de um gesto do usuário (clique/tecla). */
+  /** Carrega o Tone.js antes do clique: assim o Safari libera o áudio no próprio gesto. */
+  preload(): void {
+    this.preloading ??= import("tone")
+      .then((T) => {
+        this.preloaded = T
+      })
+      .catch(() => {
+        this.preloading = null
+      })
+  }
+
   start(): Promise<void> {
     if (this.state === "ready") return Promise.resolve()
+    // Dentro do gesto do usuário: destrava o áudio agora, se o Tone já carregou.
+    if (this.preloaded) void this.preloaded.start().catch(() => {})
     this.starting ??= this.boot().catch((e) => {
       console.error("Som indisponível", e)
       this.starting = null
@@ -409,8 +424,9 @@ class SoundEngine {
     const birdPan = new T.Panner(0).connect(bus)
     const bird = new T.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.008, decay: 0.05, sustain: 0.3, release: 0.05 } }).connect(birdPan)
     bird.volume.value = -22
+    let birdLivre = 0
     const birdLoop = new T.Loop((time) => {
-      if (Math.random() > def.birds) return
+      if (time < birdLivre || Math.random() > def.birds) return
       const n = 2 + Math.floor(Math.random() * 4)
       const up = Math.random() < 0.5
       birdPan.pan.setValueAtTime(rnd(-0.9, 0.9), time)
@@ -424,6 +440,7 @@ class SoundEngine {
         bird.frequency.exponentialRampToValueAtTime(b, t + dur)
         t += dur + rnd(0.03, 0.12)
       }
+      birdLivre = t + 0.05
     }, 0.5).start(0)
 
     const nodes: Node[] = [

@@ -515,7 +515,17 @@ function LigarSom() {
   const sound = usePreferences((s) => s.sound)
   const setSound = usePreferences((s) => s.setSound)
   const motor = useSoundState()
-  if (sound && motor === "ready") return null
+  if (sound && motor === "ready")
+    return (
+      <button
+        type="button"
+        title="Testar o som"
+        onClick={() => soundEngine.stinger("light")}
+        className="inline-flex items-center gap-2 rounded-full border border-sage/50 px-[0.9vw] py-[0.35vw] text-[0.9vw] text-[#bfe3c7]"
+      >
+        <Volume2 className="size-[1.1vw]" aria-hidden /> Floresta tocando
+      </button>
+    )
   return (
     <button
       type="button"
@@ -553,6 +563,8 @@ export function TelaoJanela({ code }: { code: string }) {
   const e = state ? etapaAtual(state) : null
   const mood = state && e ? moodDe(state, e) : null
   useMood(mood)
+  // Carrega o motor de som já na abertura, para o clique liberar o áudio na hora.
+  useEffect(() => soundEngine.preload(), [])
 
   // Volume e mudo vêm do condutor.
   const volume = state?.som.volume
