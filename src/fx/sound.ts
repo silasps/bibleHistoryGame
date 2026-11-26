@@ -11,8 +11,7 @@ export type EngineState = "off" | "loading" | "ready"
 export type AmbientMood = "night" | "garden" | "tension" | "warm" | "wonder" | "hope" | "sorrow" | "triumph"
 /** Trilhas de jogo: animadas, no estilo dos games, com melodia gerada aqui (não é cópia de nenhum jogo). */
 export type ArcadeMood = "play" | "play-tense" | "play-epic"
-export type ForestMood = "floresta" | "floresta-oracao" | "floresta-fala"
-export type Mood = AmbientMood | ArcadeMood | ForestMood
+export type Mood = AmbientMood | ArcadeMood
 export type Stinger = "reveal" | "seal" | "whoosh" | "heartbeat" | "train" | "vote" | "light" | "rewind" | "tap" | "buzzer" | "beep" | "tick" | "rattle"
 
 interface MoodDef {
@@ -194,21 +193,6 @@ export function arcadeMelody(def: Pick<ArcadeDef, "seed" | "progression" | "scal
   return [...a, ...a2, ...b, ...end]
 }
 
-/** Floresta tropical: ambiente contínuo sintetizado (rio, vento nas folhas, insetos, pássaros). */
-interface ForestDef {
-  river: number
-  wind: number
-  insects: number
-  birds: number
-  pad: boolean
-}
-
-const FOREST: Record<ForestMood, ForestDef> = {
-  floresta: { river: 0.22, wind: 0.07, insects: 0.05, birds: 0.35, pad: false },
-  "floresta-oracao": { river: 0.22 * 0.55, wind: 0.07 * 0.55, insects: 0.05 * 0.55, birds: 0.12, pad: true },
-  "floresta-fala": { river: 0.22 * 0.3, wind: 0.07 * 0.3, insects: 0.05 * 0.3, birds: 0.06, pad: false },
-}
-
 interface MoodVoice {
   mood: Mood
   bus: import("tone").Gain
@@ -228,8 +212,6 @@ class SoundEngine {
   private state: EngineState = "off"
   private listeners = new Set<() => void>()
   private starting: Promise<void> | null = null
-  private preloading: Promise<void> | null = null
-  private preloaded: ToneModule | null = null
 
   getState = () => this.state
   subscribe = (l: () => void) => {
@@ -242,21 +224,8 @@ class SoundEngine {
   }
 
   /** Precisa ser chamado dentro de um gesto do usuário (clique/tecla). */
-  /** Carrega o Tone.js antes do clique: assim o Safari libera o áudio no próprio gesto. */
-  preload(): void {
-    this.preloading ??= import("tone")
-      .then((T) => {
-        this.preloaded = T
-      })
-      .catch(() => {
-        this.preloading = null
-      })
-  }
-
   start(): Promise<void> {
     if (this.state === "ready") return Promise.resolve()
-    // Dentro do gesto do usuário: destrava o áudio agora, se o Tone já carregou.
-    if (this.preloaded) void this.preloaded.start().catch(() => {})
     this.starting ??= this.boot().catch((e) => {
       console.error("Som indisponível", e)
       this.starting = null
@@ -323,10 +292,6 @@ class SoundEngine {
       this.voice = this.arcadeVoice(mood as ArcadeMood)
       return
     }
-    if (mood in FOREST) {
-      this.voice = this.forestVoice(mood as ForestMood)
-      return
-    }
     const def = MOODS[mood as AmbientMood]
     T.getTransport().bpm.rampTo(def.bpm, 2)
 
@@ -378,94 +343,6 @@ class SoundEngine {
 
     bus.gain.rampTo(1, 3)
     this.voice = { mood, bus, nodes: [send, padFilter, padLfo, pad, bass, arp, windGain, windFilter, wind], loops: [chordLoop, arpLoop] }
-  }
-
-  /** Floresta: rio, vento, cigarras/grilos, pássaros aleatórios e (na oração) um pad suave. */
-  private forestVoice(mood: ForestMood): MoodVoice {
-    const T = this.tone!
-    const def = FOREST[mood]
-    const rnd = (a: number, b: number) => a + Math.random() * (b - a)
-    const bus = new T.Gain(0).connect(this.master!)
-    const send = new T.Gain(0.3).connect(this.reverb!)
-    bus.connect(send)
-
-    // Rio: ruído marrom grave + ruído rosa em banda média com ondulação lenta.
-    const riverLow = new T.Filter(500, "lowpass").connect(bus)
-    const riverLowGain = new T.Gain(def.river).connect(riverLow)
-    const riverBrown = new T.Noise("brown").connect(riverLowGain).start()
-    const riverBand = new T.Filter(1100, "bandpass", -12).connect(bus)
-    const riverFlow = new T.Gain(0).connect(riverBand)
-    const riverPink = new T.Noise("pink").connect(riverFlow).start()
-    const riverLfo = new T.LFO(rnd(0.1, 0.2), def.river * 0.15, def.river * 0.6).connect(riverFlow.gain).start()
-
-    // Vento nas folhas.
-    const windGain = new T.Gain(def.wind).connect(bus)
-    const windFilter = new T.AutoFilter({ frequency: 0.06, baseFrequency: 350, octaves: 3 }).connect(windGain).start()
-    const windNoise = new T.Noise("pink").connect(windFilter).start()
-
-    // Cigarras: seno agudo com tremolo rápido e volume que cresce e some devagar.
-    const insectGain = new T.Gain(0).connect(bus)
-    const insectTrem = new T.Tremolo(rnd(28, 35), 0.9).connect(insectGain).start()
-    const insectOsc = new T.Oscillator(rnd(4500, 5500), "sine").connect(insectTrem).start()
-    const insectLfo = new T.LFO(1 / rnd(10, 15), 0, def.insects).connect(insectGain.gain).start()
-
-    // Grilos: bipes agudos curtos e ocasionais.
-    const cricketPan = new T.Panner(0).connect(bus)
-    const cricket = new T.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.003, decay: 0.03, sustain: 0, release: 0.02 } }).connect(cricketPan)
-    cricket.volume.value = -34 + 20 * Math.log10(Math.max(def.insects / 0.05, 0.05))
-    const cricketLoop = new T.Loop((time) => {
-      if (Math.random() > 0.3) return
-      const f = rnd(4200, 5200)
-      const n = 2 + Math.floor(Math.random() * 3)
-      for (let i = 0; i < n; i++) cricket.triggerAttackRelease(f, 0.03, time + i * 0.07)
-    }, 1.5).start(0)
-
-    // Pássaros: frases curtas de 2 a 5 trinados com glissando e pan aleatório.
-    const birdPan = new T.Panner(0).connect(bus)
-    const bird = new T.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.008, decay: 0.05, sustain: 0.3, release: 0.05 } }).connect(birdPan)
-    bird.volume.value = -22
-    let birdLivre = 0
-    const birdLoop = new T.Loop((time) => {
-      if (time < birdLivre || Math.random() > def.birds) return
-      const n = 2 + Math.floor(Math.random() * 4)
-      const up = Math.random() < 0.5
-      birdPan.pan.setValueAtTime(rnd(-0.9, 0.9), time)
-      let t = time
-      for (let i = 0; i < n; i++) {
-        const dur = rnd(0.06, 0.12)
-        const a = rnd(1800, 3600)
-        const b = Math.min(4200, Math.max(1800, up ? a * rnd(1.15, 1.6) : a / rnd(1.15, 1.6)))
-        bird.triggerAttackRelease(a, dur, t)
-        bird.frequency.setValueAtTime(a, t)
-        bird.frequency.exponentialRampToValueAtTime(b, t + dur)
-        t += dur + rnd(0.03, 0.12)
-      }
-      birdLivre = t + 0.05
-    }, 0.5).start(0)
-
-    const nodes: Node[] = [
-      send, riverLow, riverLowGain, riverBrown, riverBand, riverFlow, riverPink, riverLfo,
-      windGain, windFilter, windNoise, insectGain, insectTrem, insectOsc, insectLfo,
-      cricketPan, cricket, birdPan, bird,
-    ]
-    const loops = [cricketLoop, birdLoop]
-
-    if (def.pad) {
-      // Pad suave só na oração: acorde longo, ataque lento, direto no reverb.
-      const pad = new T.PolySynth(T.Synth, {
-        oscillator: { type: "fatsine", count: 3, spread: 18 },
-        envelope: { attack: 4, decay: 2, sustain: 0.8, release: 6 },
-      }).connect(this.reverb!)
-      pad.volume.value = -26
-      const padLoop = new T.Loop((time) => {
-        pad.triggerAttackRelease(["D3", "A3", "F#4", "E5"], "6m", time)
-      }, "8m").start(0)
-      nodes.push(pad)
-      loops.push(padLoop)
-    }
-
-    bus.gain.rampTo(1, 3)
-    return { mood, bus, nodes, loops }
   }
 
   /** Trilha de jogo: bateria, baixo saltitante, melodia em 8 bits e arpejo. */
