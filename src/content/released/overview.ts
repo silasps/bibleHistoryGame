@@ -19,7 +19,7 @@ const CONNECTIONS = z.array(WeekConnection).parse([
     week: 2,
     blocks: [
       "Deus estabeleceu uma série de rituais para que fosse possível Ele se relacionar com o povo e, como lá no jardim o homem havia sido separado de Deus, agora Ele encontra um meio de se relacionar novamente, fazendo um convite através de cada lei, ritual e mandamento.",
-      "O capítulo 16, no meio de Levítico — a expiação por todo o povo —, conecta com a vida de Cristo.",
+      "O meio do livro, capítulo 16, vai falar sobre a expiação por todo o povo, o que conecta com a vida de Cristo.",
     ],
   },
   {

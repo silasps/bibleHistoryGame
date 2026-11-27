@@ -5,7 +5,7 @@ import { ItemColor } from "../overview/schema"
 import { weekBudgetMinutes } from "../rubric"
 import { FALAS, type FalaId } from "./falas"
 import { gameMax, gameSecondsOf, ROOM_GAMES } from "./jogos"
-import { isSchoolItem, schoolHostOf } from "./escola"
+import { isSchoolItem, isSlideItem, schoolHostOf } from "./escola"
 import { MOMENTOS } from "./momentos"
 
 // A história contada por ETAPAS (não por semanas). As semanas continuam nos
@@ -18,7 +18,13 @@ export const PrdAnchor = z.object({
   week: z.number().int(),
   /** Índice em `memoryVerse` da semana (a semana 3 tem dois versículos). */
   refIndex: z.number().int().min(0).default(0),
+  /** O versículo entra logo depois deste item (antes dos jogos "depois" dele), na hora em que é dito na história. */
   afterItemId: z.string(),
+  /**
+   * Só no último versículo da semana: a pista entra depois deste item (pode ser
+   * de uma etapa seguinte). Sem ele, a pista fecha o bloco do item do versículo.
+   */
+  clueAfterItemId: z.string().optional(),
 })
 export type PrdAnchor = z.infer<typeof PrdAnchor>
 
@@ -89,6 +95,7 @@ const ETAPAS = z.array(Etapa).parse([
     n: 1, id: "o-comeco", title: "O começo", color: "lilas", status: "com_material",
     itemIds: ["criacao", "adao-eva", "queda"],
     intros: ["r01-intro"],
+    // Gn 3:15 é dito antes das vestes (3:21) e da expulsão (3:23): vem logo depois da Queda (autor, 26/11/2026).
     prd: [{ week: 1, afterItemId: "queda" }],
     games: [
       { id: "criacao", kind: "criacao", max: 8, itemId: "criacao", on: "item", seconds: 75 },
@@ -148,7 +155,10 @@ const ETAPAS = z.array(Etapa).parse([
   },
   {
     n: 7, id: "a-terra", title: "A terra", color: "oliva", status: "com_material",
-    itemIds: ["josue", "conquista-canaa", "periodo-juizes", "debora", "gideao", "rute-boaz", "sansao"],
+    // Ordem da Bíblia, guiada pela cronologia da escola (autor, 26/11/2026): primeiro Juízes, depois Rute
+    // (o autor explica que Rute acontece no meio dos Juízes). Josué antes da Conquista, por causa de Js 1:7.
+    ordemManual: true,
+    itemIds: ["josue", "conquista-canaa", "periodo-juizes", "debora", "gideao", "sansao", "rute-boaz"],
     intros: ["r03-intro"],
     // Pedido do autor (26/11/2026): Js 1:7 ("seja forte e corajoso") é quando Deus fala com Josué,
     // depois da morte de Moisés e antes de entrar na terra (Js 1) — vem antes da Conquista.
@@ -167,20 +177,26 @@ const ETAPAS = z.array(Etapa).parse([
     n: 9, id: "o-reino-dividido", title: "O reino dividido", color: "azul", status: "com_material",
     // Briefing (16/11/2026): a divisão abre a etapa; o altar do Carmelo vem depois de Acabe.
     // Harã-Síria voltou como slide curto (linha do tempo da escola, 19/11/2026), antes de Acabe.
-    itemIds: ["divisao-reino", "jeroboao", "roboao", "reis-julgamento", "aram", "acabe", "elias", "profetas-do-reino", "eliseu", "assiria"],
+    // Pedido do autor (26/11/2026): Salomão morre, Roboão assume e rejeita o conselho, e então o reino se divide (1Rs 12).
+    itemIds: ["roboao", "divisao-reino", "jeroboao", "reis-julgamento", "aram", "acabe", "elias", "profetas-do-reino", "eliseu", "assiria"],
     ordemManual: true,
   },
   {
     n: 10, id: "os-profetas-avisam", title: "Os profetas avisam", color: "turquesa", status: "com_material",
-    itemIds: ["isaias", "joel", "miqueias", "ezequias", "queda-samaria", "amos", "oseias", "jonas", "cerco-jerusalem", "manasses", "naum", "babilonia"],
+    // Ordem da cronologia da escola (referência do autor, 26/11/2026).
+    ordemManual: true,
+    itemIds: ["queda-samaria", "amos", "oseias", "jonas", "cerco-jerusalem", "isaias", "joel", "miqueias", "ezequias", "manasses", "naum", "babilonia"],
     intros: ["r05-intro", "r05-alerta", "r05-servos"],
     // Linha do tempo da escola: Mq 6:8 junto de Isaías.
     prd: [{ week: 5, afterItemId: "isaias" }],
   },
   {
     n: 11, id: "exilio-e-esperanca", title: "Exílio e esperança", color: "coral", status: "com_material",
-    itemIds: ["josias", "sofonias", "jeremias", "habacuque", "daniel", "ezequiel", "queda-jerusalem", "lamentacoes", "obadias", "inicio-exilio", "ciro", "persia"],
+    // Ordem da cronologia da escola (referência do autor, 26/11/2026): a queda e o exílio, depois Daniel e Ezequiel no exílio.
+    ordemManual: true,
+    itemIds: ["josias", "sofonias", "jeremias", "habacuque", "queda-jerusalem", "lamentacoes", "obadias", "inicio-exilio", "daniel", "ezequiel", "persia", "ciro"],
     intros: ["r06-intro", "r04-esperanca"],
+    // Ez 36:26 vem depois da notícia da queda (Ez 33:21): Ezequiel já está depois da queda e do exílio (autor, 26/11/2026).
     prd: [{ week: 6, afterItemId: "ezequiel" }],
     beats: [{ id: "daniel-cova", afterItemId: "ciro", label: "Daniel na cova dos leões", momento: "daniel-cova", art: "daniel" }],
   },
@@ -204,12 +220,18 @@ const ETAPAS = z.array(Etapa).parse([
     intros: ["r08-chegou"],
     itemIds: ["augusto", "nascimento-jesus", "jesus", "herodes-antipas", "pilatos", "ministerio-jesus", "morte-ressurreicao", "ascensao"],
     ordemManual: true,
-    prd: [{ week: 8, afterItemId: "morte-ressurreicao" }],
+    prd: [
+      { week: 8, afterItemId: "morte-ressurreicao" },
+      // At 1:8 é dito antes da ascensão (At 1:8–9); a pista 9 e as pausas da semana 9 ficam depois de Pentecostes (autor, 26/11/2026).
+      { week: 9, afterItemId: "morte-ressurreicao", clueAfterItemId: "pentecostes" },
+    ],
   },
   {
     n: 15, id: "a-igreja", title: "A Igreja", color: "coral", status: "com_material",
-    itemIds: ["pentecostes", "ministerio-pedro", "estevao", "conversao-paulo", "ministerio-paulo", "visao-pedro", "primeira-viagem", "concilio", "nero", "roma-queimada"],
-    prd: [{ week: 9, afterItemId: "pentecostes" }],
+    // Na ordem em que aparece em Atos (autor, 26/11/2026): a visão de Pedro (At 10) antes do ministério de Paulo (At 13).
+    ordemManual: true,
+    itemIds: ["pentecostes", "ministerio-pedro", "estevao", "conversao-paulo", "visao-pedro", "ministerio-paulo", "primeira-viagem", "concilio", "nero", "roma-queimada"],
+    // O versículo da semana 9 (At 1:8) está na Etapa 14, antes da ascensão; a pista 9 vem depois de Pentecostes.
   },
   {
     n: 16, id: "paulo", title: "Paulo", color: "magenta", status: "com_material",
@@ -257,7 +279,7 @@ export function itemsOfEtapa(n: number): TimelineItem[] {
  */
 export function slideItemsOfEtapa(n: number): TimelineItem[] {
   const skip = new Set(getEtapa(n)?.semSlide ?? [])
-  return itemsOfEtapa(n).filter((i) => !skip.has(i.id) && isSchoolItem(i.id))
+  return itemsOfEtapa(n).filter((i) => !skip.has(i.id) && isSlideItem(i.id))
 }
 
 /** Itens do autor fora da lista da escola que entram no slide deste item. */
@@ -329,6 +351,12 @@ export function validateEtapas(): string[] {
     for (const p of e.prd) {
       if (!e.itemIds.includes(p.afterItemId)) issues.push(`etapa ${e.n}: PRD depois de ${p.afterItemId}, que não está na etapa`)
       if (!getWeek(p.week)?.memoryVerse[p.refIndex]) issues.push(`etapa ${e.n}: semana ${p.week} não tem o versículo ${p.refIndex}`)
+      if (p.clueAfterItemId) {
+        // A pista vai para um slide da escola desta etapa ou de uma seguinte, e só no último versículo da semana.
+        const where = etapas.find((x) => x.itemIds.includes(p.clueAfterItemId!))
+        if (!where || where.n < e.n || !isSchoolItem(p.clueAfterItemId)) issues.push(`etapa ${e.n}: pista da semana ${p.week} depois de ${p.clueAfterItemId}, que não serve`)
+        if (p.refIndex !== (getWeek(p.week)?.memoryVerse.length ?? 1) - 1) issues.push(`etapa ${e.n}: clueAfterItemId só no último versículo da semana ${p.week}`)
+      }
     }
   }
   for (const i of items) if (!placed.has(i.id)) issues.push(`${i.id}: fora de qualquer etapa`)

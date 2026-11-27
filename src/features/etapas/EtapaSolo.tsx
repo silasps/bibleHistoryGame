@@ -204,7 +204,7 @@ function Step({ scene, onGameDone }: { scene: Scene; onGameDone: (relicId: strin
         <h2 className="font-display text-3xl" style={{ color: ITEM_COLORS[item.color] }}>
           {item.label}
         </h2>
-        {also.length > 0 && <p className="font-display text-lg text-parchment/80">e {also.join(" · ")}</p>}
+        {also.length > 0 && <p className="font-display text-lg text-parchment/80">{also.join(" · ")}</p>}
         <p className="text-sm text-mist">{[item.sub, formatSpan(item)].filter(Boolean).join(" · ")}</p>
         {o.stageLine && <p className="font-display text-xl leading-snug">{o.stageLine}</p>}
         {depth.map((d) => (

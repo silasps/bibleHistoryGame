@@ -41,10 +41,23 @@ const HOST_OF: Record<string, string> = {
   "levitico-santidade": "arao",
 }
 
+/**
+ * Itens da escola que o autor prefere citar por alto dentro de outro slide
+ * (continuam na faixa da linha do tempo e no "Aprofundar" daquele slide).
+ */
+const AUTHOR_FOLD: Record<string, string> = {
+  // Pedido do autor (26/11/2026): nos Juízes, Gideão e Sansão são os principais; Débora ele cita na fala.
+  debora: "periodo-juizes",
+}
+
 export const isSchoolItem = (id: string) => SCHOOL.has(id)
 
-/** Slide da escola que recebe um item que não está na lista (o tema entra no item-âncora). */
+/** Item que vira slide próprio: está na lista da escola e o autor não o juntou a outro slide. */
+export const isSlideItem = (id: string) => SCHOOL.has(id) && !AUTHOR_FOLD[id]
+
+/** Slide que recebe um item sem slide próprio (o tema entra no item-âncora). */
 export function schoolHostOf(id: string): string | undefined {
+  if (AUTHOR_FOLD[id]) return AUTHOR_FOLD[id]
   if (SCHOOL.has(id)) return undefined
   return HOST_OF[id] ?? getItem(id)?.anchor
 }

@@ -34,9 +34,22 @@ describe("etapas da história", () => {
 
   it("na sequência, cada versículo vem logo depois do seu item, e a pista depois do último versículo da semana", () => {
     const ids = sequenceScenes("visao-geral").map((s) => s.id)
-    // Depois da Queda: Deus veste o homem (Gn 3:21), fora do jardim, e então o versículo.
-    expect(ids.slice(ids.indexOf("item-queda"), ids.indexOf("item-queda") + 4)).toEqual(["item-queda", "jogo-vestes", "jogo-fora", "versiculo-01"])
-    expect(ids.indexOf("pista-01")).toBe(ids.indexOf("versiculo-01") + 1)
+    // Ordem da Bíblia (autor, 26/11/2026): Gn 3:15 logo depois da Queda, antes das vestes (3:21) e da expulsão (3:23); a pista fecha o bloco.
+    expect(ids.slice(ids.indexOf("item-queda"), ids.indexOf("item-queda") + 5)).toEqual(["item-queda", "versiculo-01", "jogo-vestes", "jogo-fora", "pista-01"])
+    // Ez 36:26 depois da notícia da queda (Ez 33:21): Queda de Jerusalém → Início do Exílio → Daniel → Ezequiel → versículo → pista → Ciro.
+    expect(ids.indexOf("item-inicio-exilio")).toBeGreaterThan(ids.indexOf("item-queda-jerusalem"))
+    expect(ids.indexOf("item-ezequiel")).toBeGreaterThan(ids.indexOf("item-inicio-exilio"))
+    expect(ids.indexOf("versiculo-06")).toBe(ids.indexOf("item-ezequiel") + 1)
+    expect(ids.indexOf("pista-06")).toBe(ids.indexOf("versiculo-06") + 1)
+    expect(ids.indexOf("item-ciro")).toBeGreaterThan(ids.indexOf("pista-06"))
+    // Juízes: Gideão e Sansão, depois Rute (Débora entra no slide do período).
+    expect(ids.indexOf("item-sansao")).toBeLessThan(ids.indexOf("item-rute-boaz"))
+    expect(ids).not.toContain("item-debora")
+    // At 1:8 é dito antes da ascensão; a pista 9 e as pausas da semana 9 ficam depois de Pentecostes.
+    expect(ids.indexOf("versiculo-09")).toBe(ids.indexOf("pista-08") + 1)
+    expect(ids.indexOf("item-ascensao")).toBe(ids.indexOf("versiculo-09") + 1)
+    expect(ids.indexOf("pista-09")).toBe(ids.indexOf("item-pentecostes") + 1)
+    expect(ids.indexOf("pausa-s9-carater-natureza")).toBeGreaterThan(ids.indexOf("item-roma-queimada"))
     // Js 1:7: Deus fala com Josué antes de entrar na terra (autor, 26/11/2026).
     expect(ids.indexOf("versiculo-03-1")).toBe(ids.indexOf("item-josue") + 1)
     expect(ids.indexOf("item-conquista-canaa")).toBeGreaterThan(ids.indexOf("versiculo-03-1"))
@@ -67,9 +80,10 @@ describe("roteiro do briefing (16/11/2026)", () => {
     expect(scenes.find((s) => s.id === "item-davi")?.game?.id).toBe("funda")
   })
 
-  it("Etapa 9: a divisão abre; Harã-Síria (slide curto, com mapa) vem antes de Acabe; Acabe antes de Elias e do altar", () => {
+  it("Etapa 9: Roboão abre e o reino se divide (1Rs 12); Harã-Síria (slide curto, com mapa) vem antes de Acabe; Acabe antes de Elias e do altar", () => {
     const e9 = scenes.filter((s) => s.overview?.etapa === 9 && s.overview.role === "item").map((s) => s.overview!.itemId)
-    expect(e9[0]).toBe("divisao-reino")
+    expect(e9.slice(0, 3)).toEqual(["roboao", "divisao-reino", "jeroboao"])
+    expect((scenes.find((s) => s.id === "item-aram")?.steps ?? []).map((st) => st.text).join(" ")).toMatch(/Hazael/)
     expect(e9.indexOf("aram")).toBe(e9.indexOf("acabe") - 1)
     expect(scenes.find((s) => s.id === "item-aram")?.overview?.mapa?.id).toBe("ara")
     expect(e9.indexOf("acabe")).toBeLessThan(e9.indexOf("elias"))

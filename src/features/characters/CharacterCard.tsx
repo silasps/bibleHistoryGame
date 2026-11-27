@@ -81,7 +81,7 @@ export function CharacterCard({ character: c, onOpen, highlight }: { character: 
                   ) : (
                     <span className="font-medium text-parchment">{other?.name}</span>
                   )}
-                  <span className="text-parchment/80">— {k.note}</span>
+                  <span className="text-parchment/80">· {k.note}</span>
                   <RefList refs={k.refs} />
                 </li>
               )

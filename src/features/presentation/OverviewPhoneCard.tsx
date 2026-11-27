@@ -47,7 +47,7 @@ export function OverviewPhoneCard({ overview }: { overview: OverviewView }) {
             {item.label}
           </h2>
           {(overview.alsoItemIds ?? []).length > 0 && (
-            <p className="font-display text-lg text-parchment/80">e {(overview.alsoItemIds ?? []).map((id) => getItem(id)?.label).join(" · ")}</p>
+            <p className="font-display text-lg text-parchment/80">{(overview.alsoItemIds ?? []).map((id) => getItem(id)?.label).join(" · ")}</p>
           )}
           <p className="text-sm text-mist">{[item.sub, formatSpan(item)].filter(Boolean).join(" · ")}</p>
           {!overview.stageLine && item.refs.length > 0 && <p className="mt-2 text-base text-sand">{formatRefs(item.refs, "long")}</p>}

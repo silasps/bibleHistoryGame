@@ -21,7 +21,7 @@ export default function PresenterPage() {
         <p className="text-xs uppercase tracking-[0.4em] text-gold">Modo apresentação</p>
         <h1 className="mt-2 font-display text-5xl text-parchment">Preparar a sala</h1>
         <p className="mt-3 max-w-2xl text-mist">
-          Três superfícies: o telão (abra numa janela no projetor), este painel e os celulares do público. A apresentação é conduzida por você — nada avança sozinho.
+          Três superfícies: o telão (abra numa janela no projetor), este painel e os celulares do público. A apresentação é conduzida por você: nada avança sozinho.
         </p>
         <div className="mt-10">
           <PresenterLobby sequences={seqs} liveAvailable={isLiveConfigured()} accessRequired={!!process.env.PRESENTER_ACCESS_CODE} />

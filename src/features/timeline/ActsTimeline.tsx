@@ -51,7 +51,7 @@ export function ActsTimeline({ compact = false }: { compact?: boolean }) {
                     <Layers className="mt-0.5 size-3.5 shrink-0 text-gold/70" aria-hidden />
                     <span>
                       <span className="sr-only">Sobreposição: </span>
-                      <strong className="font-medium text-sand">{o.books.map((b) => getBook(b).name).join(", ")}</strong> — {o.note}
+                      <strong className="font-medium text-sand">{o.books.map((b) => getBook(b).name).join(", ")}</strong> · {o.note}
                     </span>
                   </li>
                 ))}

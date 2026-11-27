@@ -28,6 +28,7 @@ export interface Aprofundamento {
 
 const AULA_PENTATEUCO = "Aula Pentateuco (semana 2)"
 const AULA_TRIBOS = "Aula Tribos (semana 3)"
+const BIBLIA_ARA = "A Bíblia sobre Arã (pedido do autor, 26/11/2026)"
 const RESUMO = (w: number) => `Seu resumo (semana ${w})`
 const LINHA = (w: number) => `Sua linha do tempo (semana ${w})`
 const BRIEFING = "Seu briefing (16/11/2026)"
@@ -136,7 +137,14 @@ export const APROFUNDAR: Record<string, Aprofundamento> = {
   // Harã-Síria (linha do tempo da escola): um slide curto, com o mapa e uma linha só.
   aram: {
     principal: l("Arã, a Síria, com capital em Damasco, é o vizinho do norte que guerreia com Israel.", [ref("1Kgs", 20, 1), ref("Isa", 7, 8)], "Linha do tempo da escola · sua linha do tempo (semana 4)"),
-    passos: [],
+    // Pedido do autor (26/11/2026): explicar a potência da época e por que guerreava com Israel, pelo que a Bíblia diz.
+    passos: [
+      l("Já com Salomão, por causa da idolatria, Deus levanta adversários: Rezom reina em Damasco e é inimigo de Israel.", [ref("1Kgs", 11, 9, 11), ref("1Kgs", 11, 23, 25)], BIBLIA_ARA),
+      l("Arã é uma potência: Ben-Hadade cerca Samaria, e o Senhor livra Israel para mostrar que Ele é o Senhor.", [ref("1Kgs", 20, 1), ref("1Kgs", 20, 13), ref("1Kgs", 20, 28)], BIBLIA_ARA),
+      l("Por causa dos pecados de Jeroboão que Israel seguia, o Senhor entrega o povo nas mãos de Hazael, rei da Síria.", [ref("2Kgs", 13, 2, 3)], BIBLIA_ARA),
+      l("Quando o povo clama, o Senhor ouve e dá a Israel um libertador.", [ref("2Kgs", 13, 4, 5)], BIBLIA_ARA),
+      l("Arã cai quando a Assíria toma Damasco.", [ref("2Kgs", 16, 9)], BIBLIA_ARA),
+    ],
   },
   assiria: {
     principal: l("A Assíria cresce como potência e passa a cobrar tributo de Israel.", [ref("2Kgs", 15, 19, 20)], LINHA(4)),

@@ -54,7 +54,7 @@ export const resumo08: ResumoExcerptInput[] = [
   {
     id: "r08-reino",
     week: 8,
-    text: "Todos os livros vão mostrar que um reino está chegando. “Então, o anjo lhes disse: — Não tenham medo, pois trago boas-novas de grande alegria para vocês, que são para todo o povo. Hoje, na cidade de Davi, nasceu o Salvador, que é Cristo (ungido), o Senhor (em grego, Kyrios)” (Lc 2:10-11).",
+    text: "Todos os livros vão mostrar que um reino está chegando. “Então, o anjo lhes disse:, Não tenham medo, pois trago boas-novas de grande alegria para vocês, que são para todo o povo. Hoje, na cidade de Davi, nasceu o Salvador, que é Cristo (ungido), o Senhor (em grego, Kyrios)” (Lc 2:10-11).",
     refs: [ref("Luke", 2, 10, 11)],
     itemIds: ["nascimento-jesus"],
   },
@@ -92,7 +92,7 @@ export const resumo08: ResumoExcerptInput[] = [
   {
     id: "r08-ressurreicao",
     week: 8,
-    text: "Jesus, então, logo após sua ressurreição, aparece às mulheres que tinham ido ao seu túmulo, mas o anjo, dirigindo-se às mulheres, disse: “— Não tenham medo! Sei que vocês procuram Jesus, que foi crucificado. Ele não está aqui; ressuscitou, como tinha dito. Venham ver onde ele jazia.” Em outras palavras, Jesus estava dizendo: tenham calma, porque tudo o que foi anunciado e prometido a vocês está se realizando.",
+    text: "Jesus, então, logo após sua ressurreição, aparece às mulheres que tinham ido ao seu túmulo, mas o anjo, dirigindo-se às mulheres, disse: “Não tenham medo! Sei que vocês procuram Jesus, que foi crucificado. Ele não está aqui; ressuscitou, como tinha dito. Venham ver onde ele jazia.” Em outras palavras, Jesus estava dizendo: tenham calma, porque tudo o que foi anunciado e prometido a vocês está se realizando.",
     refs: [ref("Matt", 28, 5, 6)],
     itemIds: ["morte-ressurreicao"],
   },

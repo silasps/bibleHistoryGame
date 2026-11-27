@@ -171,6 +171,8 @@ function clueScene(week: number, etapa: number): SceneInput {
   }
 }
 
+const isLastVerse = (m: { week: number; refIndex: number }) => m.refIndex === getWeek(m.week)!.memoryVerse.length - 1
+
 function etapaScenes(etapa: Etapa): SceneInput[] {
   // Linha de abertura: trechos sem item do resumo. Frases que falam em "semana" ficam de fora da tela.
   const intro = etapa.intros
@@ -195,6 +197,10 @@ function etapaScenes(etapa: Etapa): SceneInput[] {
 
   const scenes: SceneInput[] = [opening]
   const cluesHere: number[] = []
+  const pushClue = (week: number) => {
+    scenes.push(clueScene(week, etapa.n))
+    cluesHere.push(week)
+  }
   const slideItems = slideItemsOfEtapa(etapa.n)
   for (const item of slideItems) {
     // Item que virou parte do slide de um vizinho: os jogos, momentos e versículos dele seguem depois daquele slide.
@@ -235,7 +241,17 @@ function etapaScenes(etapa: Etapa): SceneInput[] {
       })
       for (const { beat, extra } of slideBeats) scenes.push(beatScene(beat, extra, item.week, etapa.n))
     }
-    for (const g of etapa.games.filter((g) => g.itemId === item.id && g.on === "depois")) {
+    // O versículo do plano vem logo depois do item, na hora em que é dito na história (antes dos jogos "depois").
+    // A pista da semana vem logo depois do último versículo dela; se o item tem jogos "depois", fecha o bloco do item.
+    const depois = etapa.games.filter((g) => g.itemId === item.id && g.on === "depois")
+    const pending: number[] = []
+    for (const p of prdMoments.filter((m) => m.etapa === etapa.n && m.afterItemId === item.id)) {
+      scenes.push(verseScene(p.week, p.refIndex, etapa.n, p.knot))
+      if (!isLastVerse(p) || p.clueAfterItemId) continue
+      if (depois.length) pending.push(p.week)
+      else pushClue(p.week)
+    }
+    for (const g of depois) {
       scenes.push({
         id: `jogo-${g.id}`,
         type: "historical_context",
@@ -250,14 +266,9 @@ function etapaScenes(etapa: Etapa): SceneInput[] {
         estimatedSeconds: g.seconds,
       })
     }
-    // O versículo do plano vem logo depois do item (e antes dos momentos).
-    for (const p of prdMoments.filter((m) => m.etapa === etapa.n && m.afterItemId === item.id)) {
-      scenes.push(verseScene(p.week, p.refIndex, etapa.n, p.knot))
-      if (p.refIndex === getWeek(p.week)!.memoryVerse.length - 1) {
-        scenes.push(clueScene(p.week, etapa.n))
-        cluesHere.push(p.week)
-      }
-    }
+    pending.forEach(pushClue)
+    // Pista que a âncora pediu para depois deste item (ex.: a da semana 9 depois de Pentecostes).
+    for (const m of prdMoments.filter((m) => m.clueAfterItemId === item.id && isLastVerse(m))) pushClue(m.week)
   }
   // Espaços do autor (C&N e revelação pessoal) das semanas cuja pista abriu nesta etapa.
   const pauses = cluesHere.flatMap((week) => slotFor((s) => s.position.kind === "semana" && s.position.week === week).map((s) => slotScene(s, week, etapa.n)))

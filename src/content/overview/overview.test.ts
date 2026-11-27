@@ -110,3 +110,11 @@ describe("tópicos para falar (só no painel)", () => {
     }
   })
 })
+
+describe("textos do autor na tela", () => {
+  it("nenhum texto das cenas usa travessão (o resumo do autor não usa)", () => {
+    const json = JSON.stringify(sequenceScenes("visao-geral"))
+    expect(json.match(/.{40}—.{20}/g) ?? []).toEqual([])
+    for (const e of excerpts) expect(`${e.text} ${e.stageLine ?? ""}`, e.id).not.toContain("—")
+  })
+})

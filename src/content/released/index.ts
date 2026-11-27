@@ -13,7 +13,7 @@ const SYNTHESES = z.array(ReleasedSynthesis).parse([
   {
     evidenceId: "ev-descendencia",
     classificationNote:
-      "O anúncio da vitória da descendência da mulher sobre a serpente está explícito no texto. A identificação dessa descendência com Cristo é uma leitura cristã apoiada em ecos do Novo Testamento — por isso está marcada como interpretação.",
+      "O anúncio da vitória da descendência da mulher sobre a serpente está explícito no texto. A identificação dessa descendência com Cristo é uma leitura cristã apoiada em ecos do Novo Testamento; por isso está marcada como interpretação.",
     blocks: [
       block(
         "parafrase",
@@ -22,7 +22,7 @@ const SYNTHESES = z.array(ReleasedSynthesis).parse([
       ),
       block(
         "interpretacao",
-        "É o primeiro anúncio, na narrativa bíblica, de que o mal será derrotado — e ele vem no meio das consequências da queda, antes de qualquer pedido de perdão.",
+        "É o primeiro anúncio, na narrativa bíblica, de que o mal será derrotado, e ele vem no meio das consequências da queda, antes de qualquer pedido de perdão.",
       ),
       block(
         "interpretacao",
@@ -30,7 +30,7 @@ const SYNTHESES = z.array(ReleasedSynthesis).parse([
       ),
       block(
         "interpretacao",
-        "Na tradição cristã, este versículo ficou conhecido como “protoevangelho” — o primeiro anúncio do evangelho —, lido como apontando para Cristo.",
+        "Na tradição cristã, este versículo ficou conhecido como “protoevangelho”, o primeiro anúncio do evangelho, lido como apontando para Cristo.",
       ),
       block(
         "interpretacao",

@@ -104,7 +104,7 @@ export function PresenterLobby({ sequences, liveAvailable, accessRequired }: { s
         <Link href={`/presenter/prep?seq=${sequenceId}`} className="text-gold underline">
           Área de preparação
         </Link>{" "}
-        — nunca a projete.
+        (nunca a projete).
       </p>
     </div>
   )
