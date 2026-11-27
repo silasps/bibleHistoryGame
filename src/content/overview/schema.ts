@@ -44,6 +44,8 @@ export const TimelineItem = z
     refs: z.array(BibleRef).default([]),
     /** Item histórico sem texto bíblico próprio (ex.: Nero, Roma queimada): de onde veio. */
     historico: z.string().optional(),
+    /** Profetas: em que reino profetizam (aparece no slide). */
+    reino: z.enum(["norte", "sul", "exilio", "pos-exilio"]).optional(),
   })
   .refine((i) => i.refs.length > 0 || !!i.historico, "item sem referência bíblica precisa dizer a fonte em `historico`")
   .refine((i) => i.kind === "tema" || i.from !== undefined, "item datado precisa de `from`")

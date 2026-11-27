@@ -39,6 +39,8 @@ const HOST_OF: Record<string, string> = {
   "antioco-iv": "macabeus",
   // "Levítico: sejam santos" vai com Arão (sacerdócio e sistema sacrificial, Lv 8–10), depois do tabernáculo.
   "levitico-santidade": "arao",
+  // Habacuque entra no slide da Babilônia, onde está a pergunta dele (autor, 26/11/2026).
+  habacuque: "babilonia",
 }
 
 /**

@@ -74,6 +74,13 @@ export function contextForItem(itemId: string): CN[] {
   return contextNotes.filter((n) => n.itemIds.includes(itemId))
 }
 
+/** Em que reino o profeta profetiza: Israel (Norte), Judá (Sul) ou no exílio. */
+export function reinoLabel(reino: TimelineItem["reino"], short = false): string | undefined {
+  if (!reino) return undefined
+  if (short) return { norte: "Israel, Norte", sul: "Judá, Sul", exilio: "no exílio", "pos-exilio": "Judá, pós-exílio" }[reino]
+  return { norte: "Israel, reino do Norte", sul: "Judá, reino do Sul", exilio: "No exílio, na Babilônia", "pos-exilio": "Judá, depois do exílio" }[reino]
+}
+
 export function formatYear(year: number): string {
   return year < 0 ? `${-year} a.C.` : `${year} d.C.`
 }

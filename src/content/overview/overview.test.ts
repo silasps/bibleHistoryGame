@@ -118,3 +118,12 @@ describe("textos do autor na tela", () => {
     for (const e of excerpts) expect(`${e.text} ${e.stageLine ?? ""}`, e.id).not.toContain("—")
   })
 })
+
+describe("profetas: em que reino profetizam", () => {
+  it("cada profeta diz se é Israel (Norte), Judá (Sul) ou o exílio", () => {
+    const reino = (id: string) => getItem(id)?.reino
+    for (const id of ["elias", "eliseu", "amos", "oseias", "jonas"]) expect(reino(id), id).toBe("norte")
+    for (const id of ["isaias", "joel", "miqueias", "jeremias", "sofonias", "habacuque"]) expect(reino(id), id).toBe("sul")
+    for (const id of ["ezequiel", "daniel"]) expect(reino(id), id).toBe("exilio")
+  })
+})

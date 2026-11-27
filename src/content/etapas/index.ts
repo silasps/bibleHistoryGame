@@ -185,7 +185,8 @@ const ETAPAS = z.array(Etapa).parse([
     n: 10, id: "os-profetas-avisam", title: "Os profetas avisam", color: "turquesa", status: "com_material",
     // Ordem da cronologia da escola (referência do autor, 26/11/2026).
     ordemManual: true,
-    itemIds: ["queda-samaria", "amos", "oseias", "jonas", "cerco-jerusalem", "isaias", "joel", "miqueias", "ezequias", "manasses", "naum", "babilonia"],
+    // Habacuque fica no slide da Babilônia: "às vésperas da invasão, por quê?" (autor, 26/11/2026).
+    itemIds: ["queda-samaria", "amos", "oseias", "jonas", "cerco-jerusalem", "isaias", "joel", "miqueias", "ezequias", "manasses", "naum", "babilonia", "habacuque"],
     intros: ["r05-intro", "r05-alerta", "r05-servos"],
     // Linha do tempo da escola: Mq 6:8 junto de Isaías.
     prd: [{ week: 5, afterItemId: "isaias" }],
@@ -194,7 +195,7 @@ const ETAPAS = z.array(Etapa).parse([
     n: 11, id: "exilio-e-esperanca", title: "Exílio e esperança", color: "coral", status: "com_material",
     // Ordem da cronologia da escola (referência do autor, 26/11/2026): a queda e o exílio, depois Daniel e Ezequiel no exílio.
     ordemManual: true,
-    itemIds: ["josias", "sofonias", "jeremias", "habacuque", "queda-jerusalem", "lamentacoes", "obadias", "inicio-exilio", "daniel", "ezequiel", "persia", "ciro"],
+    itemIds: ["josias", "sofonias", "jeremias", "queda-jerusalem", "lamentacoes", "obadias", "inicio-exilio", "daniel", "ezequiel", "persia", "ciro"],
     intros: ["r06-intro", "r04-esperanca"],
     // Ez 36:26 vem depois da notícia da queda (Ez 33:21): Ezequiel já está depois da queda e do exílio (autor, 26/11/2026).
     prd: [{ week: 6, afterItemId: "ezequiel" }],

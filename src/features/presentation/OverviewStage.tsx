@@ -6,7 +6,7 @@ import { ITEM_COLORS, ItemArt } from "@/components/art/ItemArt"
 import { ContextMap } from "@/components/art/maps/ContextMap"
 import { getCharacter } from "@/content/characters"
 import { getEtapa, prdMoments, type Etapa } from "@/content/etapas"
-import { formatSpan, getItem, getWeek } from "@/content/overview"
+import { formatSpan, getItem, getWeek, reinoLabel, type TimelineItem } from "@/content/overview"
 import type { TimelineWeek } from "@/content/overview/schema"
 import { formatRef, formatRefs } from "@/content/refs"
 import type { GameView, OverviewView } from "@/domain/projection"
@@ -23,6 +23,19 @@ import { PlanThread } from "./PlanThread"
  * ilustração sai do cartão e ganha destaque com uma linha do resumo do autor.
  */
 /** `hideVerse`: na prévia do painel, o versículo do PRD fica escondido (só a referência). */
+/**
+ * Temas que entram no slide e, se forem profetas do mesmo reino, em que reino
+ * profetizam ("Amós · Oseias · Jonas" / "em Israel, reino do Norte").
+ */
+function alsoLine(also: TimelineItem[]): { names: string; reino?: string } {
+  const reinos = [...new Set(also.map((i) => i.reino))]
+  if (reinos.length === 1) {
+    const r = reinoLabel(reinos[0])
+    return { names: also.map((i) => i.label).join(" · "), reino: r && (reinos[0] === "exilio" ? r : `em ${r}`) }
+  }
+  return { names: also.map((i) => (i.reino ? `${i.label} (${reinoLabel(i.reino, true)})` : i.label)).join(" · ") }
+}
+
 export function OverviewStage({ overview, game, hideVerse = false }: { overview: OverviewView; game?: GameView; hideVerse?: boolean }) {
   const fx = useFx()
   const revealed = useMemo(() => new Set(overview.revealedItemIds), [overview.revealedItemIds])
@@ -92,9 +105,14 @@ export function OverviewStage({ overview, game, hideVerse = false }: { overview:
               )}
               <div className="space-y-[2cqh]">
                 <SplitReveal key={item.id} text={item.label} as="h2" by="words" className={`font-display leading-[1.02] [text-wrap:balance] ${mapa ? "text-[4.2cqw]" : "text-[6cqw]"}`} />
-                {also.length > 0 && <p className="font-display text-[2.6cqw] leading-tight text-parchment/80">{also.map((i) => i.label).join(" · ")}</p>}
+                {also.length > 0 && (
+                  <div>
+                    <p className="font-display text-[2.6cqw] leading-tight text-parchment/80">{alsoLine(also).names}</p>
+                    {alsoLine(also).reino && <p className="text-[1.6cqw] text-sand">{alsoLine(also).reino}</p>}
+                  </div>
+                )}
                 <p className="text-[2.6cqw] font-semibold tabular-nums" style={{ color: ITEM_COLORS[item.color] }}>
-                  {[item.sub, formatSpan(item)].filter(Boolean).join(" · ")}
+                  {[reinoLabel(item.reino) ?? item.sub, formatSpan(item)].filter(Boolean).join(" · ")}
                 </p>
                 {/* Sem frase do resumo (ex.: Novo Testamento, até chegar o material): a referência bíblica. */}
                 {!line && item.refs.length > 0 && <p className="text-[2.2cqw] text-sand">{formatRefs(item.refs, "long")}</p>}

@@ -204,6 +204,8 @@ class SoundEngine {
   private tone: ToneModule | null = null
   private master: import("tone").Volume | null = null
   private sfx: import("tone").Gain | null = null
+  /** Saída dos efeitos, por fora do compressor da música (o selo não abafa a trilha). */
+  private sfxOut: import("tone").Volume | null = null
   private reverb: import("tone").Reverb | null = null
   private delay: import("tone").FeedbackDelay | null = null
   private voice: MoodVoice | null = null
@@ -263,12 +265,20 @@ class SoundEngine {
     const limiter = new T.Limiter(-1).toDestination()
     const comp = new T.Compressor({ threshold: -20, ratio: 3, attack: 0.03, release: 0.3 }).connect(limiter)
     this.master = new T.Volume(-60).connect(comp)
+    // Os efeitos (selo, revelação, voto) vão direto ao limitador: tocam junto com a música sem
+    // acionar o compressor dela, que antes abaixava a trilha por alguns segundos.
+    this.sfxOut = new T.Volume(-60).connect(limiter)
     this.reverb = new T.Reverb({ decay: 6, preDelay: 0.04, wet: 1 })
     await this.reverb.ready
     this.reverb.connect(this.master)
     this.delay = new T.FeedbackDelay({ delayTime: "8n.", feedback: 0.35, wet: 1 }).connect(this.reverb)
-    this.sfx = new T.Gain(1).connect(this.master)
-    this.sfx.connect(this.reverb)
+    this.sfx = new T.Gain(1).connect(this.sfxOut)
+    const sfxSend = new T.Gain(0.35).connect(this.reverb)
+    this.sfx.connect(sfxSend)
+    // Se o navegador suspender o áudio (aba em segundo plano), retoma ao voltar.
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && T.getContext().state !== "running") void T.getContext().resume().catch(() => {})
+    })
     this.applyVolume()
     if (T.getTransport().state !== "started") T.getTransport().start("+0.05")
     this.setState("ready")
@@ -285,10 +295,12 @@ class SoundEngine {
     if (!this.master || !this.tone) return
     const db = this.volume <= 0.001 ? -60 : this.tone.gainToDb(this.volume) - 6
     this.master.volume.rampTo(db, 0.4)
+    this.sfxOut?.volume.rampTo(db, 0.4)
   }
 
   setMuted(muted: boolean) {
     if (this.master) this.master.mute = muted
+    if (this.sfxOut) this.sfxOut.mute = muted
   }
 
   /** Troca a trilha com crossfade. `null` silencia a música (efeitos continuam). */

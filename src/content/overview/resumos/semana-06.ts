@@ -47,7 +47,7 @@ export const resumo06: ResumoExcerptInput[] = [
     id: "r06-habacuque-fe",
     week: 6,
     text: "O Senhor responde a Habacuque e mostra quais são seus planos, e diz que, em meio a toda essa adversidade, “o justo viverá pela sua fé”. Agora que Habacuque entendeu o que Deus está fazendo, sua postura muda, e ele começa a mostrar como seu coração está descansado no Senhor em qualquer situação que estiver por vir.",
-    stageLine: "Deus responde que “o justo viverá pela sua fé”, e o coração de Habacuque fica descansado no Senhor.",
+    // A frase deste trecho está no "Aprofundar" de Habacuque (aprofundar.ts), na ordem da história dele.
     refs: [ref("Hab", 2, 4), ref("Hab", 3, 17, 19)],
     itemIds: ["habacuque"],
     corrections: ["c9"],

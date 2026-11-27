@@ -159,6 +159,14 @@ export const APROFUNDAR: Record<string, Aprofundamento> = {
 
   // ── Etapa 11 · Exílio e esperança ─────────────────────────────────────────
   // Jeremias (complemento, item 2): Deus avisa muitas vezes antes do juízo.
+  // Pedido do autor (26/11/2026): Habacuque no slide da Babilônia, do "por quê?" ao "eu me alegrarei no Senhor".
+  habacuque: {
+    passos: [
+      l("Judá estava em decadência espiritual, com violência, injustiça e corrupção, e a Babilônia crescia como império.", [ref("Hab", 1, 2, 4), ref("Hab", 1, 6)], RESUMO(6)),
+      l("Deus responde que “o justo viverá pela sua fé”, e o coração de Habacuque fica descansado no Senhor.", [ref("Hab", 2, 4)], RESUMO(6)),
+      l("Ainda que a figueira não floresça e não haja fruto na videira nem gado no curral, Habacuque se alegra no Senhor.", [ref("Hab", 3, 17, 18)], "Hc 3:17–18 · pedido do autor (26/11/2026)", "parafrase"),
+    ],
+  },
   jeremias: {
     passos: [
       l("Na porta do templo, Deus fala por Jeremias: corrijam seus caminhos, e eu os deixarei morar nesta terra.", [ref("Jer", 7, 1, 7)], RESUMO(6)),
