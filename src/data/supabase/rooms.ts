@@ -121,8 +121,8 @@ export async function applyHostCommand(
     if (!secretMatches(secret, row.host_secret_hash)) return { error: "Sem permissão de apresentador" }
     const loaded = { row, state: stageOnly(row.state) }
     const narrative = { scenes: sequenceScenes(row.sequence_id) }
-    // "Próximo" num slide com jogo decide entre o pódio e o slide seguinte: precisa saber se alguém pontuou.
-    const game = cmd.type === "next" ? narrative.scenes[loaded.state.index]?.game : undefined
+    // "Mostrar pódio" precisa saber se alguém pontuou no jogo do slide.
+    const game = cmd.type === "podium" ? narrative.scenes[loaded.state.index]?.game : undefined
     const input = game && game.max > 0 ? { ...loaded.state, plays: { [game.id]: await scoredPlays(code, game.id) } } : loaded.state
     const { state, error } = reduceHost(input, cmd, { now: Date.now(), narrative })
     if (error) return { error }

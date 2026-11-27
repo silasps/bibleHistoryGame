@@ -102,6 +102,7 @@ export type HostCommand =
   | { type: "cue"; kind: CueKind }
   | { type: "spotlight"; skinId: string | null }
   | { type: "game_start" }
+  | { type: "podium" }
   | { type: "set_rehearsal"; value: boolean }
   | { type: "end" }
 
@@ -207,16 +208,17 @@ export function reduceHost(state: SessionState, cmd: HostCommand, ctx: Ctx): Hos
       return {
         state: bump({ ...state, status: "running", timing: { ...state.timing, startedAt: now, sceneEnteredAt: now } }),
       }
-    case "next": {
-      // Jogo com pontos no slide: o primeiro Próximo mostra o pódio; o segundo segue.
+    case "next":
+      // O pódio é opcional (pedido do autor, 26/11/2026): Próximo segue direto, mesmo com jogo.
+      return { state: bump(moveTo(state, state.index + 1, now)) }
+    case "podium": {
+      // "Mostrar pódio": só quando o apresentador quiser, se alguém pontuou no jogo do slide.
       const game = narrative.scenes[state.index]?.game
       const live = state.gameLive?.id === game?.id ? state.gameLive : null
       const scored = game && game.max > 0 && Object.values(state.plays?.[game.id] ?? {}).some((r) => r.value > 0)
       const playing = game && (game.startable ? live?.phase === "on" : !live)
-      if (game && scored && playing) {
-        return { state: bump({ ...state, gameLive: { id: game.id, phase: "podio", startedAt: live?.startedAt ?? now, podiumAt: now } }) }
-      }
-      return { state: bump(moveTo(state, state.index + 1, now)) }
+      if (!game || !scored || !playing) return { state, error: "Ninguém pontuou neste jogo ainda" }
+      return { state: bump({ ...state, gameLive: { id: game.id, phase: "podio", startedAt: live?.startedAt ?? now, podiumAt: now } }) }
     }
     case "game_start": {
       const game = narrative.scenes[state.index]?.game

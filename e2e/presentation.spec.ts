@@ -55,11 +55,11 @@ test("demonstração local: a linha do tempo conduz e a pista da semana só abre
   // Na Criação, o celular vira o minijogo (toque para a luz).
   await expect(phone.getByRole("button", { name: /haja luz/ })).toBeVisible()
 
-  // O versículo (NAA) é público: telão e celular mostram o texto; o parágrafo do PRD não.
+  // O versículo (NAA) é público no telão; o parágrafo do PRD não. O celular só aparece na hora de uma ação.
   await gotoScene(host, /Versículo do plano · Gênesis 3:15/)
   await expect(stage).toContainText("Porei inimizade entre você e a mulher")
-  await expect(phone.getByText(/Porei inimizade entre você e a mulher/)).toBeVisible()
-  await expect(phone.getByText("PRD · Plano Redentor de Deus")).toBeVisible()
+  await expect(phone.getByText("Olhe para o telão")).toBeVisible()
+  await expect(stage).not.toContainText("Olhe o seu celular")
   await expect(stage).not.toContainText(AUTHOR_PRD)
   await expect(stage).not.toContainText(FORBIDDEN)
   // No painel, a prévia do telão mostra só a referência: o texto fica escondido.
@@ -73,17 +73,17 @@ test("demonstração local: a linha do tempo conduz e a pista da semana só abre
   await host.getByRole("button", { name: "Mostrar tudo" }).click()
   await expect(host.getByRole("button", { name: /Lembrar o versículo/ })).toBeDisabled()
 
-  // A pista chega selada: o telão mostra o selo e a dica; o celular, a recompensa.
+  // A pista chega selada: o telão mostra o selo e a dica; o celular descansa até a liberação.
   await gotoScene(host, /Pista 1 do plano/)
   await expect(stage).toContainText("1º selo do trilho")
   await expect(stage).toContainText("Abre depois do versículo Gênesis 3:15")
-  await expect(phone.getByText("Você ganhou o 1º selo do trilho!")).toBeVisible()
+  await expect(phone.getByText("Olhe para o telão")).toBeVisible()
   await expect(phone.locator("body")).not.toContainText(AUTHOR_PRD)
-  // Antes da liberação, tocar no selo não abre nada.
-  await phone.getByRole("button", { name: /Espere o sinal/ }).click()
-  await expect(phone.getByText("Ainda não! Espere o sinal.")).toBeVisible()
 
+  // Liberou: o telão chama para o celular e o celular mostra o selo para quebrar.
   await host.getByRole("button", { name: /Liberar pista/ }).click()
+  await expect(stage).toContainText("Olhe o seu celular")
+  await expect(phone.getByText(/É a sua vez/)).toBeVisible()
   await expect(stage).toContainText("Toquem no selo pelo celular")
   await expect(stage).toContainText("0 de 1 já quebraram o selo")
   await expect(phone.locator("body")).not.toContainText(AUTHOR_PRD)
@@ -116,7 +116,8 @@ test.describe("ao vivo com Supabase", () => {
 
     await host.getByRole("button", { name: /Começar a apresentação/ }).click()
     await gotoScene(host, /^\d+\s*Abraão/)
-    for (const p of phones) await expect(p.getByRole("heading", { name: "Abraão" })).toBeVisible({ timeout: 10_000 })
+    // Tópico sem ação: os celulares descansam e mandam olhar o telão.
+    for (const p of phones) await expect(p.getByText("Olhe para o telão")).toBeVisible({ timeout: 10_000 })
 
     await gotoScene(host, /Pista 1 do plano/)
     const before = await phones[0].evaluate(async (c) => (await fetch(`/api/rooms/${c}/audience`)).text(), code)
@@ -161,7 +162,7 @@ test.describe("ao vivo com Supabase", () => {
 
     await host.getByRole("button", { name: /Começar a apresentação/ }).click()
     await gotoScene(host, /^\d+ Noé 🎮/)
-    await expect(phone.getByText(/Este tópico tem um jogo/)).toBeVisible({ timeout: 10_000 })
+    await expect(phone.getByText("Olhe para o telão")).toBeVisible({ timeout: 10_000 })
     await host.getByRole("button", { name: "Jogar agora" }).click()
     await phone.getByRole("button", { name: /^Começar/ }).click({ timeout: 10_000 })
     await phone.getByRole("button", { name: "Par de animais" }).first().click()

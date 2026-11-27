@@ -11,6 +11,7 @@ import {
   Hammer,
   Lightbulb,
   MonitorPlay,
+  NotebookPen,
   Pause,
   Play,
   Plus,
@@ -43,11 +44,14 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import type { HostRoomApi } from "@/data/ports"
 import { tally } from "@/domain/poll"
 import { toProjectorView } from "@/domain/projection"
+import { reduceHost } from "@/domain/session"
+import { gameSecondsOf, getRoomGame } from "@/content/etapas/jogos"
 import type { HostCommand } from "@/domain/session"
 import { cn } from "@/lib/utils"
 import { clickerAction } from "./clicker"
 import { DeepDive } from "./DeepDive"
-import { PresenterNotes } from "./PresenterNotes"
+import { NoteButton, PresenterNotes, usePresenterNotes } from "./PresenterNotes"
+import { NextSlide } from "./NextSlide"
 import { PresenterSound } from "./PresenterSound"
 import { PresenterTopics } from "./PresenterTopics"
 import { clock, useElapsed } from "../etapas/games/LiveGameCard"
@@ -89,13 +93,22 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
   const pollState = poll && state ? state.polls[poll.id] : undefined
   const released = !!(scene?.releases && state?.released.includes(scene.releases))
   const preview = useMemo(() => (state ? toProjectorView(state, { scenes }, getEvidence) : null), [state, scenes])
+  // Miniatura do próximo slide: o mesmo palco, calculado como se o apresentador avançasse (nada é enviado).
+  const nextView = useMemo(() => {
+    if (!state || state.status !== "running" || state.index + 1 >= scenes.length) return null
+    const ahead = reduceHost({ ...state, paused: false }, { type: "goto", index: state.index + 1 }, { now: 0, narrative: { scenes } }).state
+    return toProjectorView(ahead, { scenes }, getEvidence)
+  }, [state, scenes])
+  const notes = usePresenterNotes(state?.sequenceId ?? "", scene?.id)
+  const noteHere = !!scene && !!notes.notes[scene.id]?.trim()
   const seal = preview?.scene?.seal
   const liveGame = preview?.scene?.game
   const gameRunning = liveGame?.phase === "on" && liveGame.max > 0
-  // Próximo durante um jogo com pontos mostra o pódio (no próprio slide) antes de seguir.
-  const nextShowsPodium = !!gameRunning && liveGame!.players > 0
+  // O pódio é opcional: aparece só se o apresentador apertar "Mostrar pódio" (Próxima segue direto).
+  const canPodium = !!gameRunning && liveGame!.players > 0
   const gameElapsed = useElapsed(liveGame?.phase === "on" ? liveGame.startedAt : undefined)
   const [deepOpen, setDeepOpen] = useState(false)
+  const [noteOpen, setNoteOpen] = useState(false)
   const sealInfo = preview?.scene?.sealInfo
   const counts = poll ? tally(pollState?.votes ?? {}, poll) : null
   const participants = state ? Object.keys(state.participants).length : 0
@@ -232,9 +245,25 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
 
       <div className="grid grid-cols-1 gap-6 p-4 md:p-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-5">
-          <div className="overflow-hidden rounded-2xl border border-border">
+          <div className="relative overflow-hidden rounded-2xl border border-border">
             {/* O som da apresentação toca aqui, no computador do apresentador (o telão é mudo). */}
             <ProjectorStage view={preview} joinUrl={joinUrl} preview audible />
+            {noteHere && (
+              <button
+                type="button"
+                onClick={() => setNoteOpen(true)}
+                className="absolute left-3 top-3 z-40 inline-flex animate-pulse items-center gap-2 rounded-full border border-sky-300/70 bg-night/90 px-3 py-1.5 text-sm font-semibold text-sky-100 shadow-[0_0_18px_rgba(125,211,252,0.35)] backdrop-blur"
+                title="Você escreveu uma nota para esta cena"
+              >
+                <NotebookPen className="size-4" aria-hidden /> Tem nota sua aqui
+              </button>
+            )}
+            {state.paused && state.status === "running" && (
+              <p className="absolute inset-x-0 bottom-0 z-40 bg-[#5a2a16]/90 px-4 py-2 text-center text-sm font-semibold text-[#ffd9c4]" role="status">
+                Apresentação pausada · o telão mostra “Pausa”, o tempo parou e a música silenciou
+              </p>
+            )}
+            {nextView && next && !state.paused && <NextSlide view={nextView} joinUrl={joinUrl} title={next.title} />}
           </div>
 
           {state.status === "lobby" && (
@@ -245,7 +274,8 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
 
           {state.status === "running" && scene && (
             <>
-              <div className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-border bg-ink p-4">
+              <div className="space-y-3 rounded-2xl border border-border bg-ink p-4">
+              <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0">
                   <p className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-mist">
                     Cena {state.index + 1} de {scenes.length}
@@ -255,108 +285,114 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
                   {next && <p className="mt-1 text-sm text-mist">A seguir: {next.title}</p>}
                 </div>
                 <div className="flex gap-2">
+                  <Button
+                    variant={state.paused ? "default" : "outline"}
+                    size="lg"
+                    className={cn("h-14 px-4 text-base", state.paused && "animate-pulse")}
+                    onClick={() => send({ type: state.paused ? "resume" : "pause" })}
+                    title="Atalho: P"
+                  >
+                    {state.paused ? <Play className="size-5" /> : <Pause className="size-5" />} {state.paused ? "Retomar" : "Pausar"}
+                  </Button>
                   <Button variant="outline" size="lg" className="h-14 w-14" onClick={() => send({ type: "prev" })} disabled={state.index === 0} aria-label="Cena anterior">
                     <ChevronLeft className="size-6" />
                   </Button>
-                  <Button size="lg" className="h-14 px-6 text-lg" onClick={() => send({ type: "next" })} disabled={!next && !nextShowsPodium}>
-                    {nextShowsPodium ? (
-                      <>
-                        <Trophy className="size-5" /> Mostrar pódio
-                      </>
+                  <Button size="lg" className="h-14 px-6 text-lg" onClick={() => send({ type: "next" })} disabled={!next}>
+                    Próxima <ChevronRight className="size-6" />
+                  </Button>
+                </div>
+              </div>
+                <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3" role="toolbar" aria-label="Ações deste slide">
+                  {liveGame?.startable && liveGame.phase === "parado" && (
+                    <Button size="lg" className="h-11" onClick={() => send({ type: "game_start" })}>
+                      <Play /> Jogar agora
+                    </Button>
+                  )}
+                  {liveGame?.startable && liveGame.phase === "on" && (
+                    <p className="flex h-11 items-center justify-center gap-2 rounded-md border border-gold/50 bg-gold/10 px-3 text-sm text-gold-bright" role="status">
+                      <Trophy className="size-4" aria-hidden /> Jogo rodando · <span className={cn("tabular-nums", gameElapsed >= gameSecondsOf(getRoomGame(liveGame.id)) && "text-[#ffb98a]")}>{clock(gameElapsed)}</span> · {liveGame.players} jogando
+                    </p>
+                  )}
+                  {canPodium && (
+                    <Button variant="outline" size="lg" className="h-11 border-gold/50 text-gold-bright" onClick={() => send({ type: "podium" })} title="Opcional: mostra o pódio no telão; Próxima segue direto">
+                      <Trophy /> Mostrar pódio
+                    </Button>
+                  )}
+
+                  {poll && (
+                    <>
+                      <Button
+                        variant={pollState?.status === "open" ? "default" : "outline"}
+                        size="lg"
+                        className="h-11"
+                        onClick={() => send({ type: pollState?.status === "open" ? "close_poll" : "open_poll", pollId: poll.id })}
+                      >
+                        <Vote /> {pollState?.status === "open" ? "Fechar votação" : pollState?.status === "closed" ? "Reabrir votação" : "Abrir votação"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="h-11"
+                        disabled={!pollState}
+                        onClick={() => pollState && send({ type: pollState.resultsVisible ? "hide_results" : "show_results", pollId: poll.id })}
+                      >
+                        {pollState?.resultsVisible ? <EyeOff /> : <BarChart3 />} {pollState?.resultsVisible ? "Ocultar resultado" : "Revelar resultado"}
+                      </Button>
+                    </>
+                  )}
+
+                  {scene.releases &&
+                    (!released ? (
+                      <Button size="lg" className="h-11" onClick={() => send({ type: "release", evidenceId: scene.releases! })}>
+                        <Unlock /> Liberar pista
+                      </Button>
                     ) : (
-                      <>
-                        Próxima <ChevronRight className="size-6" />
-                      </>
-                    )}
+                      <Button size="lg" className="h-11" disabled={seal === "aberto"} onClick={() => send({ type: "cue", kind: "selo" })}>
+                        <Hammer />
+                        {seal === "aberto" ? "Selo aberto no telão" : "Quebrar selo no telão"}
+                        {sealInfo && seal !== "aberto" && (
+                          <span className="tabular-nums opacity-80">
+                            ({sealInfo.opened}/{sealInfo.players})
+                          </span>
+                        )}
+                      </Button>
+                    ))}
+
+                  {scene.steps && scene.steps.length > 0 && (
+                    <>
+                      <Button size="lg" className="h-11" disabled={state.step >= scene.steps.length} onClick={() => send({ type: "step", delta: 1 })}>
+                        <Footprints /> {scene.overview ? "Aprofundar" : "Próximo candidato"} ({state.step}/{scene.steps.length})
+                      </Button>
+                      <Button variant="outline" size="lg" className="h-11" disabled={state.step === 0} onClick={() => send({ type: "step", delta: -1 })}>
+                        {scene.overview ? "Voltar linha" : "Voltar candidato"}
+                      </Button>
+                    </>
+                  )}
+
+                  {scene.visual === "yard-train" && (
+                    <>
+                      <Button variant="outline" size="lg" className="h-11" onClick={() => send({ type: "cue", kind: "muro" })}>
+                        <BrickWall /> Levantar o muro
+                      </Button>
+                      <Button variant="outline" size="lg" className="h-11" onClick={() => send({ type: "cue", kind: "trem" })}>
+                        <TrainFront /> Passar o trem
+                      </Button>
+                    </>
+                  )}
+                  <span className="flex-1" />
+                  <NoteButton notes={notes} sceneId={scene.id} sceneTitle={scene.title} open={noteOpen} onOpenChange={setNoteOpen} />
+                  <Button variant={deepOpen ? "default" : "outline"} size="lg" className="h-11" onClick={() => setDeepOpen((o) => !o)} title="Atalho: A">
+                    <BookOpenText /> Aprofundar mais
                   </Button>
                 </div>
               </div>
 
+              {deepOpen && <DeepDive scene={scene} onClose={() => setDeepOpen(false)} />}
+
               <PresenterTopics scene={scene} />
 
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {liveGame?.startable && liveGame.phase === "parado" && (
-                  <Button size="lg" className="h-12" onClick={() => send({ type: "game_start" })}>
-                    <Play /> Jogar agora
-                  </Button>
-                )}
-                {liveGame?.startable && liveGame.phase === "on" && (
-                  <p className="flex h-12 items-center justify-center gap-2 rounded-md border border-gold/50 bg-gold/10 px-3 text-sm text-gold-bright" role="status">
-                    <Trophy className="size-4" aria-hidden /> Jogo rodando · <span className={cn("tabular-nums", gameElapsed >= 75 && "text-[#ffb98a]")}>{clock(gameElapsed)}</span> · {liveGame.players} jogando
-                  </p>
-                )}
-                <Button variant={deepOpen ? "default" : "outline"} size="lg" className="h-12" onClick={() => setDeepOpen((o) => !o)}>
-                  <BookOpenText /> Aprofundar mais
-                </Button>
-                <Button variant={state.paused ? "default" : "outline"} size="lg" className="h-12" onClick={() => send({ type: state.paused ? "resume" : "pause" })}>
-                  {state.paused ? <Play /> : <Pause />} {state.paused ? "Retomar" : "Pausar telão"}
-                </Button>
 
-                {poll && (
-                  <>
-                    <Button
-                      variant={pollState?.status === "open" ? "default" : "outline"}
-                      size="lg"
-                      className="h-12"
-                      onClick={() => send({ type: pollState?.status === "open" ? "close_poll" : "open_poll", pollId: poll.id })}
-                    >
-                      <Vote /> {pollState?.status === "open" ? "Fechar votação" : pollState?.status === "closed" ? "Reabrir votação" : "Abrir votação"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="h-12"
-                      disabled={!pollState}
-                      onClick={() => pollState && send({ type: pollState.resultsVisible ? "hide_results" : "show_results", pollId: poll.id })}
-                    >
-                      {pollState?.resultsVisible ? <EyeOff /> : <BarChart3 />} {pollState?.resultsVisible ? "Ocultar resultado" : "Revelar resultado"}
-                    </Button>
-                  </>
-                )}
-
-                {scene.releases &&
-                  (!released ? (
-                    <Button size="lg" className="h-12" onClick={() => send({ type: "release", evidenceId: scene.releases! })}>
-                      <Unlock /> Liberar pista
-                    </Button>
-                  ) : (
-                    <Button size="lg" className="h-12" disabled={seal === "aberto"} onClick={() => send({ type: "cue", kind: "selo" })}>
-                      <Hammer />
-                      {seal === "aberto" ? "Selo aberto no telão" : "Quebrar selo no telão"}
-                      {sealInfo && seal !== "aberto" && (
-                        <span className="tabular-nums opacity-80">
-                          ({sealInfo.opened}/{sealInfo.players})
-                        </span>
-                      )}
-                    </Button>
-                  ))}
-
-                {scene.steps && scene.steps.length > 0 && (
-                  <>
-                    <Button size="lg" className="h-12" disabled={state.step >= scene.steps.length} onClick={() => send({ type: "step", delta: 1 })}>
-                      <Footprints /> {scene.overview ? "Aprofundar" : "Próximo candidato"} ({state.step}/{scene.steps.length})
-                    </Button>
-                    <Button variant="outline" size="lg" className="h-12" disabled={state.step === 0} onClick={() => send({ type: "step", delta: -1 })}>
-                      {scene.overview ? "Voltar linha" : "Voltar candidato"}
-                    </Button>
-                  </>
-                )}
-
-                {scene.visual === "yard-train" && (
-                  <>
-                    <Button variant="outline" size="lg" className="h-12" onClick={() => send({ type: "cue", kind: "muro" })}>
-                      <BrickWall /> Levantar o muro
-                    </Button>
-                    <Button variant="outline" size="lg" className="h-12" onClick={() => send({ type: "cue", kind: "trem" })}>
-                      <TrainFront /> Passar o trem
-                    </Button>
-                  </>
-                )}
-              </div>
-
-              <PresenterNotes sequenceId={state.sequenceId} sceneId={scene.id} sceneTitle={scene.title} />
-
-              {deepOpen && <DeepDive scene={scene} onClose={() => setDeepOpen(false)} />}
+              <PresenterNotes notes={notes} sceneId={scene.id} sceneTitle={scene.title} />
 
               {verse && (
                 <div className="space-y-3 rounded-2xl border border-gold/30 bg-ink p-4">
@@ -484,6 +520,7 @@ export function PresenterConsole({ room, code, joinUrl, projectorUrl, onDelete }
                       <span className="flex-1 truncate">{s.title}</span>
                       {s.optional && <span className="rounded-full border border-border px-1.5 text-[0.6rem] uppercase tracking-wider text-mist" title="Pode pular quando faltar tempo">opcional</span>}
                       {s.game?.startable && <span className="text-xs" title="Tópico com jogo: aperte “Jogar agora” se quiser jogar">🎮</span>}
+                      {notes.notes[s.id]?.trim() && <NotebookPen className="size-3.5 shrink-0 text-sky-200" aria-label="Tem nota sua" />}
                       {SCue && <SCue className="size-3.5 shrink-0 text-gold/80" />}
                       <span className="w-12 text-right font-mono text-xs tabular-nums text-mist/70">
                         {spent ? `${Math.round(spent / 1000)}s` : `~${Math.round(s.estimatedSeconds / 60)}m`}

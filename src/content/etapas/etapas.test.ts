@@ -37,7 +37,9 @@ describe("etapas da história", () => {
     // Depois da Queda: Deus veste o homem (Gn 3:21), fora do jardim, e então o versículo.
     expect(ids.slice(ids.indexOf("item-queda"), ids.indexOf("item-queda") + 4)).toEqual(["item-queda", "jogo-vestes", "jogo-fora", "versiculo-01"])
     expect(ids.indexOf("pista-01")).toBe(ids.indexOf("versiculo-01") + 1)
-    expect(ids.indexOf("versiculo-03-1")).toBe(ids.indexOf("item-conquista-canaa") + 1)
+    // Js 1:7: Deus fala com Josué antes de entrar na terra (autor, 26/11/2026).
+    expect(ids.indexOf("versiculo-03-1")).toBe(ids.indexOf("item-josue") + 1)
+    expect(ids.indexOf("item-conquista-canaa")).toBeGreaterThan(ids.indexOf("versiculo-03-1"))
     expect(ids.indexOf("pista-03")).toBe(ids.indexOf("versiculo-03-2") + 1)
     expect(ids.indexOf("pista-03")).toBeGreaterThan(ids.indexOf("item-alianca-davidica"))
   })
@@ -92,16 +94,30 @@ describe("roteiro do briefing (16/11/2026)", () => {
   })
 
   it("o versículo do plano vem logo depois do item da escola; os momentos viram linhas do Aprofundar do tópico", () => {
-    // Linha do tempo da escola: Lv 20:7–8 com a Aliança do Sinai, Js 1:7 com a Conquista, Mq 6:8 com Isaías.
-    expect(ids.indexOf("versiculo-02")).toBe(ids.indexOf("item-alianca-sinai") + 1)
-    expect(ids.indexOf("versiculo-03-1")).toBe(ids.indexOf("item-conquista-canaa") + 1)
+    // Ordem da Bíblia (autor, 26/11/2026): Sinai → tabernáculo → Arão e Levítico → Lv 20:7–8 → espiões.
+    expect(ids.indexOf("item-alianca-sinai")).toBeLessThan(ids.indexOf("item-tabernaculo"))
+    expect(ids.indexOf("item-arao")).toBe(ids.indexOf("item-tabernaculo") + 1)
+    expect(ids.indexOf("versiculo-02")).toBe(ids.indexOf("item-arao") + 1)
+    expect(ids.indexOf("item-espioes")).toBeGreaterThan(ids.indexOf("versiculo-02"))
+    // Raabe (Js 2) fica na Conquista de Canaã, sob Josué; os espiões de Moisés ficam só com Nm 13–14.
+    const stepsOf = (id: string) => (scenes.find((s) => s.id === id)?.steps ?? []).map((st) => st.text).join(" ")
+    expect(stepsOf("item-espioes")).not.toMatch(/Raabe/)
+    expect(stepsOf("item-conquista-canaa")).toMatch(/Raabe/)
+    // Js 1:7 com a Conquista, Mq 6:8 com Isaías (linha do tempo da escola).
+    // Js 1:7: Deus fala com Josué antes de entrar na terra (autor, 26/11/2026).
+    expect(ids.indexOf("versiculo-03-1")).toBe(ids.indexOf("item-josue") + 1)
+    expect(ids.indexOf("item-conquista-canaa")).toBeGreaterThan(ids.indexOf("versiculo-03-1"))
     expect(ids.indexOf("versiculo-05")).toBe(ids.indexOf("item-isaias") + 1)
-    // Roteiro de 45 min: nenhum momento vira slide próprio.
-    expect(ids.some((id) => id.startsWith("momento-"))).toBe(false)
+    // Roteiro de 45 min: só o arco-íris (pedido do autor) vira slide próprio, logo depois do Dilúvio.
+    expect(ids.filter((id) => id.startsWith("momento-"))).toEqual(["momento-arco-iris"])
+    expect(ids.indexOf("momento-arco-iris")).toBe(ids.indexOf("item-diluvio") + 1)
     const steps = (id: string) => (scenes.find((s) => s.id === id)?.steps ?? []).map((st) => st.text)
+    expect(scenes.find((s) => s.id === "momento-arco-iris")?.overview?.stageLine).toMatch(/sinal da aliança com Noé/)
+    // O que vem depois do arco-íris (Noé também erra, Gn 9:20–21) fica no slide dele, na ordem da Bíblia.
+    expect(steps("momento-arco-iris").some((t) => /Noé também erra/.test(t))).toBe(true)
+    expect(steps("item-diluvio").some((t) => /bem maior/.test(t))).toBe(true)
     expect(steps("item-alianca-sinai").some((t) => /bezerro de ouro/.test(t))).toBe(true)
     expect(steps("item-ciro").some((t) => /cova dos leões/.test(t))).toBe(true)
-    expect(steps("item-diluvio").some((t) => /arco-íris/.test(t))).toBe(true)
   })
 
   it("roteiro de 45 min: só os itens da escola viram slide; os outros entram no tópico ao lado", () => {
@@ -135,5 +151,22 @@ describe("roteiro do briefing (16/11/2026)", () => {
       expect(l.refs.length, l.text).toBeGreaterThan(0)
       expect(l.fonte, l.text).toBeTruthy()
     }
+  })
+})
+
+describe("duração dos jogos", () => {
+  it("estrelas (Abraão) 15 s, maná 30 s; os outros, 75 s", async () => {
+    const { gameSecondsOf, getRoomGame, ROOM_GAMES } = await import("./jogos")
+    expect(gameSecondsOf(getRoomGame("estrelas"))).toBe(15)
+    expect(gameSecondsOf(getRoomGame("mana"))).toBe(30)
+    for (const g of ROOM_GAMES.filter((g) => g.id !== "estrelas" && g.id !== "mana")) expect(gameSecondsOf(g), g.id).toBe(75)
+  })
+
+  it("maná e codornizes intercalados: manhã maná, tarde codornizes; no sexto dia, o dobro do maná", async () => {
+    const { getRoomGame } = await import("./jogos")
+    const mana = getRoomGame("mana")
+    if (mana?.mechanic !== "juntar") throw new Error("maná sem a mecânica de juntar")
+    expect(mana.sessions.map((s) => s.piece).slice(0, 4)).toEqual(["mana", "codorniz", "mana", "codorniz"])
+    expect(mana.sessions.find((s) => s.label === "Dia 6 · manhã")?.count).toBe(2 * mana.sessions[0].count)
   })
 })

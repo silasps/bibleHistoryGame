@@ -63,8 +63,17 @@ export const APROFUNDAR: Record<string, Aprofundamento> = {
       l("Dez espiões espalham medo: diante daquele povo, eles se sentiam como gafanhotos.", [ref("Num", 13, 31, 33)], AULA_TRIBOS),
       l("O povo chora a noite inteira e quer voltar para o Egito.", [ref("Num", 14, 1, 4)], AULA_TRIBOS),
       l("Josué e Calebe confiam: se o Senhor se agradar de nós, Ele nos dará esta terra.", [ref("Num", 14, 6, 9)], AULA_TRIBOS),
+      // Pedido do autor (26/11/2026): os 40 dias espiando viram 40 anos (um ano por dia).
+      l("Os espiões andaram 40 dias pela terra; por causa da incredulidade, cada dia vira um ano no deserto.", [ref("Num", 13, 25), ref("Num", 14, 34)], "Pedido do autor (26/11/2026) · Nm 14:34"),
       l("A incredulidade tem consequência: aquela geração fica 40 anos no deserto; só Josué e Calebe entram.", [ref("Num", 14, 29, 34)], AULA_TRIBOS),
-      l("Quarenta anos depois, Josué envia dois espiões a Jericó, e Raabe, uma cananeia, os esconde.", [ref("Josh", 2, 1, 6)], AULA_TRIBOS),
+    ],
+  },
+
+  // ── Etapa 7 · A terra ─────────────────────────────────────────────────────
+  // Pedido do autor (26/11/2026): a segunda ida dos espiões (Raabe) é depois dos 40 anos, sob Josué, antes de Jericó.
+  "conquista-canaa": {
+    passos: [
+      l("Antes de Jericó, Josué envia dois espiões, e Raabe, uma cananeia, os esconde.", [ref("Josh", 2, 1, 6)], AULA_TRIBOS),
       l("Raabe confessa que o Senhor deu a terra a Israel e pede que poupem a sua família.", [ref("Josh", 2, 9, 13)], AULA_TRIBOS),
       l("Um cordão vermelho na janela é o sinal: quando Jericó cai, Raabe e sua família são salvas.", [ref("Josh", 2, 18, 21), ref("Josh", 6, 22, 25)], AULA_TRIBOS),
       l("Desta vez, os espiões voltam dizendo: o Senhor entregou toda a terra em nossas mãos.", [ref("Josh", 2, 24)], AULA_TRIBOS),
@@ -72,8 +81,6 @@ export const APROFUNDAR: Record<string, Aprofundamento> = {
     ],
     apoio: [l("Raabe aparece na genealogia de Jesus, como mãe de Boaz.", [ref("Matt", 1, 5)], AULA_TRIBOS)],
   },
-
-  // ── Etapa 7 · A terra ─────────────────────────────────────────────────────
   josue: {
     principal: l("Depois da morte de Moisés, o Senhor fala com Josué: atravesse o Jordão com todo o povo.", [ref("Josh", 1, 1, 2)], AULA_TRIBOS),
     passos: [],

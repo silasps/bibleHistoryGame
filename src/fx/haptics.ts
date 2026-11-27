@@ -14,4 +14,6 @@ export const HAPTIC = {
   vote: 15,
   light: [10, 40, 10],
   wave: 80,
+  /** É a vez do público: abriu uma ação no celular. */
+  turn: [60, 80, 60, 80, 160],
 }

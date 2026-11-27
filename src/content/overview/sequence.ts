@@ -91,6 +91,25 @@ function beatSteps(b: Etapa["beats"][number]) {
   return lines.map((text, i) => ({ id: `${b.id}-${i + 1}`, label: c.origem === "fala" ? `Da sua fala · ${b.label}` : `Aprofundar · ${b.label}`, text }))
 }
 
+/** Momento com slide próprio (ex.: o arco-íris depois do Dilúvio). */
+function beatScene(b: Etapa["beats"][number], extra: Etapa["beats"], week: number, etapaN: number): SceneInput {
+  const c = beatContent(b)
+  const own = c.steps.map((text, i) => ({ id: `${b.id}-${i + 1}`, label: c.origem === "fala" ? "Da sua fala" : "Aprofundar", text }))
+  const steps = [...own, ...extra.flatMap(beatSteps)]
+  return {
+    id: `momento-${b.id}`,
+    type: b.pause ? "presenter_pause" : "historical_context",
+    title: b.label,
+    perspective: "historical_observer",
+    visual: "timeline",
+    illumination: b.pause ? 0.35 : 0.55,
+    overview: { role: "beat", week, etapa: etapaN, beatId: b.id, stageLine: c.stageLine },
+    steps: steps.length ? steps : undefined,
+    presenterCue: b.pause ? "pausa" : "historia",
+    estimatedSeconds: b.pause ? 45 : 15,
+  }
+}
+
 function slotScene(slot: ReflectionSlot, week?: number, etapa?: number): SceneInput {
   const filled = isFilled(slot)
   const role = slot.position.kind === "abertura" ? "abertura" : slot.position.kind === "conclusao" ? "conclusao" : "reflexao"
@@ -185,7 +204,13 @@ function etapaScenes(etapa: Etapa): SceneInput[] {
       // Roteiro de 45 min: os itens fora da lista da escola entram aqui (faixa da linha do tempo + "Aprofundar").
       const guests = [...also, item.id].flatMap((id) => guestsOf(etapa.n, id).map((g) => g.id))
       const group = [item.id, ...also, ...guests]
-      const beats = etapa.beats.filter((b) => group.includes(b.afterItemId))
+      // Momentos: viram linhas do tópico, menos os que o autor quer como slide (e os que vêm depois deles, que viram linhas desse slide).
+      const itemBeats: Etapa["beats"] = []
+      const slideBeats: { beat: Etapa["beats"][number]; extra: Etapa["beats"] }[] = []
+      for (const b of etapa.beats.filter((b) => group.includes(b.afterItemId))) {
+        if (b.slide) slideBeats.push({ beat: b, extra: [] })
+        else (slideBeats.at(-1)?.extra ?? itemBeats).push(b)
+      }
       const mainLine = slideLineFor(item.id)
       const mainId = LINES.picked.get(item.id)?.id
       const others = group
@@ -202,12 +227,13 @@ function etapaScenes(etapa: Etapa): SceneInput[] {
         illumination: 0.55,
         overview: { role: "item", week: item.week, etapa: etapa.n, itemId: item.id, alsoItemIds: also.length + guests.length ? [...also, ...guests] : undefined, mapa, stageLine: mainLine },
         // Os momentos (suas falas e os rascunhos) viram linhas do "Aprofundar" do tópico: você toca no assunto se quiser.
-        steps: [...depthSteps(others), ...group.flatMap(extraSteps), ...beats.flatMap(beatSteps)],
+        steps: [...depthSteps(others), ...group.flatMap(extraSteps), ...itemBeats.flatMap(beatSteps)],
         game: game && { id: game.id, kind: game.kind, max: game.max, startable: game.aoVivo },
         presenterCue: "historia",
         // Jogo ao vivo: a estimativa só soma quando o apresentador marca "vou jogar ao vivo" (Área de preparação).
         estimatedSeconds: game && !game.aoVivo ? game.seconds : 15,
       })
+      for (const { beat, extra } of slideBeats) scenes.push(beatScene(beat, extra, item.week, etapa.n))
     }
     for (const g of etapa.games.filter((g) => g.itemId === item.id && g.on === "depois")) {
       scenes.push({

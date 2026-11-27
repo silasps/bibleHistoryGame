@@ -50,7 +50,7 @@ export function useCountdown(totalMs: number, running: boolean, onEnd?: () => vo
 /** Barra do topo: tempo que sobra, pontos e um rótulo curto (ex.: "Pares 3/7"). */
 export function GameHud({ left, total, score, label, className }: { left: number; total: number; score: number; label?: string; className?: string }) {
   const share = Math.max(0, Math.min(1, left / total))
-  const low = left < 10_000
+  const low = left < Math.min(10_000, total / 3)
   return (
     <div className={cn("pointer-events-none absolute inset-x-0 top-0 z-20 space-y-1 bg-gradient-to-b from-black/70 to-transparent px-3 pb-4 pt-2", className)}>
       <div className="h-1.5 overflow-hidden rounded-full bg-white/15" role="progressbar" aria-label="Tempo" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(share * 100)}>

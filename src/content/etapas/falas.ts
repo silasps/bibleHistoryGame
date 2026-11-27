@@ -45,10 +45,11 @@ export const FALAS = {
     cn: "Bom e amoroso",
   },
   "arco-iris": {
-    text: "Deus faz a primeira aliança com o arco-íris no céu.",
-    stageLine: "Deus faz a primeira aliança, com o arco-íris no céu.",
+    // Pedido do autor (26/11/2026): "a aliança noaica é demonstrada através deste símbolo, de que Deus prometeu nunca mais destruir a terra em água".
+    text: "Deus faz a primeira aliança com o arco-íris no céu. A aliança com Noé é demonstrada através deste símbolo: Deus prometeu nunca mais destruir a terra com água.",
+    stageLine: "O arco-íris é o sinal da aliança com Noé: Deus promete que nunca mais um dilúvio destruirá a terra.",
     kind: "narracao",
-    refs: [ref("Gen", 9, 12, 13)],
+    refs: [ref("Gen", 9, 11, 13)],
   },
   "noe-caido": {
     text: "A narrativa segue e mostra que Noé também erra. Logo depois de sair da arca, ele está ali jogado no chão, como se fosse um segundo Adão. Tinha sido escolhido pelo Senhor e agora está ali, bêbado, jogado. A natureza caída do homem ainda estava levando ele para esse lugar de destruição, de autodestruição.",

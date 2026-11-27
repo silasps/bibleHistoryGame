@@ -1,6 +1,6 @@
 "use client"
 
-import { Pause } from "lucide-react"
+import { MonitorPlay, Pause } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -8,16 +8,17 @@ import { ConnectionStatus } from "@/components/story/ConnectionStatus"
 import { DemoBadge } from "@/components/story/DemoBadge"
 import { Button } from "@/components/ui/button"
 import type { AudienceRoomApi, RoomMode } from "@/data/ports"
+import { phoneFocus, type PhoneAction } from "@/domain/phone-action"
 import type { ClueView } from "@/domain/projection"
 import { SEAL_TAPS, sealGameId } from "@/domain/session"
 import { HAPTIC, vibrate } from "@/fx/haptics"
 import { ParticleField } from "@/fx/ParticleField"
 import { useStinger } from "@/fx/useSound"
+import { useWakeLock } from "@/lib/useWakeLock"
 import { cn } from "@/lib/utils"
 import { useInventory } from "@/stores/inventory"
 import { PhoneGame } from "../etapas/etapa-1/PhoneGame"
 import { HajaLuzPhone } from "./Moments"
-import { OverviewPhoneCard } from "./OverviewPhoneCard"
 import { Achievements, PhoneDock, PhoneSheet, type DockPanel } from "./PhoneDock"
 import { Counting, ResultsPhone, useFreshResults } from "./Podium"
 import { PollResults } from "./PollResults"
@@ -68,6 +69,12 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
   const scene = view?.scene
   const poll = scene?.poll
   const canVote = poll?.status === "open"
+  // Só aparece o que a pessoa tem para fazer; fora disso, o celular descansa e o telão manda.
+  const focus = phoneFocus(view ?? null, brokenHere)
+  const idle = !focus.game && !focus.clue && !focus.poll && !focus.light
+  // A tela não apaga durante a sala (como um vídeo tocando), para estar pronta na hora da ação.
+  useWakeLock(joined && !!view && view.status !== "ended")
+  const turn = useTurnSignal(focus.todo, scene?.id)
   // A pista da cena atual aparece em destaque; o Arquivo guarda as outras.
   const featured = scene?.clueId ? view?.clues.find((c) => c.evidenceId === scene.clueId) : undefined
   const archive = view?.clues.filter((c) => c.evidenceId !== featured?.evidenceId) ?? []
@@ -128,25 +135,19 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
             {view.status === "lobby" && (
               <section className="glass rounded-3xl p-6 text-center">
                 <p className="font-display text-3xl text-parchment">Você está dentro{view.me?.nickname ? `, ${view.me.nickname}` : ""}.</p>
-                <p className="mt-2 text-mist">A investigação começa em instantes. Fique de olho no telão.</p>
+                <p className="mt-2 text-mist">A investigação começa em instantes. Fique de olho no telão: quando for a sua vez, este celular mostra o que fazer.</p>
               </section>
             )}
 
-            {view.status === "running" && scene && (
-              <section className={cn("flex flex-col gap-4", scene.game && "flex-1")} aria-live="polite">
-                {scene.game && !(scene.game.startable && scene.game.phase === "parado") ? (
-                  <PhoneGame game={scene.game} line={scene.overview?.stageLine} scope={inventoryScope} play={room.play} />
-                ) : (
-                  scene.overview && <OverviewPhoneCard overview={scene.overview} />
-                )}
-                {scene.game?.startable && scene.game.phase === "parado" && (
-                  <p className="rounded-2xl border border-gold/40 bg-gold/10 px-4 py-3 text-center text-sm text-gold-bright">🎮 Este tópico tem um jogo. Ele começa quando o apresentador liberar.</p>
-                )}
-                {!scene.overview && scene.title && <h1 className="font-display text-3xl leading-tight text-parchment">{scene.title}</h1>}
-                {scene.prompt && (!scene.overview || scene.overview.role === "versiculo") && <p className="text-mist">{scene.prompt}</p>}
-                {featured && <SealedClue key={featured.evidenceId} clue={featured} broken={isBroken(featured)} onBroken={() => breakSeal(featured.evidenceId)} featured />}
+            {view.status === "running" && scene && idle && <PhoneRest paused={view.paused} />}
 
-                {poll && poll.status !== "idle" && (
+            {view.status === "running" && scene && !idle && (
+              <section className={cn("flex flex-col gap-4", focus.game && "flex-1")} aria-live="polite">
+                <AnimatePresence>{turn && <TurnBanner key={turn.key} action={turn.action} />}</AnimatePresence>
+                {focus.game && <PhoneGame game={scene.game!} line={scene.overview?.stageLine} scope={inventoryScope} play={room.play} />}
+                {focus.clue && featured && <SealedClue key={featured.evidenceId} clue={featured} broken={isBroken(featured)} onBroken={() => breakSeal(featured.evidenceId)} featured />}
+
+                {focus.poll && poll && (
                   <div className="glass space-y-3 rounded-3xl p-4">
                     {canVote && !poll.resultsVisible ? (
                       <>
@@ -175,7 +176,7 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
                   </div>
                 )}
 
-                {view.moment?.kind === "luzes" && (
+                {focus.light && (
                   <motion.button
                     whileTap={{ scale: 0.94 }}
                     disabled={view.me?.lit}
@@ -238,5 +239,56 @@ export function AudienceScreen({ room, mode, code }: { room: AudienceRoomApi & {
         {view?.moment?.kind === "haja-luz" && <HajaLuzPhone key={view.moment.startedAt} startedAt={view.moment.startedAt} myOrder={view.moment.myOrder} total={view.moment.total} />}
       </AnimatePresence>
     </div>
+  )
+}
+
+const TURN_TEXT: Record<PhoneAction, string> = {
+  jogo: "Hora do jogo!",
+  votar: "Hora de votar!",
+  selo: "Quebre o selo!",
+  luz: "Acenda a sua luz!",
+}
+
+/** Quando abre uma ação, o celular vibra e mostra "É a sua vez" por alguns segundos. */
+function useTurnSignal(todo: PhoneAction | null, sceneId: string | undefined) {
+  const key = todo ? `${sceneId}:${todo}` : null
+  const [expired, setExpired] = useState<string | null>(null)
+  useEffect(() => {
+    if (!key) return
+    vibrate(HAPTIC.turn)
+    const t = setTimeout(() => setExpired(key), 4000)
+    return () => clearTimeout(t)
+  }, [key])
+  return todo && key && expired !== key ? { action: todo, key } : null
+}
+
+function TurnBanner({ action }: { action: PhoneAction }) {
+  return (
+    <motion.p
+      role="status"
+      initial={{ opacity: 0, y: -12, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, height: 0, marginBottom: -16 }}
+      className="rounded-2xl border border-gold/60 bg-gold/15 px-4 py-3 text-center font-display text-2xl text-gold-bright shadow-[0_0_30px_rgba(216,169,72,0.35)]"
+    >
+      É a sua vez · {TURN_TEXT[action]}
+    </motion.p>
+  )
+}
+
+/** Celular em repouso: nada para fazer agora, a atenção vai para o telão. */
+function PhoneRest({ paused }: { paused: boolean }) {
+  return (
+    <section className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center" aria-live="polite">
+      <motion.div
+        animate={{ opacity: [0.45, 0.9, 0.45] }}
+        transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+        className="grid size-20 place-items-center rounded-full border border-gold/30 bg-night/60"
+      >
+        {paused ? <Pause className="size-9 text-gold/80" aria-hidden /> : <MonitorPlay className="size-9 text-gold/80" aria-hidden />}
+      </motion.div>
+      <p className="font-display text-3xl text-parchment">{paused ? "Pausa" : "Olhe para o telão"}</p>
+      <p className="max-w-xs text-sm text-mist">{paused ? "Já voltamos. Fique por perto." : "Quando for a sua vez, este celular vibra e mostra o que fazer."}</p>
+    </section>
   )
 }

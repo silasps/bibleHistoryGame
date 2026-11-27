@@ -61,14 +61,13 @@ test("todos os minijogos das etapas 3 a 11 chegam ao desfecho, com pontos e rel�
       await tap("Atravessar um grupo", 6)
       await page.clock.runFor(3_000)
     }],
-    // Maná: se a máquina estiver lenta e os 75 s acabarem antes, o jogo termina no mesmo desfecho (com pontos e relíquia).
+    // Maná e codornizes (30 s): junta o que estiver caindo; termina ao completar os seis dias ou quando o tempo acaba, no mesmo desfecho.
     6: ["No sétimo dia, descanso", async () => {
       const finale = page.getByText("No sétimo dia, descanso")
-      for (const n of [5, 5, 5, 5, 5, 10]) {
+      for (let k = 0; k < 120 && !(await finale.isVisible()); k++) {
         // Clique com limite: se o desfecho cobrir a tela no meio do clique, o laço só segue.
-        for (let i = 0; i < n && !(await finale.isVisible()); i++) await page.getByRole("button", { name: "Juntar o maná" }).first().click({ timeout: 5_000 }).catch(() => {})
-        if (await finale.isVisible()) break
-        await page.clock.runFor(1_800)
+        await page.getByRole("button", { name: /Juntar (o maná|a codorniz)/ }).first().click({ timeout: 2_000 }).catch(() => {})
+        await page.clock.runFor(400)
       }
     }],
     7: ["As muralhas caem", async () => {
@@ -129,8 +128,8 @@ test("ao vivo: Jogar agora no slide do tópico, o celular joga, Próximo mostra 
 
   await host.getByRole("button", { name: /Começar a apresentação/ }).click()
   await host.getByRole("navigation", { name: "Roteiro da sequência" }).getByRole("button", { name: /^\d+ Noé 🎮/ }).click()
-  // Antes do "Jogar agora", o celular mostra o tópico.
-  await expect(phone.getByText(/Este tópico tem um jogo/)).toBeVisible()
+  // Antes do "Jogar agora", o celular descansa (olhe para o telão) e o telão não chama.
+  await expect(phone.getByText("Olhe para o telão")).toBeVisible()
   await host.getByRole("button", { name: "Jogar agora" }).click()
   await play(phone)
   await phone.getByRole("button", { name: "Par de animais" }).first().click()

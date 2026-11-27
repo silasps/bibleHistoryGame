@@ -86,6 +86,18 @@ export const ART: Record<string, () => ReactNode> = {
       <Waves x={50} y={80} w={76} n={2} />
     </>
   ),
+  "arco-iris": () => (
+    <>
+      {[34, 29, 24, 19].map((r, i) => (
+        <path key={r} d={`M ${50 - r} 56 A ${r} ${r} 0 0 1 ${50 + r} 56`} stroke={i === 0 ? GOLD : undefined} strokeOpacity={1 - i * 0.18} />
+      ))}
+      <Cloud x={20} y={56} s={0.7} />
+      <Cloud x={80} y={56} s={0.7} />
+      <Ark x={50} y={72} s={0.8} />
+      <Waves x={50} y={86} w={60} n={1} />
+      <Dove x={66} y={30} s={0.8} />
+    </>
+  ),
   babel: () => (
     <>
       <Tower x={50} y={60} s={1.5} />

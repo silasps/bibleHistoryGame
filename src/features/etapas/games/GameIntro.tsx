@@ -3,7 +3,7 @@
 import { Play } from "lucide-react"
 import { motion } from "motion/react"
 import type { EtapaRoomGame, Gesture } from "@/content/etapas/jogos"
-import { GAME_SECONDS } from "@/content/etapas/jogos"
+import { gameSecondsOf } from "@/content/etapas/jogos"
 import { formatRef } from "@/content/refs"
 import { useFx } from "@/fx/useFx"
 import { Backdrop } from "../etapa-1/art"
@@ -111,7 +111,7 @@ export function GameIntro({ game, onStart }: { game: EtapaRoomGame; onStart: () 
         <GestureDemo gesture={game.gesture} />
         <p className="max-w-xs text-base leading-snug text-parchment">{game.instruction}</p>
         <p className="max-w-xs text-xs leading-snug text-sand">
-          {GAME_SECONDS} segundos · {game.scoring}
+          {gameSecondsOf(game)} segundos · {game.scoring}
         </p>
         <motion.button
           type="button"

@@ -4,7 +4,7 @@ import { compareItems, excerpts, getItem, getWeek, items, weeks, type TimelineIt
 import { ItemColor } from "../overview/schema"
 import { weekBudgetMinutes } from "../rubric"
 import { FALAS, type FalaId } from "./falas"
-import { gameMax, ROOM_GAMES } from "./jogos"
+import { gameMax, gameSecondsOf, ROOM_GAMES } from "./jogos"
 import { isSchoolItem, schoolHostOf } from "./escola"
 import { MOMENTOS } from "./momentos"
 
@@ -52,6 +52,11 @@ export const EtapaBeat = z.object({
   art: z.string(),
   /** Ponto de reflexão: pausa mais longa, com visual de pausa. */
   pause: z.boolean().default(false),
+  /**
+   * Fica como slide próprio, logo depois do tópico, mesmo no roteiro de 45 min
+   * (pedido do autor). Os momentos seguintes do mesmo tópico viram linhas dele.
+   */
+  slide: z.boolean().default(false),
 })
 export type EtapaBeat = z.infer<typeof EtapaBeat>
 
@@ -99,7 +104,8 @@ const ETAPAS = z.array(Etapa).parse([
     itemIds: ["noe", "diluvio", "babel"],
     beats: [
       { id: "bondade-juizo", afterItemId: "diluvio", label: "A bondade de Deus no juízo", fala: "bondade-juizo", art: "diluvio" },
-      { id: "arco-iris", afterItemId: "diluvio", label: "O arco-íris", fala: "arco-iris", art: "diluvio" },
+      // Pedido do autor (26/11/2026): depois do Dilúvio, o arco-íris, sinal da aliança com Noé.
+      { id: "arco-iris", afterItemId: "diluvio", label: "O arco-íris", fala: "arco-iris", art: "arco-iris", slide: true },
       { id: "noe-caido", afterItemId: "diluvio", label: "Noé também erra", fala: "noe-caido", art: "noe" },
     ],
   },
@@ -130,18 +136,23 @@ const ETAPAS = z.array(Etapa).parse([
   { n: 5, id: "libertacao", title: "Libertação", color: "carmim", status: "com_material", itemIds: ["exodo"] },
   {
     n: 6, id: "deus-no-meio-do-povo", title: "Deus no meio do povo", color: "dourado", status: "com_material",
-    itemIds: ["peregrinacao", "arao", "alianca-sinai", "tabernaculo", "levitico-santidade", "espioes", "alianca-deuteronomica", "uncao-josue", "morte-moises"],
+    // Ordem da Bíblia, conferida com o autor (26/11/2026) e a cronologia da aula de Pentateuco:
+    // Sinai e os 10 mandamentos (Êx 19–20) → tabernáculo (Êx 25–40) → sacerdotes ungidos e sistema
+    // sacrificial (Lv 8–10) → "sejam santos" (Lv 20:7–8) → espiões (Nm 13–14) → Deuteronômio.
+    ordemManual: true,
+    itemIds: ["peregrinacao", "alianca-sinai", "tabernaculo", "arao", "levitico-santidade", "espioes", "alianca-deuteronomica", "uncao-josue", "morte-moises"],
     intros: ["r02-intro", "r02-recapitulacao"],
-    // Linha do tempo da escola (19/11/2026): Lv 20:7–8 junto da Aliança do Sinai.
-    prd: [{ week: 2, afterItemId: "alianca-sinai" }],
+    // Pedido do autor (26/11/2026): Lv 20:7–8 junto do tabernáculo; fica logo depois de Arão e de Levítico, na ordem da Bíblia.
+    prd: [{ week: 2, afterItemId: "arao" }],
     beats: [{ id: "bezerro", afterItemId: "alianca-sinai", label: "O bezerro de ouro", momento: "bezerro", art: "alianca-sinai" }],
   },
   {
     n: 7, id: "a-terra", title: "A terra", color: "oliva", status: "com_material",
     itemIds: ["josue", "conquista-canaa", "periodo-juizes", "debora", "gideao", "rute-boaz", "sansao"],
     intros: ["r03-intro"],
-    // Linha do tempo da escola: Js 1:7 junto da Conquista de Canaã.
-    prd: [{ week: 3, refIndex: 0, afterItemId: "conquista-canaa" }],
+    // Pedido do autor (26/11/2026): Js 1:7 ("seja forte e corajoso") é quando Deus fala com Josué,
+    // depois da morte de Moisés e antes de entrar na terra (Js 1) — vem antes da Conquista.
+    prd: [{ week: 3, refIndex: 0, afterItemId: "josue" }],
   },
   {
     n: 8, id: "o-reino", title: "O reino", color: "violeta", status: "com_material",
@@ -219,7 +230,7 @@ export const etapas: Etapa[] = ETAPAS.map((e) => ({
   games: [
     ...e.games,
     ...ROOM_GAMES.filter((g) => g.etapa === e.n).map((g) =>
-      EtapaGame.parse({ id: g.id, kind: g.kind, max: gameMax(g), itemId: g.itemId, on: "item", title: g.title, aoVivo: true, seconds: GAME_LIVE_SECONDS }),
+      EtapaGame.parse({ id: g.id, kind: g.kind, max: gameMax(g), itemId: g.itemId, on: "item", title: g.title, aoVivo: true, seconds: gameSecondsOf(g) }),
     ),
   ],
 }))

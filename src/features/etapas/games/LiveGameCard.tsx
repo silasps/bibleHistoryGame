@@ -2,8 +2,7 @@
 
 import { motion } from "motion/react"
 import { useEffect, useState } from "react"
-import { getRoomGame } from "@/content/etapas/jogos"
-import { GAME_LIVE_SECONDS } from "@/content/etapas"
+import { gameSecondsOf, getRoomGame } from "@/content/etapas/jogos"
 import type { GameView } from "@/domain/projection"
 import { useFx } from "@/fx/useFx"
 import { formatScore } from "../../presentation/Podium"
@@ -31,7 +30,7 @@ export function LiveGameCard({ game }: { game: GameView }) {
   const fx = useFx()
   const def = getRoomGame(game.id)
   const elapsed = useElapsed(game.phase === "on" ? game.startedAt : undefined)
-  const over = elapsed >= GAME_LIVE_SECONDS
+  const over = elapsed >= gameSecondsOf(def)
   return (
     <motion.aside
       initial={fx.motion ? { opacity: 0, y: 30 } : false}

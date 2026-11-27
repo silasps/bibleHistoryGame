@@ -44,6 +44,8 @@ interface BaseGame {
   palette: [string, string, string]
   finale: { label: string; ref: Ref; note?: { label: string; ref: Ref } }
   relic: EtapaRelic
+  /** Duração própria, em segundos (sem ela, GAME_SECONDS). */
+  seconds?: number
 }
 
 /** Arca: animais aos pares entram; objetos de hoje, não (escolha do autor). */
@@ -60,14 +62,25 @@ export interface MultiplyGame extends BaseGame {
 }
 
 /** Tocar para juntar por rodadas (maná: cada dia tem a sua medida). */
+/** Uma sessão do jogo de juntar: o que cai e quanto juntar antes de avançar. */
+export interface CollectSession {
+  piece: "mana" | "codorniz"
+  count: number
+  /** Ex.: "Dia 2 · manhã". */
+  label: string
+}
+
+/**
+ * Maná e codornizes (Êx 16): sessões intercaladas (manhã, maná; tarde,
+ * codornizes). Quanto mais rápido juntar, mais sessões a pessoa avança no tempo.
+ */
 export interface CollectGame extends BaseGame {
   mechanic: "juntar"
-  rounds: number[]
-  roundLabel?: string
-  pieces: string[]
-  spawn: "surgir" | "cair"
-  /** Toques além da meta da rodada (ex.: maná guardado demais). */
+  sessions: CollectSession[]
+  /** Toques além da medida do maná (o que se guardou estragou). */
   overflow?: { label: string; ref: Ref }
+  /** Aviso de cada troca de sessão. */
+  announce: Record<CollectSession["piece"], { label: string; ref: Ref }>
 }
 
 /** Cesto: vedar as frestas, colocar o menino e levar o cesto até a margem. */
@@ -143,6 +156,8 @@ export const ROOM_GAMES: EtapaRoomGame[] = [
   },
   {
     id: "estrelas", kind: "estrelas", etapa: 3, itemId: "alianca-abraamica", mechanic: "multiplicar", gesture: "tocar",
+    // Pedido do autor (26/11/2026): o jogo de Abraão dura só 15 segundos.
+    seconds: 15,
     title: "Conte as estrelas",
     instruction: "Toque nas estrelas para contá-las: cada uma revela outras",
     scoring: "+1 por estrela contada · ganha quem contar mais",
@@ -180,12 +195,22 @@ export const ROOM_GAMES: EtapaRoomGame[] = [
   },
   {
     id: "mana", kind: "mana", etapa: 6, itemId: "peregrinacao", mechanic: "juntar", gesture: "tocar",
-    title: "O maná de cada dia",
-    instruction: "Junte o maná da manhã: só o necessário para o dia",
-    scoring: "+20 por porção do dia · −20 se guardar demais · bônus pelo tempo",
-    ref: ref("Exod", 16, 16, 18),
+    // Pedido do autor (26/11/2026): maná e codornizes intercalados, em sessões, e 30 segundos.
+    title: "O maná e as codornizes",
+    instruction: "Pela manhã, junte o maná; à tarde, as codornizes",
+    scoring: "+20 por porção · −20 se guardar maná demais · quanto mais rápido, mais dias",
+    ref: ref("Exod", 16, 13, 18),
     art: "deserto", palette: ["#f5e2b8", "#c9a066", "#3a2a1a"],
-    rounds: [5, 5, 5, 5, 5, 10], roundLabel: "Dia", pieces: ["mana"], spawn: "cair",
+    seconds: 30,
+    sessions: [1, 2, 3, 4, 5, 6].flatMap((d) => [
+      // No sexto dia, o dobro do maná (Êx 16:22).
+      { piece: "mana" as const, count: d === 6 ? 6 : 3, label: `Dia ${d} · manhã` },
+      { piece: "codorniz" as const, count: 2, label: `Dia ${d} · tarde` },
+    ]),
+    announce: {
+      mana: { label: "Pela manhã, o maná", ref: ref("Exod", 16, 14, 15) },
+      codorniz: { label: "À tarde, as codornizes", ref: ref("Exod", 16, 13) },
+    },
     overflow: { label: "Guardado para o dia seguinte, estragou", ref: ref("Exod", 16, 20) },
     finale: { label: "No sétimo dia, descanso", ref: ref("Exod", 16, 26) },
     relic: relic("vaso-mana", "O vaso de maná", ref("Exod", 16, 33)),
@@ -265,6 +290,11 @@ export const ROOM_GAMES: EtapaRoomGame[] = [
     relic: relic("coracao-novo", "O coração novo", ref("Ezek", 36, 26)),
   },
 ]
+
+/** Quanto dura o jogo, em segundos. */
+export function gameSecondsOf(game: Pick<BaseGame, "seconds"> | undefined): number {
+  return game?.seconds ?? GAME_SECONDS
+}
 
 export function getRoomGame(id: string): EtapaRoomGame | undefined {
   return ROOM_GAMES.find((g) => g.id === id)

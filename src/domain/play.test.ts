@@ -74,12 +74,13 @@ describe("pódio dos minijogos", () => {
     expect(phone.scene?.game?.top).toBeUndefined()
   })
 
-  it("Próximo num jogo com pontos mostra o pódio no próprio slide; o segundo Próximo segue", () => {
+  it("o pódio é opcional: Próximo segue direto; Mostrar pódio põe o pódio no próprio slide e o Próximo segue", () => {
     let s = roomAt("item-criacao")
     s = playAt(s, "p1", 3, false, 2000)
     s = playAt(s, "p2", 8, true, 3000)
     expect(toProjectorView(s, { scenes }, getEvidence).results).toBeUndefined()
-    s = reduceHost(s, { type: "next" }, { now: 9000, narrative: { scenes } }).state
+    expect(reduceHost(s, { type: "next" }, { now: 9000, narrative: { scenes } }).state.index).toBe(at("item-criacao") + 1)
+    s = reduceHost(s, { type: "podium" }, { now: 9000, narrative: { scenes } }).state
     expect(s.index).toBe(at("item-criacao"))
     const results = toProjectorView(s, { scenes }, getEvidence).results
     expect(results).toMatchObject({ at: 9000, max: 8, players: 2, top: [{ place: 1, name: "Jogador 2" }, { place: 2, name: "Jogador 1" }] })
@@ -90,7 +91,8 @@ describe("pódio dos minijogos", () => {
     expect(toProjectorView(s, { scenes }, getEvidence).results).toBeUndefined()
   })
 
-  it("sair de um jogo sem ninguém pontuar não mostra pódio", () => {
+  it("sem ninguém pontuar, não há pódio para mostrar", () => {
+    expect(reduceHost(roomAt("item-criacao"), { type: "podium" }, ctx).error).toBeTruthy()
     const s = reduceHost(roomAt("item-criacao"), { type: "next" }, ctx).state
     expect(toProjectorView(s, { scenes }, getEvidence).results).toBeUndefined()
   })
@@ -111,13 +113,14 @@ describe("jogo ao vivo no slide do tópico (etapas 2–11)", () => {
     expect(r.state.plays?.arca.p1.value).toBe(1000)
   })
 
-  it("sem ninguém jogar, Próximo segue direto; com pontos, vai ao pódio e aceita a pontuação final por alguns instantes", () => {
+  it("Próximo segue direto mesmo com pontos; Mostrar pódio aceita a pontuação final por alguns instantes", () => {
     const quiet = reduceHost(reduceHost(roomAt("item-noe"), { type: "game_start" }, ctx).state, { type: "next" }, ctx).state
     expect(quiet.index).toBe(at("item-noe") + 1)
 
     let s = reduceHost(roomAt("item-noe"), { type: "game_start" }, { now: 1000, narrative: { scenes } }).state
     s = playArca(s, "p1", 300, 2000).state
-    s = reduceHost(s, { type: "next" }, { now: 10_000, narrative: { scenes } }).state
+    expect(reduceHost(s, { type: "next" }, { now: 10_000, narrative: { scenes } }).state.index).toBe(at("item-noe") + 1)
+    s = reduceHost(s, { type: "podium" }, { now: 10_000, narrative: { scenes } }).state
     expect(s.gameLive).toMatchObject({ id: "arca", phase: "podio" })
     const late = playArca(s, "p2", 400, 11_000)
     expect(late.result).toBe("accepted")

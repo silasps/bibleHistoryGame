@@ -4,6 +4,7 @@ import { Pause } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { useEffect, useMemo, useRef } from "react"
 import type { ProjectorView } from "@/domain/projection"
+import { stagePhoneAction } from "@/domain/phone-action"
 import { SplitReveal } from "@/fx/SplitReveal"
 import { moodForScene } from "@/fx/sound"
 import { useMood, useStinger } from "@/fx/useSound"
@@ -16,6 +17,7 @@ import { LiveGameCard } from "../etapas/games/LiveGameCard"
 import { Counting, LivePodium, ResultsStage, useFreshResults } from "./Podium"
 import { PollResults } from "./PollResults"
 import { QRJoin } from "./QRJoin"
+import { PhoneCue } from "./PhoneCue"
 import { StageSeal } from "./StageSeal"
 
 interface Props {
@@ -26,18 +28,22 @@ interface Props {
   preview?: boolean
   /** A prévia do painel toca a trilha e os efeitos (o som sai do computador do apresentador). */
   audible?: boolean
+  /** Identifica o palco na página (a miniatura do próximo slide usa "proximo"). */
+  surface?: string
 }
 
 /**
  * Telão 16:9. Recebe apenas o ProjectorView: não tem acesso a notas do
  * apresentador nem a sínteses. Textos escalam com o tamanho do palco (cqw).
  */
-export function ProjectorStage({ view, joinUrl, className, preview = false, audible = false }: Props) {
+export function ProjectorStage({ view, joinUrl, className, preview = false, audible = false, surface = "projector" }: Props) {
   const scene = view?.scene ?? null
   const stinger = useStinger()
   const fx = useFx()
   const playsSound = !preview || audible
-  useMood(playsSound ? moodForScene(view?.status === "running" ? scene : null, scene?.game?.phase === "on") : null)
+  // Na pausa, a música silencia (os efeitos também param de tocar, porque nada muda no palco).
+  useMood(playsSound && !view?.paused ? moodForScene(view?.status === "running" ? scene : null, scene?.game?.phase === "on") : null)
+  const phoneAction = stagePhoneAction(view)
   useHajaLuzSound(playsSound && view?.moment?.kind === "haja-luz" ? view.moment.startedAt : undefined)
   const [results, , counting] = useFreshResults(view?.results)
 
@@ -61,7 +67,7 @@ export function ProjectorStage({ view, joinUrl, className, preview = false, audi
   }, [visual.trainKey, playsSound, stinger])
 
   return (
-    <div className={cn("relative aspect-video w-full overflow-hidden bg-night [container-type:size]", className)} data-surface="projector">
+    <div className={cn("relative aspect-video w-full overflow-hidden bg-night [container-type:size]", className)} data-surface={surface}>
       {!view && (
         <div className="grid h-full place-items-center text-[2cqw] text-mist" role="status">
           Aguardando a sala…
@@ -166,12 +172,8 @@ export function ProjectorStage({ view, joinUrl, className, preview = false, audi
         )}
         {view?.moment?.kind === "haja-luz" && !preview && <HajaLuzStage key={view.moment.startedAt} />}
       </AnimatePresence>
-      {view?.moment?.kind === "luzes" && (
-        <div className="pointer-events-none absolute inset-x-0 top-[3cqh] z-10 text-center">
-          <p className="font-display text-[2.6cqw] italic text-gold-bright [text-shadow:0_0_2cqw_rgba(0,0,0,0.9)]">Acenda a sua luz pelo celular</p>
-          <p className="text-[1.6cqw] tabular-nums text-sand">{view.lightsCount} de {view.participantCount}</p>
-        </div>
-      )}
+      {/* Hora de pegar o celular: fora das ações, o celular fica em repouso. */}
+      <AnimatePresence>{phoneAction && <PhoneCue key={phoneAction} action={phoneAction} extra={phoneAction === "luz" ? `${view!.lightsCount} de ${view!.participantCount}` : undefined} />}</AnimatePresence>
     </div>
   )
 }

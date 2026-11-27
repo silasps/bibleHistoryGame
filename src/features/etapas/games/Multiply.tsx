@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react"
 import { useCallback, useEffect, useRef, useState } from "react"
-import type { MultiplyGame } from "@/content/etapas/jogos"
+import { gameSecondsOf, type MultiplyGame } from "@/content/etapas/jogos"
 import { formatRef } from "@/content/refs"
 import { starsScore } from "@/domain/score"
 import { HAPTIC, vibrate } from "@/fx/haptics"
@@ -10,7 +10,7 @@ import { useFx } from "@/fx/useFx"
 import { useStinger } from "@/fx/useSound"
 import { Backdrop } from "../etapa-1/art"
 import { Finale } from "./Finale"
-import { GAME_MS, GameHud, seeded, StepHint, useCountdown, useLatest } from "./kit"
+import { GameHud, seeded, StepHint, useCountdown, useLatest } from "./kit"
 
 interface Star {
   key: number
@@ -53,7 +53,8 @@ export function Multiply({ game, onProgress, stopped }: { game: MultiplyGame; on
     setOver(true)
     report.current(starsScore(counted.current), true)
   }, [report])
-  const { left } = useCountdown(GAME_MS, !over && !stopped, finish)
+  const totalMs = gameSecondsOf(game) * 1000
+  const { left } = useCountdown(totalMs, !over && !stopped, finish)
   useEffect(() => {
     if (stopped) finish()
   }, [stopped, finish])
@@ -106,7 +107,7 @@ export function Multiply({ game, onProgress, stopped }: { game: MultiplyGame; on
     <div className="relative h-full w-full overflow-hidden select-none">
       <Backdrop name={game.art} portrait palette={game.palette} />
       <canvas ref={sky} className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden />
-      <GameHud left={left} total={GAME_MS} score={starsScore(count)} label="Conte as estrelas" />
+      <GameHud left={left} total={totalMs} score={starsScore(count)} label="Conte as estrelas" />
       <StepHint>
         {game.instruction}{" · "}<span className="whitespace-nowrap">{formatRef(game.ref, "short")}</span>
       </StepHint>

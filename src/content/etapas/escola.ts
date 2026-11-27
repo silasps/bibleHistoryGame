@@ -34,7 +34,12 @@ export const SCHOOL_ITEMS = [
 const SCHOOL = new Set<string>(SCHOOL_ITEMS)
 
 /** Itens do autor fora da lista da escola que não são temas: entram neste slide. */
-const HOST_OF: Record<string, string> = { alexandre: "imperio-grego", "antioco-iv": "macabeus" }
+const HOST_OF: Record<string, string> = {
+  alexandre: "imperio-grego",
+  "antioco-iv": "macabeus",
+  // "Levítico: sejam santos" vai com Arão (sacerdócio e sistema sacrificial, Lv 8–10), depois do tabernáculo.
+  "levitico-santidade": "arao",
+}
 
 export const isSchoolItem = (id: string) => SCHOOL.has(id)
 
